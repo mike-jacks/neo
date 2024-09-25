@@ -34,51 +34,6 @@ func main() {
 
 	srv := setupGraphQLServer(driver)
 
-	// GraphiQL handler
-	graphiqlHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write([]byte(`
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<title>GraphiQL</title>
-				<link href="https://unpkg.com/graphiql/graphiql.min.css" rel="stylesheet" />
-			</head>
-			<body style="margin: 0;">
-				<div id="graphiql" style="height: 100vh;"></div>
-				<script
-					crossorigin
-					src="https://unpkg.com/react/umd/react.production.min.js"
-				></script>
-				<script
-					crossorigin
-					src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"
-				></script>
-				<script
-					crossorigin
-					src="https://unpkg.com/graphiql/graphiql.min.js"
-				></script>
-				<script>
-					const graphQLFetcher = graphQLParams =>
-						fetch('/query', {
-							method: 'post',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify(graphQLParams),
-						}).then(response => response.json());
-
-					ReactDOM.render(
-						React.createElement(GraphiQL, { fetcher: graphQLFetcher }),
-						document.getElementById('graphiql'),
-					);
-				</script>
-			</body>
-			</html>
-		`))
-	})
-
-	http.Handle("/graphiql", graphiqlHandler)
 	http.Handle("/playground", playground.Handler("GraphQL Playground", "/query"))
 	http.Handle("/query", srv)
 
