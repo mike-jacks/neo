@@ -24,6 +24,3 @@ go.work.sum
 # env file
 .env
 Neo4j-093aefc9-Created-2024-09-20.txt
-
-.vscode/*
-.vscode/

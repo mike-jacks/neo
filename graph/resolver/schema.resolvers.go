@@ -14,132 +14,192 @@ import (
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
-// CreatePerson is the resolver for the createPerson field.
-func (r *mutationResolver) CreatePerson(ctx context.Context, name string) (*model.Person, error) {
+// CreateSchemaNode is the resolver for the createSchemaNode field.
+func (r *mutationResolver) CreateSchemaNode(ctx context.Context, createSchemaNodeInput model.CreateSchemaNodeInput) (*model.SchemaNode, error) {
 	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	result, err := session.Run(ctx, "CREATE (p:Person {id: $id, name: $name}) RETURN p.id, p.name", map[string]interface{}{
-		"id":   uuid.New().String(),
-		"name": name,
-	})
-	if err != nil {
-		return nil, err
+	// Ensure uniqueness constraint on SchemaNode name
+	constraintQueries := []string{
+		"CREATE CONSTRAINT unique_schema_node_name IF NOT EXISTS FOR (n:SchemaNode) REQUIRE n.name IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_node_id IF NOT EXISTS FOR (n:SchemaNode) REQUIRE n.id IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_property_name IF NOT EXISTS FOR (p:SchemaProperty) REQUIRE p.name IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_property_id IF NOT EXISTS FOR (p:SchemaProperty) REQUIRE p.id IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_relationship_name IF NOT EXISTS FOR (r:SchemaRelationship) REQUIRE r.name IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_relationship_id IF NOT EXISTS FOR (r:SchemaRelationship) REQUIRE r.id IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_label_name IF NOT EXISTS FOR (l:SchemaLabel) REQUIRE l.name IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_label_id IF NOT EXISTS FOR (l:SchemaLabel) REQUIRE l.id IS UNIQUE",
 	}
-
-	if result.Next(ctx) {
-		record := result.Record()
-		id, _ := record.Get("p.id")
-		name, _ := record.Get("p.name")
-		return &model.Person{
-			ID:   id.(string),
-			Name: name.(string),
-		}, nil
-	}
-
-	return nil, fmt.Errorf("failed to create person")
-}
-
-// UpdatePerson is the resolver for the updatePerson field.
-func (r *mutationResolver) UpdatePerson(ctx context.Context, name *string) (*model.Person, error) {
-	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	defer session.Close(ctx)
-
-	result, err := session.Run(ctx, "MATCH (p:Person {id: $id}) SET p.name = $name RETURN p.id, p.name", map[string]interface{}{
-		"name": name,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if result.Next(ctx) {
-		record := result.Record()
-		id, _ := record.Get("p.id")
-		name, _ := record.Get("p.name")
-		return &model.Person{
-			ID:   id.(string),
-			Name: name.(string),
-		}, nil
-	}
-
-	return nil, fmt.Errorf("failed to update person")
-}
-
-// DeletePerson is the resolver for the deletePerson field.
-func (r *mutationResolver) DeletePerson(ctx context.Context, id string) (bool, error) {
-	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	defer session.Close(ctx)
-
-	result, err := session.Run(ctx, "MATCH (p:Person {id: $id}) DETACH DELETE p RETURN true", map[string]interface{}{
-		"id": id,
-	})
-	if err != nil {
-		return false, err
-	}
-
-	if result.Next(ctx) {
-		record := result.Record()
-		success, _ := record.Get("true")
-		return success.(bool), nil
-	}
-
-	return false, fmt.Errorf("failed to delete person")
-}
-
-// Persons is the resolver for the persons field.
-func (r *queryResolver) Persons(ctx context.Context) ([]*model.Person, error) {
-	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
-	defer session.Close(ctx)
-
-	result, err := session.Run(ctx, "MATCH (p:Person) RETURN p", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var persons []*model.Person
-	for result.Next(ctx) {
-		record := result.Record()
-		node, ok := record.Get("p")
-		if !ok {
-			return nil, fmt.Errorf("person node not found")
-		}
-		personNode := node.(neo4j.Node)
-		personNodeProps := personNode.Props
-
-		persons = append(persons, &model.Person{
-			ID:   personNodeProps["id"].(string),
-			Name: personNodeProps["name"].(string),
+	for _, constraintQuery := range constraintQueries {
+		_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
+			_, err := tx.Run(ctx, constraintQuery, nil)
+			return nil, err
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	if err = result.Err(); err != nil {
-		return nil, err
+	schemaNode := model.SchemaNode{
+		ID:         uuid.New().String(),
+		Name:       createSchemaNodeInput.Name,
+		Labels:     make([]*model.SchemaLabel, len(createSchemaNodeInput.Labels)),
+		Properties: make([]*model.SchemaProperty, len(createSchemaNodeInput.Properties)),
 	}
 
-	return persons, nil
-}
+	properties := make([]map[string]interface{}, len(createSchemaNodeInput.Properties))
+	for i, property := range createSchemaNodeInput.Properties {
+		schemaNode.Properties[i] = &model.SchemaProperty{
+			ID:   uuid.New().String(),
+			Name: property.Name,
+			Type: property.Type,
+		}
+		properties[i] = map[string]interface{}{
+			"id":   schemaNode.Properties[i].ID,
+			"name": schemaNode.Properties[i].Name,
+			"type": schemaNode.Properties[i].Type,
+		}
+	}
 
-// Person is the resolver for the person field.
-func (r *queryResolver) Person(ctx context.Context, id string) (*model.Person, error) {
-	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
-	defer session.Close(ctx)
+	labels := make([]map[string]interface{}, len(createSchemaNodeInput.Labels))
+	for i, label := range createSchemaNodeInput.Labels {
+		schemaNode.Labels[i] = &model.SchemaLabel{
+			ID:   uuid.New().String(),
+			Name: label.Name,
+		}
+		labels[i] = map[string]interface{}{
+			"id":   schemaNode.Labels[i].ID,
+			"name": schemaNode.Labels[i].Name,
+		}
+	}
 
-	result, err := session.Run(ctx, "MATCH (p:Person {id: $id}) RETURN p.id, p.name", map[string]interface{}{"id": id})
+	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
+		query := `
+			CREATE (n:SchemaNode {id: $id, name: $name})
+			WITH n
+			UNWIND $properties AS property
+			MERGE (p:SchemaProperty {name: property.name})
+			ON CREATE SET p.id = property.id, p.type = property.type
+			ON MATCH SET p.type = property.type
+			MERGE (n)-[:HAS_PROPERTY]->(p)
+			WITH n
+			UNWIND $labels AS label
+			MERGE (l:SchemaLabel {name: label.name})
+			ON CREATE SET l.id = label.id
+			MERGE (n)-[:HAS_LABEL]->(l)
+			return n
+		`
+
+		parameters := map[string]interface{}{
+			"id":         schemaNode.ID,
+			"name":       schemaNode.Name,
+			"labels":     labels,
+			"properties": properties,
+		}
+
+		_, err := tx.Run(ctx, query, parameters)
+		if err != nil {
+			return nil, err
+		}
+
+		return schemaNode, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	if result.Next(ctx) {
-		record := result.Record()
-		id, _ := record.Get("p.id")
-		name, _ := record.Get("p.name")
-		return &model.Person{
-			ID:   id.(string),
-			Name: name.(string),
-		}, nil
-	}
+	return &schemaNode, nil
+}
 
-	return nil, nil // or return an error if person not found
+// CreateSchemaProperty is the resolver for the createSchemaProperty field.
+func (r *mutationResolver) CreateSchemaProperty(ctx context.Context, createSchemaPropertyInput model.CreateSchemaPropertyInput) (*model.SchemaProperty, error) {
+	panic(fmt.Errorf("not implemented: CreateSchemaProperty - createSchemaProperty"))
+}
+
+// CreateSchemaRelationship is the resolver for the createSchemaRelationship field.
+func (r *mutationResolver) CreateSchemaRelationship(ctx context.Context, createSchemaRelationshipInput model.CreateSchemaRelationshipInput) (*model.SchemaRelationship, error) {
+	panic(fmt.Errorf("not implemented: CreateSchemaRelationship - createSchemaRelationship"))
+}
+
+// UpdateSchemaNode is the resolver for the updateSchemaNode field.
+func (r *mutationResolver) UpdateSchemaNode(ctx context.Context, id string, updateSchemaNodeInput model.UpdateSchemaNodeInput) (*model.SchemaNode, error) {
+	panic(fmt.Errorf("not implemented: UpdateSchemaNode - updateSchemaNode"))
+}
+
+// UpdateSchemaProperty is the resolver for the updateSchemaProperty field.
+func (r *mutationResolver) UpdateSchemaProperty(ctx context.Context, id string, updateSchemaPropertyInput model.UpdateSchemaPropertyInput) (*model.SchemaProperty, error) {
+	panic(fmt.Errorf("not implemented: UpdateSchemaProperty - updateSchemaProperty"))
+}
+
+// UpdateSchemaRelationship is the resolver for the updateSchemaRelationship field.
+func (r *mutationResolver) UpdateSchemaRelationship(ctx context.Context, id string, updateSchemaRelationshipInput model.UpdateSchemaRelationshipInput) (*model.SchemaRelationship, error) {
+	panic(fmt.Errorf("not implemented: UpdateSchemaRelationship - updateSchemaRelationship"))
+}
+
+// DeleteSchemaNode is the resolver for the deleteSchemaNode field.
+func (r *mutationResolver) DeleteSchemaNode(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteSchemaNode - deleteSchemaNode"))
+}
+
+// DeleteSchemaProperty is the resolver for the deleteSchemaProperty field.
+func (r *mutationResolver) DeleteSchemaProperty(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteSchemaProperty - deleteSchemaProperty"))
+}
+
+// DeleteSchemaRelationship is the resolver for the deleteSchemaRelationship field.
+func (r *mutationResolver) DeleteSchemaRelationship(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteSchemaRelationship - deleteSchemaRelationship"))
+}
+
+// GetSchemaNodes is the resolver for the getSchemaNodes field.
+func (r *queryResolver) GetSchemaNodes(ctx context.Context) ([]*model.SchemaNode, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaNodes - getSchemaNodes"))
+}
+
+// GetSchemaProperties is the resolver for the getSchemaProperties field.
+func (r *queryResolver) GetSchemaProperties(ctx context.Context) ([]*model.SchemaProperty, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaProperties - getSchemaProperties"))
+}
+
+// GetSchemaRelationships is the resolver for the getSchemaRelationships field.
+func (r *queryResolver) GetSchemaRelationships(ctx context.Context) ([]*model.SchemaRelationship, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaRelationships - getSchemaRelationships"))
+}
+
+// GetSchemaNode is the resolver for the getSchemaNode field.
+func (r *queryResolver) GetSchemaNode(ctx context.Context, id string) (*model.SchemaNode, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaNode - getSchemaNode"))
+}
+
+// GetSchemaProperty is the resolver for the getSchemaProperty field.
+func (r *queryResolver) GetSchemaProperty(ctx context.Context, id string) (*model.SchemaProperty, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaProperty - getSchemaProperty"))
+}
+
+// GetSchemaRelationship is the resolver for the getSchemaRelationship field.
+func (r *queryResolver) GetSchemaRelationship(ctx context.Context, id string) (*model.SchemaRelationship, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaRelationship - getSchemaRelationship"))
+}
+
+// GetSchemaNodeByName is the resolver for the getSchemaNodeByName field.
+func (r *queryResolver) GetSchemaNodeByName(ctx context.Context, name string) (*model.SchemaNode, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaNodeByName - getSchemaNodeByName"))
+}
+
+// GetSchemaPropertyByName is the resolver for the getSchemaPropertyByName field.
+func (r *queryResolver) GetSchemaPropertyByName(ctx context.Context, name string) (*model.SchemaProperty, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaPropertyByName - getSchemaPropertyByName"))
+}
+
+// GetSchemaRelationshipByName is the resolver for the getSchemaRelationshipByName field.
+func (r *queryResolver) GetSchemaRelationshipByName(ctx context.Context, name string) (*model.SchemaRelationship, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaRelationshipByName - getSchemaRelationshipByName"))
+}
+
+// GetSchemaNodeByLabel is the resolver for the getSchemaNodeByLabel field.
+func (r *queryResolver) GetSchemaNodeByLabel(ctx context.Context, label string) (*model.SchemaNode, error) {
+	panic(fmt.Errorf("not implemented: GetSchemaNodeByLabel - getSchemaNodeByLabel"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

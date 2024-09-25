@@ -1,15 +1,97 @@
-type Person {
+type SchemaNode {
+  id: ID!
+  name: String!
+  labels: [SchemaLabel!]
+  properties: [SchemaProperty!]
+}
+
+type SchemaProperty {
+  id: ID!
+  name: String!
+  type: String!
+}
+
+type SchemaLabel {
   id: ID!
   name: String!
 }
 
+type SchemaRelationship {
+  id: ID!
+  name: String!
+  target: SchemaNode!
+  properties: [SchemaProperty!]!
+}
+
 type Query {
-  persons: [Person!]!
-  person(id: ID!): Person
+  getSchemaNodes: [SchemaNode!]!
+  getSchemaProperties: [SchemaProperty!]!
+  getSchemaRelationships: [SchemaRelationship!]!
+
+  getSchemaNode(id: ID!): SchemaNode!
+  getSchemaProperty(id: ID!): SchemaProperty!
+  getSchemaRelationship(id: ID!): SchemaRelationship!
+
+  getSchemaNodeByName(name: String!): SchemaNode!
+  getSchemaPropertyByName(name: String!): SchemaProperty!
+  getSchemaRelationshipByName(name: String!): SchemaRelationship!
+
+  getSchemaNodeByLabel(label: String!): SchemaNode!
 }
 
 type Mutation {
-  createPerson(name: String!): Person!
-  updatePerson(name: String): Person!
-  deletePerson(id: ID!): Boolean!
+  createSchemaNode(createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
+  createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
+  createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
+
+  updateSchemaNode(id: ID!, updateSchemaNodeInput: UpdateSchemaNodeInput!): SchemaNode!
+  updateSchemaProperty(id: ID!, updateSchemaPropertyInput: UpdateSchemaPropertyInput!): SchemaProperty!
+  updateSchemaRelationship(id: ID!, updateSchemaRelationshipInput: UpdateSchemaRelationshipInput!): SchemaRelationship!
+
+  deleteSchemaNode(id: ID!): Boolean!
+  deleteSchemaProperty(id: ID!): Boolean!
+  deleteSchemaRelationship(id: ID!): Boolean!
+}
+
+input CreateSchemaNodeInput {
+  name: String!
+  labels: [SchemaLabelInput!]
+  properties: [SchemaPropertyInput!]
+}
+
+input CreateSchemaPropertyInput {
+  name: String!
+  type: String!
+}
+
+input CreateSchemaRelationshipInput {
+  name: String!
+  targetNodeId: ID!
+  properties: [SchemaPropertyInput!]!
+}
+
+input UpdateSchemaNodeInput {
+  name: String
+  labels: [SchemaLabelInput!]
+  properties: [SchemaPropertyInput!]
+}
+
+input UpdateSchemaPropertyInput {
+  name: String
+  type: String
+}
+
+input UpdateSchemaRelationshipInput {
+  name: String
+  target: ID!
+  properties: [SchemaPropertyInput!]!
+}
+
+input SchemaPropertyInput {
+  name: String!
+  type: String!
+}
+
+input SchemaLabelInput {
+  name: String!
 }

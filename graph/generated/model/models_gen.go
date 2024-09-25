@@ -2,13 +2,76 @@
 
 package model
 
+type CreateSchemaNodeInput struct {
+	Name       string                 `json:"name"`
+	Labels     []*SchemaLabelInput    `json:"labels,omitempty"`
+	Properties []*SchemaPropertyInput `json:"properties,omitempty"`
+}
+
+type CreateSchemaPropertyInput struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+type CreateSchemaRelationshipInput struct {
+	Name         string                 `json:"name"`
+	TargetNodeID string                 `json:"targetNodeId"`
+	Properties   []*SchemaPropertyInput `json:"properties"`
+}
+
 type Mutation struct {
 }
 
-type Person struct {
+type Query struct {
+}
+
+type SchemaLabel struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-type Query struct {
+type SchemaLabelInput struct {
+	Name string `json:"name"`
+}
+
+type SchemaNode struct {
+	ID         string            `json:"id"`
+	Name       string            `json:"name"`
+	Labels     []*SchemaLabel    `json:"labels,omitempty"`
+	Properties []*SchemaProperty `json:"properties,omitempty"`
+}
+
+type SchemaProperty struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+type SchemaPropertyInput struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+type SchemaRelationship struct {
+	ID         string            `json:"id"`
+	Name       string            `json:"name"`
+	Target     *SchemaNode       `json:"target"`
+	Properties []*SchemaProperty `json:"properties"`
+}
+
+type UpdateSchemaNodeInput struct {
+	Name       *string                `json:"name,omitempty"`
+	Labels     []*SchemaLabelInput    `json:"labels,omitempty"`
+	Properties []*SchemaPropertyInput `json:"properties,omitempty"`
+}
+
+type UpdateSchemaPropertyInput struct {
+	Name *string `json:"name,omitempty"`
+	Type *string `json:"type,omitempty"`
+}
+
+type UpdateSchemaRelationshipInput struct {
+	Name       *string                `json:"name,omitempty"`
+	Target     string                 `json:"target"`
+	Properties []*SchemaPropertyInput `json:"properties"`
 }
