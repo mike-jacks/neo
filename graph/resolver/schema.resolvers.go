@@ -22,6 +22,8 @@ func (r *mutationResolver) CreateSchemaNode(ctx context.Context, sourceSchemaNod
 	constraintQueries := []string{
 		"CREATE CONSTRAINT unique_schema_node_name IF NOT EXISTS FOR (n:SchemaNode) REQUIRE (n.name) IS UNIQUE",
 		"CREATE CONSTRAINT unique_schema_property_name IF NOT EXISTS FOR (n:SchemaProperty) REQUIRE (n.name, n.domain, n.parentName) IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_label_name IF NOT EXISTS FOR (n:SchemaLabel) REQUIRE (n.name, n.domain, n.parentName) IS UNIQUE",
+		"CREATE CONSTRAINT unique_schema_relationship_name IF NOT EXISTS FOR (n:SchemaRelationship) REQUIRE (n.name, n.domain, n.parentName) IS UNIQUE",
 	}
 	for _, constraintQuery := range constraintQueries {
 		_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
