@@ -34,7 +34,7 @@ func main() {
 
 	srv := setupGraphQLServer(driver)
 
-	http.Handle("/playground", playground.Handler("GraphQL Playground", "/query"))
+	http.Handle("/graphql", playground.Handler("GraphQL Playground", "/query"))
 	http.Handle("/query", srv)
 
 	port := os.Getenv("PORT")
@@ -42,8 +42,9 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Connect to http://localhost:%s/graphiql for GraphiQL", port)
-	log.Printf("Connect to http://localhost:%s/playground for GraphQL Playground", port)
+	log.Printf("Connect to http://localhost:%s/graphql for GraphQL Playground", port)
+	log.Printf("Connect to http://localhost:%s/query for GraphQL API", port)
+	log.Printf("Connect to https://console.neo4j.io for Neo4j Browser Console")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
