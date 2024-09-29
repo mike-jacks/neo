@@ -10,6 +10,7 @@ import (
 
 	"github.com/mike-jacks/neo/graph/generated"
 	"github.com/mike-jacks/neo/graph/generated/model"
+	"github.com/mike-jacks/neo/tools"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
@@ -108,17 +109,12 @@ func (r *mutationResolver) CreateSchemaNode(ctx context.Context, sourceSchemaNod
 		`
 
 		parameters := map[string]interface{}{
-			"name":       schemaNode.Name,
-			"domain":     schemaNode.Domain,
-			"type":       schemaNode.Type,
-			"labels":     labels,
-			"properties": properties,
-		}
-
-		if sourceSchemaNodeName != nil {
-			parameters["sourceSchemaNodeName"] = *sourceSchemaNodeName
-		} else {
-			parameters["sourceSchemaNodeName"] = nil
+			"name":                 schemaNode.Name,
+			"domain":               schemaNode.Domain,
+			"type":                 schemaNode.Type,
+			"labels":               labels,
+			"properties":           properties,
+			"sourceSchemaNodeName": tools.DereferenceOrNil(sourceSchemaNodeName),
 		}
 
 		_, err := tx.Run(ctx, query, parameters)
