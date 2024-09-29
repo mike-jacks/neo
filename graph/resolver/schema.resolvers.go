@@ -88,22 +88,18 @@ func (r *mutationResolver) CreateSchemaNode(ctx context.Context, sourceSchemaNod
 				MERGE (p:SchemaProperty {name: property.name, domain: property.domain, type: property.type, parentName: property.parentName})
 				MERGE (n)-[:HAS_PROPERTY]->(p)
 			)
-			CREATE (e:test {name: "This is a test post properties"})
 			WITH n, sourceNode, labels
 			// Step 4: Create the labels for the new SchemaNode
 			FOREACH (label IN labels |
 				MERGE (l:SchemaLabel {name: label.name, domain: label.domain, parentName: label.parentName})
 				MERGE (n)-[:HAS_LABEL]->(l)
 			)
-			CREATE (z:test {name: "This is a test post labels"})
 
 			// Step 5: Create the relationship between the source node and the new SchemaNode
 			FOREACH (_ IN CASE WHEN sourceNode IS NOT NULL THEN [1] ELSE [] END |
 				CREATE (sourceNode)<-[:BELONGS_TO]-(n)
-				CREATE (f:test {name: "This is a test"})
 			)
 			WITH n, sourceNode
-			CREATE (z:test {name: "This is a test post relationship"})
 			// Step 6: Return the new SchemaNode
 			RETURN n
 		`
