@@ -29,8 +29,8 @@ type SchemaRelationship {
 
 type Query {
   getSchemaNodes(domain: String!): [SchemaNode!]!
-  getSchemaProperties(domain: String!): [SchemaProperty!]!
-  getSchemaRelationships(domain: String!): [SchemaRelationship!]!
+  getSchemaProperties(schemaNodeName: String!, domain: String!): [SchemaProperty!]!
+  getSchemaRelationships(schemaNodeName: String!, domain: String!): [SchemaRelationship!]!
 
   getSchemaNode(domain: String!, name: String!): SchemaNode!
   getSchemaProperty(domain: String!, name: String!, type: String!, parentName: String!): SchemaProperty!
@@ -39,7 +39,7 @@ type Query {
 
 type Mutation {
   createSchemaNode(sourceSchemaNodeName: String, createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
-  createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
+  createSchemaProperty(schemaNodeName: String!, domain: String!, createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
   createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
 
   updateSchemaNode(name: String!, domain: String!, updateSchemaNodeInput: UpdateSchemaNodeInput!): SchemaNode!

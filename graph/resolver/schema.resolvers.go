@@ -7,6 +7,7 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/mike-jacks/neo/graph/generated"
 	"github.com/mike-jacks/neo/graph/generated/model"
@@ -133,7 +134,7 @@ func (r *mutationResolver) CreateSchemaNode(ctx context.Context, sourceSchemaNod
 }
 
 // CreateSchemaProperty is the resolver for the createSchemaProperty field.
-func (r *mutationResolver) CreateSchemaProperty(ctx context.Context, createSchemaPropertyInput model.CreateSchemaPropertyInput) (*model.SchemaProperty, error) {
+func (r *mutationResolver) CreateSchemaProperty(ctx context.Context, schemaNodeName string, domain string, createSchemaPropertyInput model.CreateSchemaPropertyInput) (*model.SchemaProperty, error) {
 	panic(fmt.Errorf("not implemented: CreateSchemaProperty - createSchemaProperty"))
 }
 
@@ -144,7 +145,164 @@ func (r *mutationResolver) CreateSchemaRelationship(ctx context.Context, createS
 
 // UpdateSchemaNode is the resolver for the updateSchemaNode field.
 func (r *mutationResolver) UpdateSchemaNode(ctx context.Context, name string, domain string, updateSchemaNodeInput model.UpdateSchemaNodeInput) (*model.SchemaNode, error) {
-	panic(fmt.Errorf("not implemented: UpdateSchemaNode - updateSchemaNode"))
+	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	labels := make([]map[string]interface{}, len(updateSchemaNodeInput.Labels))
+	for i, label := range updateSchemaNodeInput.Labels {
+		labels[i] = map[string]interface{}{
+			"name":       label.Name,
+			"domain":     label.Domain,
+			"parentName": label.ParentName,
+		}
+	}
+
+	properties := make([]map[string]interface{}, len(updateSchemaNodeInput.Properties))
+	for i, property := range updateSchemaNodeInput.Properties {
+		properties[i] = map[string]interface{}{
+			"name":       property.Name,
+			"type":       property.Type,
+			"domain":     property.Domain,
+			"parentName": property.ParentName,
+		}
+	}
+
+	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
+		query := `
+			MATCH (n:SchemaNode {name: $name, domain: $domain})
+			WITH n, $newName AS newName, $newDomain AS newDomain, $newType AS newType, $newLabels AS newLabels, $newProperties AS newProperties
+			FOREACH (_ IN CASE WHEN n IS NOT NULL THEN [1] ELSE [] END |
+				SET n.name = COALESCE(newName, n.name),
+					n.domain = COALESCE(newDomain, n.domain),
+					n.type = COALESCE(newType, n.type)
+			)
+			WITH n, newLabels, newProperties
+			FOREACH (label IN newLabels |
+				MERGE (l:SchemaLabel {name: label.name, domain: label.domain, parentName: label.parentName})
+				MERGE (n)-[:HAS_LABEL]->(l)
+			)
+			WITH n, newProperties
+			FOREACH (property IN newProperties |
+				MERGE (p:SchemaProperty {name: property.name, domain: property.domain, type: property.type, parentName: property.parentName})
+				MERGE (n)-[:HAS_PROPERTY]->(p)
+			)
+			RETURN n
+	`
+		parameters := map[string]interface{}{
+			"name":          name,
+			"domain":        domain,
+			"newName":       updateSchemaNodeInput.Name,
+			"newDomain":     updateSchemaNodeInput.Domain,
+			"newType":       updateSchemaNodeInput.Type,
+			"newLabels":     labels,
+			"newProperties": properties,
+		}
+		result, err := tx.Run(ctx, query, parameters)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	nodeResult, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
+		query := `
+			MATCH (n:SchemaNode {name: $name, domain: $domain})
+			OPTIONAL MATCH (n)-[:HAS_LABEL]->(l:SchemaLabel)
+			OPTIONAL MATCH (n)-[:HAS_PROPERTY]->(p:SchemaProperty)
+			WITH n, collect(DISTINCT l {name: l.name, domain: l.domain, parentName: l.parentName}) AS labels,
+			collect(DISTINCT p {name: p.name, type: p.type, domain: p.domain, parentName: p.parentName}) AS properties
+			RETURN n {.*, labels: labels, properties: properties} AS node
+			
+		`
+		parameters := map[string]interface{}{
+			"name":   name,
+			"domain": domain,
+		}
+		result, err := tx.Run(ctx, query, parameters)
+		if err != nil {
+			log.Printf("Error retrieving updated SchemaNode: %v", err)
+			return nil, err
+		}
+		record, err := result.Single(ctx)
+		if err != nil {
+			log.Printf("Error retrieving single record: %v", err)
+			return nil, err
+		}
+		return record, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("nodeResult: %v", nodeResult)
+	log.Printf("nodeResult type: %T", nodeResult)
+
+	nodeRecord, ok := nodeResult.(*neo4j.Record)
+	if !ok {
+		log.Printf("Error asserting nodeResult to neo4j.Record: %v", nodeResult)
+		return nil, fmt.Errorf("error asserting nodeResult to neo4j.Record")
+	}
+
+	log.Printf("nodeRecord: %v", nodeRecord)
+	log.Printf("nodeRecord type: %T", nodeRecord.Values[0])
+
+	resultNode, ok := nodeRecord.Values[0].(map[string]interface{})
+	if !ok {
+		log.Printf("Error asserting resultNode to map[string]interface{}: %v", nodeRecord.Values[0])
+		return nil, fmt.Errorf("error asserting resultNode to map[string]interface{}")
+	}
+
+	resultLabels, ok := resultNode["labels"].([]interface{})
+	if !ok {
+		log.Printf("Error asserting resultLabels to []interface{}: %v", resultNode["labels"])
+		return nil, fmt.Errorf("error asserting resultLabels to []interface{}")
+	}
+	resultProperties, ok := resultNode["properties"].([]interface{})
+	if !ok {
+		log.Printf("Error asserting resultProperties to []interface{}: %v", resultNode["properties"])
+		return nil, fmt.Errorf("error asserting resultProperties to []interface{}")
+	}
+
+	schemaNode := &model.SchemaNode{
+		Name:       resultNode["name"].(string),
+		Domain:     resultNode["domain"].(string),
+		Type:       resultNode["type"].(string),
+		Labels:     make([]*model.SchemaLabel, len(resultLabels)),
+		Properties: make([]*model.SchemaProperty, len(resultProperties)),
+	}
+
+	for i, label := range resultLabels {
+		labelMap, ok := label.(map[string]interface{})
+		if !ok {
+			log.Printf("Error asserting label to map[string]interface{}: %v", label)
+			return nil, fmt.Errorf("error asserting label to map[string]interface{}")
+		}
+		schemaNode.Labels[i] = &model.SchemaLabel{
+			Name:       labelMap["name"].(string),
+			Domain:     labelMap["domain"].(string),
+			ParentName: labelMap["parentName"].(string),
+		}
+	}
+
+	for i, property := range resultProperties {
+		log.Printf("property type: %T", property)
+		propertyNode, ok := property.(map[string]interface{})
+		if !ok {
+			log.Printf("Error asserting property to map[string]interface{}: %v", property)
+			return nil, fmt.Errorf("error asserting property to map[string]interface{}")
+		}
+		schemaNode.Properties[i] = &model.SchemaProperty{
+			Name:       propertyNode["name"].(string),
+			Type:       propertyNode["type"].(string),
+			Domain:     propertyNode["domain"].(string),
+			ParentName: propertyNode["parentName"].(string),
+		}
+	}
+
+	return schemaNode, nil
 }
 
 // UpdateSchemaProperty is the resolver for the updateSchemaProperty field.
@@ -178,12 +336,12 @@ func (r *queryResolver) GetSchemaNodes(ctx context.Context, domain string) ([]*m
 }
 
 // GetSchemaProperties is the resolver for the getSchemaProperties field.
-func (r *queryResolver) GetSchemaProperties(ctx context.Context, domain string) ([]*model.SchemaProperty, error) {
+func (r *queryResolver) GetSchemaProperties(ctx context.Context, schemaNodeName string, domain string) ([]*model.SchemaProperty, error) {
 	panic(fmt.Errorf("not implemented: GetSchemaProperties - getSchemaProperties"))
 }
 
 // GetSchemaRelationships is the resolver for the getSchemaRelationships field.
-func (r *queryResolver) GetSchemaRelationships(ctx context.Context, domain string) ([]*model.SchemaRelationship, error) {
+func (r *queryResolver) GetSchemaRelationships(ctx context.Context, schemaNodeName string, domain string) ([]*model.SchemaRelationship, error) {
 	panic(fmt.Errorf("not implemented: GetSchemaRelationships - getSchemaRelationships"))
 }
 

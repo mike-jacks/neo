@@ -48,7 +48,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Mutation struct {
 		CreateSchemaNode         func(childComplexity int, sourceSchemaNodeName *string, createSchemaNodeInput model.CreateSchemaNodeInput) int
-		CreateSchemaProperty     func(childComplexity int, createSchemaPropertyInput model.CreateSchemaPropertyInput) int
+		CreateSchemaProperty     func(childComplexity int, schemaNodeName string, domain string, createSchemaPropertyInput model.CreateSchemaPropertyInput) int
 		CreateSchemaRelationship func(childComplexity int, createSchemaRelationshipInput model.CreateSchemaRelationshipInput) int
 		DeleteSchemaNode         func(childComplexity int, name string, domain string) int
 		DeleteSchemaProperty     func(childComplexity int, name string, typeArg string, domain string) int
@@ -61,10 +61,10 @@ type ComplexityRoot struct {
 	Query struct {
 		GetSchemaNode          func(childComplexity int, domain string, name string) int
 		GetSchemaNodes         func(childComplexity int, domain string) int
-		GetSchemaProperties    func(childComplexity int, domain string) int
+		GetSchemaProperties    func(childComplexity int, schemaNodeName string, domain string) int
 		GetSchemaProperty      func(childComplexity int, domain string, name string, typeArg string, parentName string) int
 		GetSchemaRelationship  func(childComplexity int, domain string, name string, parentName string) int
-		GetSchemaRelationships func(childComplexity int, domain string) int
+		GetSchemaRelationships func(childComplexity int, schemaNodeName string, domain string) int
 	}
 
 	SchemaLabel struct {
@@ -99,7 +99,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateSchemaNode(ctx context.Context, sourceSchemaNodeName *string, createSchemaNodeInput model.CreateSchemaNodeInput) (*model.SchemaNode, error)
-	CreateSchemaProperty(ctx context.Context, createSchemaPropertyInput model.CreateSchemaPropertyInput) (*model.SchemaProperty, error)
+	CreateSchemaProperty(ctx context.Context, schemaNodeName string, domain string, createSchemaPropertyInput model.CreateSchemaPropertyInput) (*model.SchemaProperty, error)
 	CreateSchemaRelationship(ctx context.Context, createSchemaRelationshipInput model.CreateSchemaRelationshipInput) (*model.SchemaRelationship, error)
 	UpdateSchemaNode(ctx context.Context, name string, domain string, updateSchemaNodeInput model.UpdateSchemaNodeInput) (*model.SchemaNode, error)
 	UpdateSchemaProperty(ctx context.Context, name string, typeArg string, domain string, updateSchemaPropertyInput model.UpdateSchemaPropertyInput) (*model.SchemaProperty, error)
@@ -110,8 +110,8 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	GetSchemaNodes(ctx context.Context, domain string) ([]*model.SchemaNode, error)
-	GetSchemaProperties(ctx context.Context, domain string) ([]*model.SchemaProperty, error)
-	GetSchemaRelationships(ctx context.Context, domain string) ([]*model.SchemaRelationship, error)
+	GetSchemaProperties(ctx context.Context, schemaNodeName string, domain string) ([]*model.SchemaProperty, error)
+	GetSchemaRelationships(ctx context.Context, schemaNodeName string, domain string) ([]*model.SchemaRelationship, error)
 	GetSchemaNode(ctx context.Context, domain string, name string) (*model.SchemaNode, error)
 	GetSchemaProperty(ctx context.Context, domain string, name string, typeArg string, parentName string) (*model.SchemaProperty, error)
 	GetSchemaRelationship(ctx context.Context, domain string, name string, parentName string) (*model.SchemaRelationship, error)
@@ -158,7 +158,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateSchemaProperty(childComplexity, args["createSchemaPropertyInput"].(model.CreateSchemaPropertyInput)), true
+		return e.complexity.Mutation.CreateSchemaProperty(childComplexity, args["schemaNodeName"].(string), args["domain"].(string), args["createSchemaPropertyInput"].(model.CreateSchemaPropertyInput)), true
 
 	case "Mutation.createSchemaRelationship":
 		if e.complexity.Mutation.CreateSchemaRelationship == nil {
@@ -278,7 +278,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSchemaProperties(childComplexity, args["domain"].(string)), true
+		return e.complexity.Query.GetSchemaProperties(childComplexity, args["schemaNodeName"].(string), args["domain"].(string)), true
 
 	case "Query.getSchemaProperty":
 		if e.complexity.Query.GetSchemaProperty == nil {
@@ -314,7 +314,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSchemaRelationships(childComplexity, args["domain"].(string)), true
+		return e.complexity.Query.GetSchemaRelationships(childComplexity, args["schemaNodeName"].(string), args["domain"].(string)), true
 
 	case "SchemaLabel.domain":
 		if e.complexity.SchemaLabel.Domain == nil {
@@ -579,8 +579,8 @@ type SchemaRelationship {
 
 type Query {
   getSchemaNodes(domain: String!): [SchemaNode!]!
-  getSchemaProperties(domain: String!): [SchemaProperty!]!
-  getSchemaRelationships(domain: String!): [SchemaRelationship!]!
+  getSchemaProperties(schemaNodeName: String!, domain: String!): [SchemaProperty!]!
+  getSchemaRelationships(schemaNodeName: String!, domain: String!): [SchemaRelationship!]!
 
   getSchemaNode(domain: String!, name: String!): SchemaNode!
   getSchemaProperty(domain: String!, name: String!, type: String!, parentName: String!): SchemaProperty!
@@ -589,7 +589,7 @@ type Query {
 
 type Mutation {
   createSchemaNode(sourceSchemaNodeName: String, createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
-  createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
+  createSchemaProperty(schemaNodeName: String!, domain: String!, createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
   createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
 
   updateSchemaNode(name: String!, domain: String!, updateSchemaNodeInput: UpdateSchemaNodeInput!): SchemaNode!
@@ -729,13 +729,67 @@ func (ec *executionContext) field_Mutation_createSchemaNode_argsCreateSchemaNode
 func (ec *executionContext) field_Mutation_createSchemaProperty_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_createSchemaProperty_argsCreateSchemaPropertyInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createSchemaProperty_argsSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["createSchemaPropertyInput"] = arg0
+	args["schemaNodeName"] = arg0
+	arg1, err := ec.field_Mutation_createSchemaProperty_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg1
+	arg2, err := ec.field_Mutation_createSchemaProperty_argsCreateSchemaPropertyInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["createSchemaPropertyInput"] = arg2
 	return args, nil
 }
+func (ec *executionContext) field_Mutation_createSchemaProperty_argsSchemaNodeName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["schemaNodeName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
+	if tmp, ok := rawArgs["schemaNodeName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createSchemaProperty_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["domain"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_createSchemaProperty_argsCreateSchemaPropertyInput(
 	ctx context.Context,
 	rawArgs map[string]interface{},
@@ -1405,13 +1459,40 @@ func (ec *executionContext) field_Query_getSchemaNodes_argsDomain(
 func (ec *executionContext) field_Query_getSchemaProperties_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaProperties_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Query_getSchemaProperties_argsSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
+	args["schemaNodeName"] = arg0
+	arg1, err := ec.field_Query_getSchemaProperties_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Query_getSchemaProperties_argsSchemaNodeName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["schemaNodeName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
+	if tmp, ok := rawArgs["schemaNodeName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_getSchemaProperties_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
@@ -1636,13 +1717,40 @@ func (ec *executionContext) field_Query_getSchemaRelationship_argsParentName(
 func (ec *executionContext) field_Query_getSchemaRelationships_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaRelationships_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Query_getSchemaRelationships_argsSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
+	args["schemaNodeName"] = arg0
+	arg1, err := ec.field_Query_getSchemaRelationships_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Query_getSchemaRelationships_argsSchemaNodeName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["schemaNodeName"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
+	if tmp, ok := rawArgs["schemaNodeName"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_getSchemaRelationships_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
@@ -1818,7 +1926,7 @@ func (ec *executionContext) _Mutation_createSchemaProperty(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateSchemaProperty(rctx, fc.Args["createSchemaPropertyInput"].(model.CreateSchemaPropertyInput))
+		return ec.resolvers.Mutation().CreateSchemaProperty(rctx, fc.Args["schemaNodeName"].(string), fc.Args["domain"].(string), fc.Args["createSchemaPropertyInput"].(model.CreateSchemaPropertyInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2381,7 +2489,7 @@ func (ec *executionContext) _Query_getSchemaProperties(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaProperties(rctx, fc.Args["domain"].(string))
+		return ec.resolvers.Query().GetSchemaProperties(rctx, fc.Args["schemaNodeName"].(string), fc.Args["domain"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2446,7 +2554,7 @@ func (ec *executionContext) _Query_getSchemaRelationships(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaRelationships(rctx, fc.Args["domain"].(string))
+		return ec.resolvers.Query().GetSchemaRelationships(rctx, fc.Args["schemaNodeName"].(string), fc.Args["domain"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
