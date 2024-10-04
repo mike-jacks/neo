@@ -1,0 +1,17 @@
+type SchemaLabel {
+  name: String!
+  domain: String!
+  parentSchemaNodeName: String!
+}
+
+input CreateSchemaLabelInput {
+  name: String!
+  domain: String!
+  parentSchemaNodeName: String!
+}
+
+input UpdateSchemaLabelInput {
+  name: String
+  domain: String
+  parentSchemaNodeName: String
+}

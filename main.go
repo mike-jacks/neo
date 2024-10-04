@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
-	"github.com/mike-jacks/neo/graph/generated"
-	"github.com/mike-jacks/neo/graph/resolver"
+	"github.com/mike-jacks/neo/generated"
+	"github.com/mike-jacks/neo/resolver"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
@@ -65,5 +65,3 @@ func setupNeo4jDriver() (neo4j.DriverWithContext, error) {
 	log.Println("Neo4j connection established")
 	return driver, nil
 }
-
-// ... existing code ...

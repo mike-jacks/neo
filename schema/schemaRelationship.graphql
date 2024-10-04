@@ -1,0 +1,20 @@
+type SchemaRelationship {
+  name: String!
+  domain: String!
+  targetSchemaNodeName: String!
+  parentSchemaNodeName: String!
+}
+
+input CreateSchemaRelationshipInput {
+  name: String!
+  domain: String!
+  targetSchemaNodeName: String!
+  parentSchemaNodeName: String!
+}
+
+input UpdateSchemaRelationshipInput {
+  name: String
+  domain: String
+  targetSchemaNodeName: String
+  parentSchemaNodeName: String
+}

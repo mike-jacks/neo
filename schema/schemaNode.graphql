@@ -1,0 +1,14 @@
+type SchemaNode {
+  name: String!
+  domain: String!
+}
+
+input CreateSchemaNodeInput {
+  name: String!
+  domain: String!
+}
+
+input UpdateSchemaNodeInput {
+  name: String
+  domain: String
+}
