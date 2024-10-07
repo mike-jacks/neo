@@ -14,37 +14,6 @@ type Query {
   # Schema Label Queries
   getSchemaNodeLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): SchemaLabel!
   getSchemaNodeLabels(domain: String!, schemaNodeName: String!): [SchemaLabel!]!
+
 }
 
-type Mutation {
-  # Schema Node Mutations
-  createSchemaNode(sourceSchemaNodeName: String, createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
-  updateSchemaNode(domain: String!, name: String!, updateSchemaNodeInput: UpdateSchemaNodeInput!): SchemaNode!
-  deleteSchemaNode(domain: String!, name: String!): Boolean!
-
-  # Schema Property Mutations
-  createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
-  updateSchemaProperty(
-    domain: String!
-    schemaNodeName: String!
-    schemaPropertyName: String!
-    schemaPropertyType: String!
-    updateSchemaPropertyInput: UpdateSchemaPropertyInput!
-  ): SchemaProperty!
-  deleteSchemaProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): Boolean!
-
-  # Schema Relationship Mutations
-  createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
-  updateSchemaRelationship(
-    domain: String!
-    schemaNodeName: String!
-    schemaRelationshipName: String!
-    updateSchemaRelationshipInput: UpdateSchemaRelationshipInput!
-  ): SchemaRelationship!
-  deleteSchemaRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): Boolean!
-
-  # Schema Label Mutations
-  createSchemaLabel(createSchemaLabelInput: CreateSchemaLabelInput!): SchemaLabel!
-  updateSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!, updateSchemaLabelInput: UpdateSchemaLabelInput!): SchemaLabel!
-  deleteSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): Boolean!
-}

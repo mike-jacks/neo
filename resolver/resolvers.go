@@ -7,200 +7,29 @@ package resolver
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/mike-jacks/neo/generated"
 	"github.com/mike-jacks/neo/model"
-	"github.com/mike-jacks/neo/utils"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
 // CreateSchemaNode is the resolver for the createSchemaNode field.
 func (r *mutationResolver) CreateSchemaNode(ctx context.Context, sourceSchemaNodeName *string, createSchemaNodeInput model.CreateSchemaNodeInput) (*model.SchemaNode, error) {
-	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	defer session.Close(ctx)
-
-	// Ensure uniqueness constraint on SchemaNode name
-	constraintQuery := "CREATE CONSTRAINT unique_schema_node_name_domain IF NOT EXISTS FOR (n:SchemaNode) REQUIRE (n.name,n.domain) IS UNIQUE"
-	if err := utils.CreateConstraint(ctx, r.Driver, []*string{&constraintQuery}); err != nil {
-		return nil, fmt.Errorf("failed to create constraint: %w", err)
-	}
-
-	schemaNode := &model.SchemaNode{
-		Name:   strings.TrimSpace(strings.ToUpper(createSchemaNodeInput.Name)),
-		Domain: strings.TrimSpace(strings.ToUpper(createSchemaNodeInput.Domain)),
-	}
-
-	var query string
-	parameters := map[string]interface{}{
-		"name":   schemaNode.Name,
-		"domain": schemaNode.Domain,
-	}
-
-	if sourceSchemaNodeName == nil {
-		query = `
-			CREATE (n:SchemaNode {name: $name, domain: $domain})
-			RETURN n
-		`
-	} else {
-		query = `
-			MATCH (sourceNode:SchemaNode {name: $sourceSchemaNodeName})
-			CREATE (n:SchemaNode {name: $name, domain: $domain})
-			CREATE (sourceNode)<-[:BELONGS_TO]-(n)
-			RETURN n
-		`
-		parameters["sourceSchemaNodeName"] = strings.TrimSpace(strings.ToUpper(*sourceSchemaNodeName))
-	}
-
-	var newSchemaNode *model.SchemaNode
-
-	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
-		result, err := tx.Run(ctx, query, parameters)
-		if err != nil {
-			return nil, err
-		}
-
-		record, err := result.Single(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create node: %w", err)
-		}
-
-		node, ok := record.Values[0].(neo4j.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected result type: %T", record.Values[0])
-		}
-
-		newSchemaNode := &model.SchemaNode{
-			Name:   node.Props["name"].(string),
-			Domain: node.Props["domain"].(string),
-		}
-
-		return newSchemaNode, nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return newSchemaNode, nil
+	return r.Database.CreateSchemaNode(ctx, sourceSchemaNodeName, createSchemaNodeInput)
 }
 
 // UpdateSchemaNode is the resolver for the updateSchemaNode field.
-func (r *mutationResolver) UpdateSchemaNode(ctx context.Context, domain string, name string, updateSchemaNodeInput model.UpdateSchemaNodeInput) (*model.SchemaNode, error) {
-	domain = strings.TrimSpace(strings.ToUpper(domain))
-	name = strings.TrimSpace(strings.ToUpper(name))
-
-	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	defer session.Close(ctx)
-
-	var updatedNode *model.SchemaNode
-
-	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
-		query := `
-			MATCH (n:SchemaNode {name: $origName, domain: $origDomain})
-		`
-		setClause := []string{}
-		parameters := map[string]interface{}{
-			"origName":   name,
-			"origDomain": domain,
-		}
-
-		if updateSchemaNodeInput.Name != nil {
-			setClause = append(setClause, "n.name = $newName")
-			parameters["newName"] = strings.TrimSpace(strings.ToUpper(*updateSchemaNodeInput.Name))
-		}
-
-		if updateSchemaNodeInput.Domain != nil {
-			setClause = append(setClause, "n.domain = $newDomain")
-			parameters["newDomain"] = strings.TrimSpace(strings.ToUpper(*updateSchemaNodeInput.Domain))
-		}
-
-		if len(setClause) > 0 {
-			query += "SET " + strings.Join(setClause, ", ")
-		} else {
-			return nil, fmt.Errorf("no fields to update")
-		}
-
-		query += " RETURN n"
-
-		result, err := tx.Run(ctx, query, parameters)
-		if err != nil {
-			return nil, err
-		}
-
-		record, err := result.Single(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("no node found or multiple nodes found: %v", err)
-		}
-
-		node, ok := record.Values[0].(neo4j.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected result type: %T", record.Values[0])
-		}
-
-		updatedNode = &model.SchemaNode{
-			Name:   node.Props["name"].(string),
-			Domain: node.Props["domain"].(string),
-		}
-
-		return nil, nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return updatedNode, nil
+func (r *mutationResolver) UpdateSchemaNode(ctx context.Context, domain string, name string, updateSchemaNodeInput model.UpdateSchemaNodeInput) ([]*model.SchemaNode, error) {
+	return r.Database.UpdateSchemaNode(ctx, domain, name, updateSchemaNodeInput)
 }
 
 // DeleteSchemaNode is the resolver for the deleteSchemaNode field.
 func (r *mutationResolver) DeleteSchemaNode(ctx context.Context, domain string, name string) (bool, error) {
-	domain = strings.TrimSpace(strings.ToUpper(domain))
-	name = strings.TrimSpace(strings.ToUpper(name))
+	return r.Database.DeleteSchemaNode(ctx, domain, name)
+}
 
-	session := r.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	defer session.Close(ctx)
-
-	result, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (interface{}, error) {
-		query := `
-			MATCH (n:SchemaNode {name: $name, domain: $domain})
-			WITH n, COUNT(n) > 0 AS nodeExists
-			DETACH DELETE n
-			RETURN nodeExists
-		`
-		parameters := map[string]interface{}{
-			"name":   name,
-			"domain": domain,
-		}
-		result, err := tx.Run(ctx, query, parameters)
-		if err != nil {
-			return false, err
-		}
-
-		record, err := result.Single(ctx)
-		if err != nil {
-			if err.Error() == "Result contains no more records" {
-				return false, fmt.Errorf("node with name '%s' and domain '%s' does not exist", name, domain)
-			}
-			return false, err
-		}
-		nodeExists, ok := record.Get("nodeExists")
-		if !ok {
-			return false, fmt.Errorf("node with name '%s' and domain '%s' does not exist", name, domain)
-		}
-		return nodeExists.(bool), nil
-	})
-
-	if err != nil {
-		return false, err
-	}
-
-	nodeExists := result.(bool)
-	if !nodeExists {
-		return false, fmt.Errorf("node with name '%s' and domain '%s' does not exist", name, domain)
-	}
-
-	return true, nil
+// InsertSchemaNode is the resolver for the insertSchemaNode field.
+func (r *mutationResolver) InsertSchemaNode(ctx context.Context, domain string, parentName string, childName string) (*model.SchemaNode, error) {
+	panic(fmt.Errorf("not implemented: InsertSchemaNode - insertSchemaNode"))
 }
 
 // CreateSchemaProperty is the resolver for the createSchemaProperty field.

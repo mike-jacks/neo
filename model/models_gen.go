@@ -40,8 +40,12 @@ type SchemaLabel struct {
 }
 
 type SchemaNode struct {
-	Name   string `json:"name"`
-	Domain string `json:"domain"`
+	Name          string                `json:"name"`
+	Domain        string                `json:"domain"`
+	ParentName    *string               `json:"parentName,omitempty"`
+	Properties    []*SchemaProperty     `json:"properties,omitempty"`
+	Relationships []*SchemaRelationship `json:"relationships,omitempty"`
+	Labels        []*SchemaLabel        `json:"labels,omitempty"`
 }
 
 type SchemaProperty struct {

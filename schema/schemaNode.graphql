@@ -1,6 +1,10 @@
 type SchemaNode {
   name: String!
   domain: String!
+  parentName: String
+  properties: [SchemaProperty!]
+  relationships: [SchemaRelationship!]
+  labels: [SchemaLabel!]
 }
 
 input CreateSchemaNodeInput {
@@ -12,3 +16,4 @@ input UpdateSchemaNodeInput {
   name: String
   domain: String
 }
+
