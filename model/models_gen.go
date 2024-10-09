@@ -2,87 +2,128 @@
 
 package model
 
-type CreateSchemaLabelInput struct {
-	Name                 string `json:"name"`
-	Domain               string `json:"domain"`
-	ParentSchemaNodeName string `json:"parentSchemaNodeName"`
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type CreateObjectRelationshipInput struct {
+	FromObjectNode *ObjectNodeInput `json:"fromObjectNode"`
+	ToObjectNode   *ObjectNodeInput `json:"toObjectNode"`
 }
 
-type CreateSchemaNodeInput struct {
-	Name   string `json:"name"`
+type DeleteObjectNodeInput struct {
 	Domain string `json:"domain"`
-}
-
-type CreateSchemaPropertyInput struct {
-	Name                 string `json:"name"`
-	Type                 string `json:"type"`
-	Domain               string `json:"domain"`
-	ParentSchemaNodeName string `json:"parentSchemaNodeName"`
-}
-
-type CreateSchemaRelationshipInput struct {
-	Name                 string `json:"name"`
-	Domain               string `json:"domain"`
-	TargetSchemaNodeName string `json:"targetSchemaNodeName"`
-	ParentSchemaNodeName string `json:"parentSchemaNodeName"`
+	Name   string `json:"name"`
+	Type   string `json:"type"`
 }
 
 type Mutation struct {
 }
 
+type ObjectNode struct {
+	Domain     string      `json:"domain"`
+	Name       string      `json:"name"`
+	Type       string      `json:"type"`
+	Labels     []string    `json:"labels,omitempty"`
+	Properties []*Property `json:"properties,omitempty"`
+}
+
+type ObjectNodeInput struct {
+	Domain     string           `json:"domain"`
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	Labels     []string         `json:"labels,omitempty"`
+	Properties []*PropertyInput `json:"properties,omitempty"`
+}
+
+type ObjectRelationship struct {
+	Name           string      `json:"name"`
+	FromObjectNode *ObjectNode `json:"fromObjectNode"`
+	ToObjectNode   *ObjectNode `json:"toObjectNode"`
+	Properties     []*Property `json:"properties,omitempty"`
+}
+
+type Property struct {
+	Key   string       `json:"key"`
+	Value string       `json:"value"`
+	Type  PropertyType `json:"type"`
+}
+
+type PropertyInput struct {
+	Key   string       `json:"key"`
+	Value string       `json:"value"`
+	Type  PropertyType `json:"type"`
+}
+
 type Query struct {
 }
 
-type SchemaLabel struct {
-	Name                 string `json:"name"`
-	Domain               string `json:"domain"`
-	ParentSchemaNodeName string `json:"parentSchemaNodeName"`
+type Response struct {
+	Success bool                   `json:"success"`
+	Message *string                `json:"message,omitempty"`
+	Error   *string                `json:"error,omitempty"`
+	Data    map[string]interface{} `json:"data,omitempty"`
 }
 
-type SchemaNode struct {
-	Name          string                `json:"name"`
-	Domain        string                `json:"domain"`
-	ParentName    *string               `json:"parentName,omitempty"`
-	Properties    []*SchemaProperty     `json:"properties,omitempty"`
-	Relationships []*SchemaRelationship `json:"relationships,omitempty"`
-	Labels        []*SchemaLabel        `json:"labels,omitempty"`
+type UpdateObjectNodeInput struct {
+	Domain     *string          `json:"domain,omitempty"`
+	Name       *string          `json:"name,omitempty"`
+	Type       *string          `json:"type,omitempty"`
+	Labels     []string         `json:"labels,omitempty"`
+	Properties []*PropertyInput `json:"properties,omitempty"`
 }
 
-type SchemaProperty struct {
-	Name                 string `json:"name"`
-	Type                 string `json:"type"`
-	Domain               string `json:"domain"`
-	ParentSchemaNodeName string `json:"parentSchemaNodeName"`
+type PropertyType string
+
+const (
+	PropertyTypeString       PropertyType = "STRING"
+	PropertyTypeInteger      PropertyType = "INTEGER"
+	PropertyTypeFloat        PropertyType = "FLOAT"
+	PropertyTypeBoolean      PropertyType = "BOOLEAN"
+	PropertyTypeArrayString  PropertyType = "ARRAY_STRING"
+	PropertyTypeArrayInteger PropertyType = "ARRAY_INTEGER"
+	PropertyTypeArrayFloat   PropertyType = "ARRAY_FLOAT"
+	PropertyTypeArrayBoolean PropertyType = "ARRAY_BOOLEAN"
+)
+
+var AllPropertyType = []PropertyType{
+	PropertyTypeString,
+	PropertyTypeInteger,
+	PropertyTypeFloat,
+	PropertyTypeBoolean,
+	PropertyTypeArrayString,
+	PropertyTypeArrayInteger,
+	PropertyTypeArrayFloat,
+	PropertyTypeArrayBoolean,
 }
 
-type SchemaRelationship struct {
-	Name                 string `json:"name"`
-	Domain               string `json:"domain"`
-	TargetSchemaNodeName string `json:"targetSchemaNodeName"`
-	ParentSchemaNodeName string `json:"parentSchemaNodeName"`
+func (e PropertyType) IsValid() bool {
+	switch e {
+	case PropertyTypeString, PropertyTypeInteger, PropertyTypeFloat, PropertyTypeBoolean, PropertyTypeArrayString, PropertyTypeArrayInteger, PropertyTypeArrayFloat, PropertyTypeArrayBoolean:
+		return true
+	}
+	return false
 }
 
-type UpdateSchemaLabelInput struct {
-	Name                 *string `json:"name,omitempty"`
-	Domain               *string `json:"domain,omitempty"`
-	ParentSchemaNodeName *string `json:"parentSchemaNodeName,omitempty"`
+func (e PropertyType) String() string {
+	return string(e)
 }
 
-type UpdateSchemaNodeInput struct {
-	Name   *string `json:"name,omitempty"`
-	Domain *string `json:"domain,omitempty"`
+func (e *PropertyType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PropertyType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PropertyType", str)
+	}
+	return nil
 }
 
-type UpdateSchemaPropertyInput struct {
-	Name                 *string `json:"name,omitempty"`
-	Type                 *string `json:"type,omitempty"`
-	Domain               *string `json:"domain,omitempty"`
-	ParentSchemaNodeName *string `json:"parentSchemaNodeName,omitempty"`
-}
-
-type UpdateSchemaRelationshipInput struct {
-	Name                 *string `json:"name,omitempty"`
-	Domain               *string `json:"domain,omitempty"`
-	TargetSchemaNodeName *string `json:"targetSchemaNodeName,omitempty"`
-	ParentSchemaNodeName *string `json:"parentSchemaNodeName,omitempty"`
+func (e PropertyType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -1,33 +1,130 @@
 type Mutation {
-  # Schema Node Mutations
-  createSchemaNode(sourceSchemaNodeName: String, createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
-  updateSchemaNode(domain: String!, name: String!, updateSchemaNodeInput: UpdateSchemaNodeInput!): [SchemaNode!]!
-  deleteSchemaNode(domain: String!, name: String!): Boolean!
-  insertSchemaNode(domain: String!, parentName: String!, childName: String!): SchemaNode!
+  # # Schema Node Mutations
+  # createSchemaNode(sourceSchemaNodeName: String, createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
+  # updateSchemaNode(domain: String!, name: String!, updateSchemaNodeInput: UpdateSchemaNodeInput!): [SchemaNode!]!
+  # deleteSchemaNode(domain: String!, name: String!): Boolean!
+  # insertSchemaNode(domain: String!, parentName: String!, childName: String!): SchemaNode!
 
-  # Schema Property Mutations
-  createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
-  updateSchemaProperty(
-    domain: String!
-    schemaNodeName: String!
-    schemaPropertyName: String!
-    schemaPropertyType: String!
-    updateSchemaPropertyInput: UpdateSchemaPropertyInput!
-  ): SchemaProperty!
-  deleteSchemaProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): Boolean!
+  # # Schema Property Mutations
+  # createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
+  # updateSchemaProperty(
+  #   domain: String!
+  #   schemaNodeName: String!
+  #   schemaPropertyName: String!
+  #   schemaPropertyType: String!
+  #   updateSchemaPropertyInput: UpdateSchemaPropertyInput!
+  # ): SchemaProperty!
+  # deleteSchemaProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): Boolean!
 
-  # Schema Relationship Mutations
-  createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
-  updateSchemaRelationship(
-    domain: String!
-    schemaNodeName: String!
-    schemaRelationshipName: String!
-    updateSchemaRelationshipInput: UpdateSchemaRelationshipInput!
-  ): SchemaRelationship!
-  deleteSchemaRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): Boolean!
+  # # Schema Relationship Mutations
+  # createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
+  # updateSchemaRelationship(
+  #   domain: String!
+  #   schemaNodeName: String!
+  #   schemaRelationshipName: String!
+  #   updateSchemaRelationshipInput: UpdateSchemaRelationshipInput!
+  # ): SchemaRelationship!
+  # deleteSchemaRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): Boolean!
 
-  # Schema Label Mutations
-  createSchemaLabel(createSchemaLabelInput: CreateSchemaLabelInput!): SchemaLabel!
-  updateSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!, updateSchemaLabelInput: UpdateSchemaLabelInput!): SchemaLabel!
-  deleteSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): Boolean!
+  # # Schema Label Mutations
+  # createSchemaLabel(createSchemaLabelInput: CreateSchemaLabelInput!): SchemaLabel!
+  # updateSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!, updateSchemaLabelInput: UpdateSchemaLabelInput!): SchemaLabel!
+  # deleteSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): Boolean!
+
+  # Object Mutations
+  createObjectNode(domain: String!, name: String!, type: String!, labels: [String!], properties: [PropertyInput!]): Response!
+  updateObjectNode(domain: String!, name: String!, type: String!, updateObjectNodeInput: UpdateObjectNodeInput!): Response!
+  deleteObjectNode(domain: String!, name: String!, type: String!): Response!
+
+  addLabelsToObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
+  removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
+
+  addPropertiesToObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
+  removePropertiesFromObjectNode(domain: String!, name: String!, type: String!, properties: [String!]!): Response!
+
+  createObjectRelationship(name: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  updatePropertiesOnObjectRelationship(
+    name: String!
+    properties: [PropertyInput!]!
+    fromObjectNode: ObjectNodeInput!
+    toObjectNode: ObjectNodeInput!
+  ): Response!
+  removePropertiesFromObjectRelationship(name: String!, properties: [String!]!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  deleteObjectRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+
+  cypherMutation(cypher_statement: String!): JSON!
+}
+
+scalar JSON
+
+enum PropertyType {
+  STRING
+  INTEGER
+  FLOAT
+  BOOLEAN
+  ARRAY_STRING
+  ARRAY_INTEGER
+  ARRAY_FLOAT
+  ARRAY_BOOLEAN
+}
+
+type Property {
+  key: String!
+  value: String!
+  type: PropertyType!
+}
+
+input PropertyInput {
+  key: String!
+  value: String!
+  type: PropertyType!
+}
+
+type Response {
+  success: Boolean!
+  message: String
+  error: String
+  data: JSON
+}
+
+type ObjectNode {
+  domain: String!
+  name: String!
+  type: String!
+  labels: [String!]
+  properties: [Property!]
+}
+
+input ObjectNodeInput {
+  domain: String!
+  name: String!
+  type: String!
+  labels: [String!]
+  properties: [PropertyInput!]
+}
+
+type ObjectRelationship {
+  name: String!
+  fromObjectNode: ObjectNode!
+  toObjectNode: ObjectNode!
+  properties: [Property!]
+}
+
+input CreateObjectRelationshipInput {
+  fromObjectNode: ObjectNodeInput!
+  toObjectNode: ObjectNodeInput!
+}
+
+input UpdateObjectNodeInput {
+  domain: String
+  name: String
+  type: String
+  labels: [String!]
+  properties: [PropertyInput!]
+}
+
+input DeleteObjectNodeInput {
+  domain: String!
+  name: String!
+  type: String!
 }

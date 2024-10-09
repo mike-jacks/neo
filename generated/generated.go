@@ -47,86 +47,77 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateSchemaLabel        func(childComplexity int, createSchemaLabelInput model.CreateSchemaLabelInput) int
-		CreateSchemaNode         func(childComplexity int, sourceSchemaNodeName *string, createSchemaNodeInput model.CreateSchemaNodeInput) int
-		CreateSchemaProperty     func(childComplexity int, createSchemaPropertyInput model.CreateSchemaPropertyInput) int
-		CreateSchemaRelationship func(childComplexity int, createSchemaRelationshipInput model.CreateSchemaRelationshipInput) int
-		DeleteSchemaLabel        func(childComplexity int, domain string, schemaNodeName string, schemaLabelName string) int
-		DeleteSchemaNode         func(childComplexity int, domain string, name string) int
-		DeleteSchemaProperty     func(childComplexity int, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string) int
-		DeleteSchemaRelationship func(childComplexity int, domain string, schemaNodeName string, schemaRelationshipName string) int
-		InsertSchemaNode         func(childComplexity int, domain string, parentName string, childName string) int
-		UpdateSchemaLabel        func(childComplexity int, domain string, schemaNodeName string, schemaLabelName string, updateSchemaLabelInput model.UpdateSchemaLabelInput) int
-		UpdateSchemaNode         func(childComplexity int, domain string, name string, updateSchemaNodeInput model.UpdateSchemaNodeInput) int
-		UpdateSchemaProperty     func(childComplexity int, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string, updateSchemaPropertyInput model.UpdateSchemaPropertyInput) int
-		UpdateSchemaRelationship func(childComplexity int, domain string, schemaNodeName string, schemaRelationshipName string, updateSchemaRelationshipInput model.UpdateSchemaRelationshipInput) int
+		AddLabelsToObjectNode                  func(childComplexity int, domain string, name string, typeArg string, labels []string) int
+		AddPropertiesToObjectNode              func(childComplexity int, domain string, name string, typeArg string, properties []*model.PropertyInput) int
+		CreateObjectNode                       func(childComplexity int, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) int
+		CreateObjectRelationship               func(childComplexity int, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		CypherMutation                         func(childComplexity int, cypherStatement string) int
+		DeleteObjectNode                       func(childComplexity int, domain string, name string, typeArg string) int
+		DeleteObjectRelationship               func(childComplexity int, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		RemoveLabelsFromObjectNode             func(childComplexity int, domain string, name string, typeArg string, labels []string) int
+		RemovePropertiesFromObjectNode         func(childComplexity int, domain string, name string, typeArg string, properties []string) int
+		RemovePropertiesFromObjectRelationship func(childComplexity int, name string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		UpdateObjectNode                       func(childComplexity int, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) int
+		UpdatePropertiesOnObjectRelationship   func(childComplexity int, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+	}
+
+	ObjectNode struct {
+		Domain     func(childComplexity int) int
+		Labels     func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Properties func(childComplexity int) int
+		Type       func(childComplexity int) int
+	}
+
+	ObjectRelationship struct {
+		FromObjectNode func(childComplexity int) int
+		Name           func(childComplexity int) int
+		Properties     func(childComplexity int) int
+		ToObjectNode   func(childComplexity int) int
+	}
+
+	Property struct {
+		Key   func(childComplexity int) int
+		Type  func(childComplexity int) int
+		Value func(childComplexity int) int
 	}
 
 	Query struct {
-		GetSchemaNode              func(childComplexity int, domain string, name string) int
-		GetSchemaNodeLabel         func(childComplexity int, domain string, schemaNodeName string, schemaLabelName string) int
-		GetSchemaNodeLabels        func(childComplexity int, domain string, schemaNodeName string) int
-		GetSchemaNodeProperties    func(childComplexity int, domain string, schemaNodeName string) int
-		GetSchemaNodeProperty      func(childComplexity int, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string) int
-		GetSchemaNodeRelationship  func(childComplexity int, domain string, schemaNodeName string, schemaRelationshipName string) int
-		GetSchemaNodeRelationships func(childComplexity int, domain string, schemaNodeName string) int
-		GetSchemaNodes             func(childComplexity int, domain string) int
+		CypherQuery                func(childComplexity int, cypherStatement string) int
+		GetObjectNode              func(childComplexity int, domain string, name string, typeArg string) int
+		GetObjectNodeRelationship  func(childComplexity int, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		GetObjectNodeRelationships func(childComplexity int, fromObjectNode model.ObjectNodeInput) int
+		GetObjectNodes             func(childComplexity int, domain string, name *string, typeArg *string) int
 	}
 
-	SchemaLabel struct {
-		Domain               func(childComplexity int) int
-		Name                 func(childComplexity int) int
-		ParentSchemaNodeName func(childComplexity int) int
-	}
-
-	SchemaNode struct {
-		Domain        func(childComplexity int) int
-		Labels        func(childComplexity int) int
-		Name          func(childComplexity int) int
-		ParentName    func(childComplexity int) int
-		Properties    func(childComplexity int) int
-		Relationships func(childComplexity int) int
-	}
-
-	SchemaProperty struct {
-		Domain               func(childComplexity int) int
-		Name                 func(childComplexity int) int
-		ParentSchemaNodeName func(childComplexity int) int
-		Type                 func(childComplexity int) int
-	}
-
-	SchemaRelationship struct {
-		Domain               func(childComplexity int) int
-		Name                 func(childComplexity int) int
-		ParentSchemaNodeName func(childComplexity int) int
-		TargetSchemaNodeName func(childComplexity int) int
+	Response struct {
+		Data    func(childComplexity int) int
+		Error   func(childComplexity int) int
+		Message func(childComplexity int) int
+		Success func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
-	CreateSchemaNode(ctx context.Context, sourceSchemaNodeName *string, createSchemaNodeInput model.CreateSchemaNodeInput) (*model.SchemaNode, error)
-	UpdateSchemaNode(ctx context.Context, domain string, name string, updateSchemaNodeInput model.UpdateSchemaNodeInput) ([]*model.SchemaNode, error)
-	DeleteSchemaNode(ctx context.Context, domain string, name string) (bool, error)
-	InsertSchemaNode(ctx context.Context, domain string, parentName string, childName string) (*model.SchemaNode, error)
-	CreateSchemaProperty(ctx context.Context, createSchemaPropertyInput model.CreateSchemaPropertyInput) (*model.SchemaProperty, error)
-	UpdateSchemaProperty(ctx context.Context, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string, updateSchemaPropertyInput model.UpdateSchemaPropertyInput) (*model.SchemaProperty, error)
-	DeleteSchemaProperty(ctx context.Context, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string) (bool, error)
-	CreateSchemaRelationship(ctx context.Context, createSchemaRelationshipInput model.CreateSchemaRelationshipInput) (*model.SchemaRelationship, error)
-	UpdateSchemaRelationship(ctx context.Context, domain string, schemaNodeName string, schemaRelationshipName string, updateSchemaRelationshipInput model.UpdateSchemaRelationshipInput) (*model.SchemaRelationship, error)
-	DeleteSchemaRelationship(ctx context.Context, domain string, schemaNodeName string, schemaRelationshipName string) (bool, error)
-	CreateSchemaLabel(ctx context.Context, createSchemaLabelInput model.CreateSchemaLabelInput) (*model.SchemaLabel, error)
-	UpdateSchemaLabel(ctx context.Context, domain string, schemaNodeName string, schemaLabelName string, updateSchemaLabelInput model.UpdateSchemaLabelInput) (*model.SchemaLabel, error)
-	DeleteSchemaLabel(ctx context.Context, domain string, schemaNodeName string, schemaLabelName string) (bool, error)
+	CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.Response, error)
+	UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error)
+	DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
+	AddLabelsToObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
+	RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
+	AddPropertiesToObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error)
+	RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error)
+	CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
+	UpdatePropertiesOnObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
+	RemovePropertiesFromObjectRelationship(ctx context.Context, name string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
+	DeleteObjectRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
+	CypherMutation(ctx context.Context, cypherStatement string) (map[string]interface{}, error)
 }
 type QueryResolver interface {
-	GetSchemaNode(ctx context.Context, domain string, name string) (*model.SchemaNode, error)
-	GetSchemaNodes(ctx context.Context, domain string) ([]*model.SchemaNode, error)
-	GetSchemaNodeProperty(ctx context.Context, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string) (*model.SchemaProperty, error)
-	GetSchemaNodeProperties(ctx context.Context, domain string, schemaNodeName string) ([]*model.SchemaProperty, error)
-	GetSchemaNodeRelationship(ctx context.Context, domain string, schemaNodeName string, schemaRelationshipName string) (*model.SchemaRelationship, error)
-	GetSchemaNodeRelationships(ctx context.Context, domain string, schemaNodeName string) ([]*model.SchemaRelationship, error)
-	GetSchemaNodeLabel(ctx context.Context, domain string, schemaNodeName string, schemaLabelName string) (*model.SchemaLabel, error)
-	GetSchemaNodeLabels(ctx context.Context, domain string, schemaNodeName string) ([]*model.SchemaLabel, error)
+	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNode, error)
+	GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string) ([]*model.ObjectNode, error)
+	GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.ObjectRelationship, error)
+	GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) ([]*model.ObjectRelationship, error)
+	CypherQuery(ctx context.Context, cypherStatement string) (map[string]interface{}, error)
 }
 
 type executableSchema struct {
@@ -148,376 +139,321 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Mutation.createSchemaLabel":
-		if e.complexity.Mutation.CreateSchemaLabel == nil {
+	case "Mutation.addLabelsToObjectNode":
+		if e.complexity.Mutation.AddLabelsToObjectNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createSchemaLabel_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_addLabelsToObjectNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateSchemaLabel(childComplexity, args["createSchemaLabelInput"].(model.CreateSchemaLabelInput)), true
+		return e.complexity.Mutation.AddLabelsToObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["labels"].([]string)), true
 
-	case "Mutation.createSchemaNode":
-		if e.complexity.Mutation.CreateSchemaNode == nil {
+	case "Mutation.addPropertiesToObjectNode":
+		if e.complexity.Mutation.AddPropertiesToObjectNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createSchemaNode_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_addPropertiesToObjectNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateSchemaNode(childComplexity, args["sourceSchemaNodeName"].(*string), args["createSchemaNodeInput"].(model.CreateSchemaNodeInput)), true
+		return e.complexity.Mutation.AddPropertiesToObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["properties"].([]*model.PropertyInput)), true
 
-	case "Mutation.createSchemaProperty":
-		if e.complexity.Mutation.CreateSchemaProperty == nil {
+	case "Mutation.createObjectNode":
+		if e.complexity.Mutation.CreateObjectNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createSchemaProperty_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createObjectNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateSchemaProperty(childComplexity, args["createSchemaPropertyInput"].(model.CreateSchemaPropertyInput)), true
+		return e.complexity.Mutation.CreateObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["labels"].([]string), args["properties"].([]*model.PropertyInput)), true
 
-	case "Mutation.createSchemaRelationship":
-		if e.complexity.Mutation.CreateSchemaRelationship == nil {
+	case "Mutation.createObjectRelationship":
+		if e.complexity.Mutation.CreateObjectRelationship == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createSchemaRelationship_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createObjectRelationship_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateSchemaRelationship(childComplexity, args["createSchemaRelationshipInput"].(model.CreateSchemaRelationshipInput)), true
+		return e.complexity.Mutation.CreateObjectRelationship(childComplexity, args["name"].(string), args["properties"].([]*model.PropertyInput), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Mutation.deleteSchemaLabel":
-		if e.complexity.Mutation.DeleteSchemaLabel == nil {
+	case "Mutation.cypherMutation":
+		if e.complexity.Mutation.CypherMutation == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteSchemaLabel_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_cypherMutation_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteSchemaLabel(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaLabelName"].(string)), true
+		return e.complexity.Mutation.CypherMutation(childComplexity, args["cypher_statement"].(string)), true
 
-	case "Mutation.deleteSchemaNode":
-		if e.complexity.Mutation.DeleteSchemaNode == nil {
+	case "Mutation.deleteObjectNode":
+		if e.complexity.Mutation.DeleteObjectNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteSchemaNode_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteObjectNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteSchemaNode(childComplexity, args["domain"].(string), args["name"].(string)), true
+		return e.complexity.Mutation.DeleteObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string)), true
 
-	case "Mutation.deleteSchemaProperty":
-		if e.complexity.Mutation.DeleteSchemaProperty == nil {
+	case "Mutation.deleteObjectRelationship":
+		if e.complexity.Mutation.DeleteObjectRelationship == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteSchemaProperty_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteObjectRelationship_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteSchemaProperty(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaPropertyName"].(string), args["schemaPropertyType"].(string)), true
+		return e.complexity.Mutation.DeleteObjectRelationship(childComplexity, args["name"].(string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Mutation.deleteSchemaRelationship":
-		if e.complexity.Mutation.DeleteSchemaRelationship == nil {
+	case "Mutation.removeLabelsFromObjectNode":
+		if e.complexity.Mutation.RemoveLabelsFromObjectNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteSchemaRelationship_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_removeLabelsFromObjectNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteSchemaRelationship(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaRelationshipName"].(string)), true
+		return e.complexity.Mutation.RemoveLabelsFromObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["labels"].([]string)), true
 
-	case "Mutation.insertSchemaNode":
-		if e.complexity.Mutation.InsertSchemaNode == nil {
+	case "Mutation.removePropertiesFromObjectNode":
+		if e.complexity.Mutation.RemovePropertiesFromObjectNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_insertSchemaNode_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_removePropertiesFromObjectNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InsertSchemaNode(childComplexity, args["domain"].(string), args["parentName"].(string), args["childName"].(string)), true
+		return e.complexity.Mutation.RemovePropertiesFromObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["properties"].([]string)), true
 
-	case "Mutation.updateSchemaLabel":
-		if e.complexity.Mutation.UpdateSchemaLabel == nil {
+	case "Mutation.removePropertiesFromObjectRelationship":
+		if e.complexity.Mutation.RemovePropertiesFromObjectRelationship == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateSchemaLabel_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_removePropertiesFromObjectRelationship_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateSchemaLabel(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaLabelName"].(string), args["updateSchemaLabelInput"].(model.UpdateSchemaLabelInput)), true
+		return e.complexity.Mutation.RemovePropertiesFromObjectRelationship(childComplexity, args["name"].(string), args["properties"].([]string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Mutation.updateSchemaNode":
-		if e.complexity.Mutation.UpdateSchemaNode == nil {
+	case "Mutation.updateObjectNode":
+		if e.complexity.Mutation.UpdateObjectNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateSchemaNode_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateObjectNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateSchemaNode(childComplexity, args["domain"].(string), args["name"].(string), args["updateSchemaNodeInput"].(model.UpdateSchemaNodeInput)), true
+		return e.complexity.Mutation.UpdateObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["updateObjectNodeInput"].(model.UpdateObjectNodeInput)), true
 
-	case "Mutation.updateSchemaProperty":
-		if e.complexity.Mutation.UpdateSchemaProperty == nil {
+	case "Mutation.updatePropertiesOnObjectRelationship":
+		if e.complexity.Mutation.UpdatePropertiesOnObjectRelationship == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateSchemaProperty_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updatePropertiesOnObjectRelationship_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateSchemaProperty(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaPropertyName"].(string), args["schemaPropertyType"].(string), args["updateSchemaPropertyInput"].(model.UpdateSchemaPropertyInput)), true
+		return e.complexity.Mutation.UpdatePropertiesOnObjectRelationship(childComplexity, args["name"].(string), args["properties"].([]*model.PropertyInput), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Mutation.updateSchemaRelationship":
-		if e.complexity.Mutation.UpdateSchemaRelationship == nil {
+	case "ObjectNode.domain":
+		if e.complexity.ObjectNode.Domain == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateSchemaRelationship_args(context.TODO(), rawArgs)
+		return e.complexity.ObjectNode.Domain(childComplexity), true
+
+	case "ObjectNode.labels":
+		if e.complexity.ObjectNode.Labels == nil {
+			break
+		}
+
+		return e.complexity.ObjectNode.Labels(childComplexity), true
+
+	case "ObjectNode.name":
+		if e.complexity.ObjectNode.Name == nil {
+			break
+		}
+
+		return e.complexity.ObjectNode.Name(childComplexity), true
+
+	case "ObjectNode.properties":
+		if e.complexity.ObjectNode.Properties == nil {
+			break
+		}
+
+		return e.complexity.ObjectNode.Properties(childComplexity), true
+
+	case "ObjectNode.type":
+		if e.complexity.ObjectNode.Type == nil {
+			break
+		}
+
+		return e.complexity.ObjectNode.Type(childComplexity), true
+
+	case "ObjectRelationship.fromObjectNode":
+		if e.complexity.ObjectRelationship.FromObjectNode == nil {
+			break
+		}
+
+		return e.complexity.ObjectRelationship.FromObjectNode(childComplexity), true
+
+	case "ObjectRelationship.name":
+		if e.complexity.ObjectRelationship.Name == nil {
+			break
+		}
+
+		return e.complexity.ObjectRelationship.Name(childComplexity), true
+
+	case "ObjectRelationship.properties":
+		if e.complexity.ObjectRelationship.Properties == nil {
+			break
+		}
+
+		return e.complexity.ObjectRelationship.Properties(childComplexity), true
+
+	case "ObjectRelationship.toObjectNode":
+		if e.complexity.ObjectRelationship.ToObjectNode == nil {
+			break
+		}
+
+		return e.complexity.ObjectRelationship.ToObjectNode(childComplexity), true
+
+	case "Property.key":
+		if e.complexity.Property.Key == nil {
+			break
+		}
+
+		return e.complexity.Property.Key(childComplexity), true
+
+	case "Property.type":
+		if e.complexity.Property.Type == nil {
+			break
+		}
+
+		return e.complexity.Property.Type(childComplexity), true
+
+	case "Property.value":
+		if e.complexity.Property.Value == nil {
+			break
+		}
+
+		return e.complexity.Property.Value(childComplexity), true
+
+	case "Query.cypherQuery":
+		if e.complexity.Query.CypherQuery == nil {
+			break
+		}
+
+		args, err := ec.field_Query_cypherQuery_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateSchemaRelationship(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaRelationshipName"].(string), args["updateSchemaRelationshipInput"].(model.UpdateSchemaRelationshipInput)), true
+		return e.complexity.Query.CypherQuery(childComplexity, args["cypher_statement"].(string)), true
 
-	case "Query.getSchemaNode":
-		if e.complexity.Query.GetSchemaNode == nil {
+	case "Query.getObjectNode":
+		if e.complexity.Query.GetObjectNode == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getSchemaNode_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getObjectNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSchemaNode(childComplexity, args["domain"].(string), args["name"].(string)), true
+		return e.complexity.Query.GetObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string)), true
 
-	case "Query.getSchemaNodeLabel":
-		if e.complexity.Query.GetSchemaNodeLabel == nil {
+	case "Query.getObjectNodeRelationship":
+		if e.complexity.Query.GetObjectNodeRelationship == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getSchemaNodeLabel_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getObjectNodeRelationship_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSchemaNodeLabel(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaLabelName"].(string)), true
+		return e.complexity.Query.GetObjectNodeRelationship(childComplexity, args["name"].(string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Query.getSchemaNodeLabels":
-		if e.complexity.Query.GetSchemaNodeLabels == nil {
+	case "Query.getObjectNodeRelationships":
+		if e.complexity.Query.GetObjectNodeRelationships == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getSchemaNodeLabels_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getObjectNodeRelationships_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSchemaNodeLabels(childComplexity, args["domain"].(string), args["schemaNodeName"].(string)), true
+		return e.complexity.Query.GetObjectNodeRelationships(childComplexity, args["fromObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Query.getSchemaNodeProperties":
-		if e.complexity.Query.GetSchemaNodeProperties == nil {
+	case "Query.getObjectNodes":
+		if e.complexity.Query.GetObjectNodes == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getSchemaNodeProperties_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getObjectNodes_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSchemaNodeProperties(childComplexity, args["domain"].(string), args["schemaNodeName"].(string)), true
+		return e.complexity.Query.GetObjectNodes(childComplexity, args["domain"].(string), args["name"].(*string), args["type"].(*string)), true
 
-	case "Query.getSchemaNodeProperty":
-		if e.complexity.Query.GetSchemaNodeProperty == nil {
+	case "Response.data":
+		if e.complexity.Response.Data == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getSchemaNodeProperty_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
+		return e.complexity.Response.Data(childComplexity), true
 
-		return e.complexity.Query.GetSchemaNodeProperty(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaPropertyName"].(string), args["schemaPropertyType"].(string)), true
-
-	case "Query.getSchemaNodeRelationship":
-		if e.complexity.Query.GetSchemaNodeRelationship == nil {
+	case "Response.error":
+		if e.complexity.Response.Error == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getSchemaNodeRelationship_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
+		return e.complexity.Response.Error(childComplexity), true
 
-		return e.complexity.Query.GetSchemaNodeRelationship(childComplexity, args["domain"].(string), args["schemaNodeName"].(string), args["schemaRelationshipName"].(string)), true
-
-	case "Query.getSchemaNodeRelationships":
-		if e.complexity.Query.GetSchemaNodeRelationships == nil {
+	case "Response.message":
+		if e.complexity.Response.Message == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getSchemaNodeRelationships_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
+		return e.complexity.Response.Message(childComplexity), true
 
-		return e.complexity.Query.GetSchemaNodeRelationships(childComplexity, args["domain"].(string), args["schemaNodeName"].(string)), true
-
-	case "Query.getSchemaNodes":
-		if e.complexity.Query.GetSchemaNodes == nil {
+	case "Response.success":
+		if e.complexity.Response.Success == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getSchemaNodes_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.GetSchemaNodes(childComplexity, args["domain"].(string)), true
-
-	case "SchemaLabel.domain":
-		if e.complexity.SchemaLabel.Domain == nil {
-			break
-		}
-
-		return e.complexity.SchemaLabel.Domain(childComplexity), true
-
-	case "SchemaLabel.name":
-		if e.complexity.SchemaLabel.Name == nil {
-			break
-		}
-
-		return e.complexity.SchemaLabel.Name(childComplexity), true
-
-	case "SchemaLabel.parentSchemaNodeName":
-		if e.complexity.SchemaLabel.ParentSchemaNodeName == nil {
-			break
-		}
-
-		return e.complexity.SchemaLabel.ParentSchemaNodeName(childComplexity), true
-
-	case "SchemaNode.domain":
-		if e.complexity.SchemaNode.Domain == nil {
-			break
-		}
-
-		return e.complexity.SchemaNode.Domain(childComplexity), true
-
-	case "SchemaNode.labels":
-		if e.complexity.SchemaNode.Labels == nil {
-			break
-		}
-
-		return e.complexity.SchemaNode.Labels(childComplexity), true
-
-	case "SchemaNode.name":
-		if e.complexity.SchemaNode.Name == nil {
-			break
-		}
-
-		return e.complexity.SchemaNode.Name(childComplexity), true
-
-	case "SchemaNode.parentName":
-		if e.complexity.SchemaNode.ParentName == nil {
-			break
-		}
-
-		return e.complexity.SchemaNode.ParentName(childComplexity), true
-
-	case "SchemaNode.properties":
-		if e.complexity.SchemaNode.Properties == nil {
-			break
-		}
-
-		return e.complexity.SchemaNode.Properties(childComplexity), true
-
-	case "SchemaNode.relationships":
-		if e.complexity.SchemaNode.Relationships == nil {
-			break
-		}
-
-		return e.complexity.SchemaNode.Relationships(childComplexity), true
-
-	case "SchemaProperty.domain":
-		if e.complexity.SchemaProperty.Domain == nil {
-			break
-		}
-
-		return e.complexity.SchemaProperty.Domain(childComplexity), true
-
-	case "SchemaProperty.name":
-		if e.complexity.SchemaProperty.Name == nil {
-			break
-		}
-
-		return e.complexity.SchemaProperty.Name(childComplexity), true
-
-	case "SchemaProperty.parentSchemaNodeName":
-		if e.complexity.SchemaProperty.ParentSchemaNodeName == nil {
-			break
-		}
-
-		return e.complexity.SchemaProperty.ParentSchemaNodeName(childComplexity), true
-
-	case "SchemaProperty.type":
-		if e.complexity.SchemaProperty.Type == nil {
-			break
-		}
-
-		return e.complexity.SchemaProperty.Type(childComplexity), true
-
-	case "SchemaRelationship.domain":
-		if e.complexity.SchemaRelationship.Domain == nil {
-			break
-		}
-
-		return e.complexity.SchemaRelationship.Domain(childComplexity), true
-
-	case "SchemaRelationship.name":
-		if e.complexity.SchemaRelationship.Name == nil {
-			break
-		}
-
-		return e.complexity.SchemaRelationship.Name(childComplexity), true
-
-	case "SchemaRelationship.parentSchemaNodeName":
-		if e.complexity.SchemaRelationship.ParentSchemaNodeName == nil {
-			break
-		}
-
-		return e.complexity.SchemaRelationship.ParentSchemaNodeName(childComplexity), true
-
-	case "SchemaRelationship.targetSchemaNodeName":
-		if e.complexity.SchemaRelationship.TargetSchemaNodeName == nil {
-			break
-		}
-
-		return e.complexity.SchemaRelationship.TargetSchemaNodeName(childComplexity), true
+		return e.complexity.Response.Success(childComplexity), true
 
 	}
 	return 0, false
@@ -527,14 +463,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputCreateSchemaLabelInput,
-		ec.unmarshalInputCreateSchemaNodeInput,
-		ec.unmarshalInputCreateSchemaPropertyInput,
-		ec.unmarshalInputCreateSchemaRelationshipInput,
-		ec.unmarshalInputUpdateSchemaLabelInput,
-		ec.unmarshalInputUpdateSchemaNodeInput,
-		ec.unmarshalInputUpdateSchemaPropertyInput,
-		ec.unmarshalInputUpdateSchemaRelationshipInput,
+		ec.unmarshalInputCreateObjectRelationshipInput,
+		ec.unmarshalInputDeleteObjectNodeInput,
+		ec.unmarshalInputObjectNodeInput,
+		ec.unmarshalInputPropertyInput,
+		ec.unmarshalInputUpdateObjectNodeInput,
 	)
 	first := true
 
@@ -633,55 +566,160 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "../schema/mutations.graphql", Input: `type Mutation {
-  # Schema Node Mutations
-  createSchemaNode(sourceSchemaNodeName: String, createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
-  updateSchemaNode(domain: String!, name: String!, updateSchemaNodeInput: UpdateSchemaNodeInput!): [SchemaNode!]!
-  deleteSchemaNode(domain: String!, name: String!): Boolean!
-  insertSchemaNode(domain: String!, parentName: String!, childName: String!): SchemaNode!
+  # # Schema Node Mutations
+  # createSchemaNode(sourceSchemaNodeName: String, createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
+  # updateSchemaNode(domain: String!, name: String!, updateSchemaNodeInput: UpdateSchemaNodeInput!): [SchemaNode!]!
+  # deleteSchemaNode(domain: String!, name: String!): Boolean!
+  # insertSchemaNode(domain: String!, parentName: String!, childName: String!): SchemaNode!
 
-  # Schema Property Mutations
-  createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
-  updateSchemaProperty(
-    domain: String!
-    schemaNodeName: String!
-    schemaPropertyName: String!
-    schemaPropertyType: String!
-    updateSchemaPropertyInput: UpdateSchemaPropertyInput!
-  ): SchemaProperty!
-  deleteSchemaProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): Boolean!
+  # # Schema Property Mutations
+  # createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
+  # updateSchemaProperty(
+  #   domain: String!
+  #   schemaNodeName: String!
+  #   schemaPropertyName: String!
+  #   schemaPropertyType: String!
+  #   updateSchemaPropertyInput: UpdateSchemaPropertyInput!
+  # ): SchemaProperty!
+  # deleteSchemaProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): Boolean!
 
-  # Schema Relationship Mutations
-  createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
-  updateSchemaRelationship(
-    domain: String!
-    schemaNodeName: String!
-    schemaRelationshipName: String!
-    updateSchemaRelationshipInput: UpdateSchemaRelationshipInput!
-  ): SchemaRelationship!
-  deleteSchemaRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): Boolean!
+  # # Schema Relationship Mutations
+  # createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
+  # updateSchemaRelationship(
+  #   domain: String!
+  #   schemaNodeName: String!
+  #   schemaRelationshipName: String!
+  #   updateSchemaRelationshipInput: UpdateSchemaRelationshipInput!
+  # ): SchemaRelationship!
+  # deleteSchemaRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): Boolean!
 
-  # Schema Label Mutations
-  createSchemaLabel(createSchemaLabelInput: CreateSchemaLabelInput!): SchemaLabel!
-  updateSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!, updateSchemaLabelInput: UpdateSchemaLabelInput!): SchemaLabel!
-  deleteSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): Boolean!
+  # # Schema Label Mutations
+  # createSchemaLabel(createSchemaLabelInput: CreateSchemaLabelInput!): SchemaLabel!
+  # updateSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!, updateSchemaLabelInput: UpdateSchemaLabelInput!): SchemaLabel!
+  # deleteSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): Boolean!
+
+  # Object Mutations
+  createObjectNode(domain: String!, name: String!, type: String!, labels: [String!], properties: [PropertyInput!]): Response!
+  updateObjectNode(domain: String!, name: String!, type: String!, updateObjectNodeInput: UpdateObjectNodeInput!): Response!
+  deleteObjectNode(domain: String!, name: String!, type: String!): Response!
+
+  addLabelsToObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
+  removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
+
+  addPropertiesToObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
+  removePropertiesFromObjectNode(domain: String!, name: String!, type: String!, properties: [String!]!): Response!
+
+  createObjectRelationship(name: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  updatePropertiesOnObjectRelationship(
+    name: String!
+    properties: [PropertyInput!]!
+    fromObjectNode: ObjectNodeInput!
+    toObjectNode: ObjectNodeInput!
+  ): Response!
+  removePropertiesFromObjectRelationship(name: String!, properties: [String!]!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  deleteObjectRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+
+  cypherMutation(cypher_statement: String!): JSON!
+}
+
+scalar JSON
+
+enum PropertyType {
+  STRING
+  INTEGER
+  FLOAT
+  BOOLEAN
+  ARRAY_STRING
+  ARRAY_INTEGER
+  ARRAY_FLOAT
+  ARRAY_BOOLEAN
+}
+
+type Property {
+  key: String!
+  value: String!
+  type: PropertyType!
+}
+
+input PropertyInput {
+  key: String!
+  value: String!
+  type: PropertyType!
+}
+
+type Response {
+  success: Boolean!
+  message: String
+  error: String
+  data: JSON
+}
+
+type ObjectNode {
+  domain: String!
+  name: String!
+  type: String!
+  labels: [String!]
+  properties: [Property!]
+}
+
+input ObjectNodeInput {
+  domain: String!
+  name: String!
+  type: String!
+  labels: [String!]
+  properties: [PropertyInput!]
+}
+
+type ObjectRelationship {
+  name: String!
+  fromObjectNode: ObjectNode!
+  toObjectNode: ObjectNode!
+  properties: [Property!]
+}
+
+input CreateObjectRelationshipInput {
+  fromObjectNode: ObjectNodeInput!
+  toObjectNode: ObjectNodeInput!
+}
+
+input UpdateObjectNodeInput {
+  domain: String
+  name: String
+  type: String
+  labels: [String!]
+  properties: [PropertyInput!]
+}
+
+input DeleteObjectNodeInput {
+  domain: String!
+  name: String!
+  type: String!
 }
 `, BuiltIn: false},
 	{Name: "../schema/queries.graphql", Input: `type Query {
-  # Schema Node Queries
-  getSchemaNode(domain: String!, name: String!): SchemaNode!
-  getSchemaNodes(domain: String!): [SchemaNode!]!
+  # # Schema Node Queries
+  # getSchemaNode(domain: String!, name: String!): SchemaNode!
+  # getSchemaNodes(domain: String!): [SchemaNode!]!
 
-  # Schema Property Queries
-  getSchemaNodeProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): SchemaProperty!
-  getSchemaNodeProperties(domain: String!, schemaNodeName: String!): [SchemaProperty!]!
+  # # Schema Property Queries
+  # getSchemaNodeProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): SchemaProperty!
+  # getSchemaNodeProperties(domain: String!, schemaNodeName: String!): [SchemaProperty!]!
 
-  # Schema Relationship Queries
-  getSchemaNodeRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): SchemaRelationship!
-  getSchemaNodeRelationships(domain: String!, schemaNodeName: String!): [SchemaRelationship!]!
+  # # Schema Relationship Queries
+  # getSchemaNodeRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): SchemaRelationship!
+  # getSchemaNodeRelationships(domain: String!, schemaNodeName: String!): [SchemaRelationship!]!
 
-  # Schema Label Queries
-  getSchemaNodeLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): SchemaLabel!
-  getSchemaNodeLabels(domain: String!, schemaNodeName: String!): [SchemaLabel!]!
+  # # Schema Label Queries
+  # getSchemaNodeLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): SchemaLabel!
+  # getSchemaNodeLabels(domain: String!, schemaNodeName: String!): [SchemaLabel!]!
+
+  # Object Queries
+  getObjectNode(domain: String!, name: String!, type: String!): ObjectNode!
+  getObjectNodes(domain: String!, name: String, type: String): [ObjectNode!]!
+  getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): ObjectRelationship!
+  getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): [ObjectRelationship!]!
+
+  cypherQuery(cypher_statement: String!): JSON!
 
 }
 
@@ -691,85 +729,85 @@ var sources = []*ast.Source{
   mutation: Mutation
 }
 `, BuiltIn: false},
-	{Name: "../schema/schemaLabel.graphql", Input: `type SchemaLabel {
-  name: String!
-  domain: String!
-  parentSchemaNodeName: String!
-}
+	{Name: "../schema/schemaLabel.graphql", Input: `# type SchemaLabel {
+#   name: String!
+#   domain: String!
+#   parentSchemaNodeName: String!
+# }
 
-input CreateSchemaLabelInput {
-  name: String!
-  domain: String!
-  parentSchemaNodeName: String!
-}
+# input CreateSchemaLabelInput {
+#   name: String!
+#   domain: String!
+#   parentSchemaNodeName: String!
+# }
 
-input UpdateSchemaLabelInput {
-  name: String
-  domain: String
-  parentSchemaNodeName: String
-}
+# input UpdateSchemaLabelInput {
+#   name: String
+#   domain: String
+#   parentSchemaNodeName: String
+# }
 `, BuiltIn: false},
-	{Name: "../schema/schemaNode.graphql", Input: `type SchemaNode {
-  name: String!
-  domain: String!
-  parentName: String
-  properties: [SchemaProperty!]
-  relationships: [SchemaRelationship!]
-  labels: [SchemaLabel!]
-}
+	{Name: "../schema/schemaNode.graphql", Input: `# type SchemaNode {
+#   name: String!
+#   domain: String!
+#   parentName: String
+#   properties: [SchemaProperty!]
+#   relationships: [SchemaRelationship!]
+#   labels: [SchemaLabel!]
+# }
 
-input CreateSchemaNodeInput {
-  name: String!
-  domain: String!
-}
+# input CreateSchemaNodeInput {
+#   name: String!
+#   domain: String!
+# }
 
-input UpdateSchemaNodeInput {
-  name: String
-  domain: String
-}
+# input UpdateSchemaNodeInput {
+#   name: String
+#   domain: String
+# }
 
 `, BuiltIn: false},
-	{Name: "../schema/schemaProperty.graphql", Input: `type SchemaProperty {
-  name: String!
-  type: String!
-  domain: String!
-  parentSchemaNodeName: String!
-}
+	{Name: "../schema/schemaProperty.graphql", Input: `# type SchemaProperty {
+#   name: String!
+#   type: String!
+#   domain: String!
+#   parentSchemaNodeName: String!
+# }
 
-input CreateSchemaPropertyInput {
-  name: String!
-  type: String!
-  domain: String!
-  parentSchemaNodeName: String!
-}
+# input CreateSchemaPropertyInput {
+#   name: String!
+#   type: String!
+#   domain: String!
+#   parentSchemaNodeName: String!
+# }
 
-input UpdateSchemaPropertyInput {
-  name: String
-  type: String
-  domain: String
-  parentSchemaNodeName: String
-}
+# input UpdateSchemaPropertyInput {
+#   name: String
+#   type: String
+#   domain: String
+#   parentSchemaNodeName: String
+# }
 `, BuiltIn: false},
-	{Name: "../schema/schemaRelationship.graphql", Input: `type SchemaRelationship {
-  name: String!
-  domain: String!
-  targetSchemaNodeName: String!
-  parentSchemaNodeName: String!
-}
+	{Name: "../schema/schemaRelationship.graphql", Input: `# type SchemaRelationship {
+#   name: String!
+#   domain: String!
+#   targetSchemaNodeName: String!
+#   parentSchemaNodeName: String!
+# }
 
-input CreateSchemaRelationshipInput {
-  name: String!
-  domain: String!
-  targetSchemaNodeName: String!
-  parentSchemaNodeName: String!
-}
+# input CreateSchemaRelationshipInput {
+#   name: String!
+#   domain: String!
+#   targetSchemaNodeName: String!
+#   parentSchemaNodeName: String!
+# }
 
-input UpdateSchemaRelationshipInput {
-  name: String
-  domain: String
-  targetSchemaNodeName: String
-  parentSchemaNodeName: String
-}
+# input UpdateSchemaRelationshipInput {
+#   name: String
+#   domain: String
+#   targetSchemaNodeName: String
+#   parentSchemaNodeName: String
+# }
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -778,191 +816,32 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_createSchemaLabel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_addLabelsToObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_createSchemaLabel_argsCreateSchemaLabelInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["createSchemaLabelInput"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_createSchemaLabel_argsCreateSchemaLabelInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.CreateSchemaLabelInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("createSchemaLabelInput"))
-	if tmp, ok := rawArgs["createSchemaLabelInput"]; ok {
-		return ec.unmarshalNCreateSchemaLabelInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐCreateSchemaLabelInput(ctx, tmp)
-	}
-
-	var zeroVal model.CreateSchemaLabelInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_createSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_createSchemaNode_argsSourceSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["sourceSchemaNodeName"] = arg0
-	arg1, err := ec.field_Mutation_createSchemaNode_argsCreateSchemaNodeInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["createSchemaNodeInput"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_createSchemaNode_argsSourceSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceSchemaNodeName"))
-	if tmp, ok := rawArgs["sourceSchemaNodeName"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_createSchemaNode_argsCreateSchemaNodeInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.CreateSchemaNodeInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("createSchemaNodeInput"))
-	if tmp, ok := rawArgs["createSchemaNodeInput"]; ok {
-		return ec.unmarshalNCreateSchemaNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐCreateSchemaNodeInput(ctx, tmp)
-	}
-
-	var zeroVal model.CreateSchemaNodeInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_createSchemaProperty_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_createSchemaProperty_argsCreateSchemaPropertyInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["createSchemaPropertyInput"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_createSchemaProperty_argsCreateSchemaPropertyInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.CreateSchemaPropertyInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("createSchemaPropertyInput"))
-	if tmp, ok := rawArgs["createSchemaPropertyInput"]; ok {
-		return ec.unmarshalNCreateSchemaPropertyInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐCreateSchemaPropertyInput(ctx, tmp)
-	}
-
-	var zeroVal model.CreateSchemaPropertyInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_createSchemaRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_createSchemaRelationship_argsCreateSchemaRelationshipInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["createSchemaRelationshipInput"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_createSchemaRelationship_argsCreateSchemaRelationshipInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.CreateSchemaRelationshipInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("createSchemaRelationshipInput"))
-	if tmp, ok := rawArgs["createSchemaRelationshipInput"]; ok {
-		return ec.unmarshalNCreateSchemaRelationshipInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐCreateSchemaRelationshipInput(ctx, tmp)
-	}
-
-	var zeroVal model.CreateSchemaRelationshipInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaLabel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_deleteSchemaLabel_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_addLabelsToObjectNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_deleteSchemaLabel_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Mutation_deleteSchemaLabel_argsSchemaLabelName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaLabelName"] = arg2
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_deleteSchemaLabel_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaLabel_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaLabel_argsSchemaLabelName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaLabelName"))
-	if tmp, ok := rawArgs["schemaLabelName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_deleteSchemaNode_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_deleteSchemaNode_argsName(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_addLabelsToObjectNode_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["name"] = arg1
+	arg2, err := ec.field_Mutation_addLabelsToObjectNode_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg2
+	arg3, err := ec.field_Mutation_addLabelsToObjectNode_argsLabels(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["labels"] = arg3
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteSchemaNode_argsDomain(
+func (ec *executionContext) field_Mutation_addLabelsToObjectNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -975,7 +854,7 @@ func (ec *executionContext) field_Mutation_deleteSchemaNode_argsDomain(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteSchemaNode_argsName(
+func (ec *executionContext) field_Mutation_addLabelsToObjectNode_argsName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -988,299 +867,58 @@ func (ec *executionContext) field_Mutation_deleteSchemaNode_argsName(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteSchemaProperty_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_addLabelsToObjectNode_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_addLabelsToObjectNode_argsLabels(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+	if tmp, ok := rawArgs["labels"]; ok {
+		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_addPropertiesToObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_deleteSchemaProperty_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_addPropertiesToObjectNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_deleteSchemaProperty_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Mutation_deleteSchemaProperty_argsSchemaPropertyName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaPropertyName"] = arg2
-	arg3, err := ec.field_Mutation_deleteSchemaProperty_argsSchemaPropertyType(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaPropertyType"] = arg3
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_deleteSchemaProperty_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaProperty_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaProperty_argsSchemaPropertyName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaPropertyName"))
-	if tmp, ok := rawArgs["schemaPropertyName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaProperty_argsSchemaPropertyType(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaPropertyType"))
-	if tmp, ok := rawArgs["schemaPropertyType"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_deleteSchemaRelationship_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_deleteSchemaRelationship_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Mutation_deleteSchemaRelationship_argsSchemaRelationshipName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaRelationshipName"] = arg2
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_deleteSchemaRelationship_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaRelationship_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSchemaRelationship_argsSchemaRelationshipName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaRelationshipName"))
-	if tmp, ok := rawArgs["schemaRelationshipName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_insertSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_insertSchemaNode_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_insertSchemaNode_argsParentName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["parentName"] = arg1
-	arg2, err := ec.field_Mutation_insertSchemaNode_argsChildName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["childName"] = arg2
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_insertSchemaNode_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_insertSchemaNode_argsParentName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("parentName"))
-	if tmp, ok := rawArgs["parentName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_insertSchemaNode_argsChildName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("childName"))
-	if tmp, ok := rawArgs["childName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSchemaLabel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updateSchemaLabel_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_updateSchemaLabel_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Mutation_updateSchemaLabel_argsSchemaLabelName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaLabelName"] = arg2
-	arg3, err := ec.field_Mutation_updateSchemaLabel_argsUpdateSchemaLabelInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["updateSchemaLabelInput"] = arg3
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_updateSchemaLabel_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSchemaLabel_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSchemaLabel_argsSchemaLabelName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaLabelName"))
-	if tmp, ok := rawArgs["schemaLabelName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSchemaLabel_argsUpdateSchemaLabelInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.UpdateSchemaLabelInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("updateSchemaLabelInput"))
-	if tmp, ok := rawArgs["updateSchemaLabelInput"]; ok {
-		return ec.unmarshalNUpdateSchemaLabelInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateSchemaLabelInput(ctx, tmp)
-	}
-
-	var zeroVal model.UpdateSchemaLabelInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updateSchemaNode_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_updateSchemaNode_argsName(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_addPropertiesToObjectNode_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["name"] = arg1
-	arg2, err := ec.field_Mutation_updateSchemaNode_argsUpdateSchemaNodeInput(ctx, rawArgs)
+	arg2, err := ec.field_Mutation_addPropertiesToObjectNode_argsType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["updateSchemaNodeInput"] = arg2
+	args["type"] = arg2
+	arg3, err := ec.field_Mutation_addPropertiesToObjectNode_argsProperties(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["properties"] = arg3
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_updateSchemaNode_argsDomain(
+func (ec *executionContext) field_Mutation_addPropertiesToObjectNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1293,7 +931,7 @@ func (ec *executionContext) field_Mutation_updateSchemaNode_argsDomain(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaNode_argsName(
+func (ec *executionContext) field_Mutation_addPropertiesToObjectNode_argsName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1306,50 +944,63 @@ func (ec *executionContext) field_Mutation_updateSchemaNode_argsName(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaNode_argsUpdateSchemaNodeInput(
+func (ec *executionContext) field_Mutation_addPropertiesToObjectNode_argsType(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.UpdateSchemaNodeInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("updateSchemaNodeInput"))
-	if tmp, ok := rawArgs["updateSchemaNodeInput"]; ok {
-		return ec.unmarshalNUpdateSchemaNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateSchemaNodeInput(ctx, tmp)
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
-	var zeroVal model.UpdateSchemaNodeInput
+	var zeroVal string
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaProperty_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_addPropertiesToObjectNode_argsProperties(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*model.PropertyInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("properties"))
+	if tmp, ok := rawArgs["properties"]; ok {
+		return ec.unmarshalNPropertyInput2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInputᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*model.PropertyInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updateSchemaProperty_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createObjectNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_updateSchemaProperty_argsSchemaNodeName(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_createObjectNode_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Mutation_updateSchemaProperty_argsSchemaPropertyName(ctx, rawArgs)
+	args["name"] = arg1
+	arg2, err := ec.field_Mutation_createObjectNode_argsType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["schemaPropertyName"] = arg2
-	arg3, err := ec.field_Mutation_updateSchemaProperty_argsSchemaPropertyType(ctx, rawArgs)
+	args["type"] = arg2
+	arg3, err := ec.field_Mutation_createObjectNode_argsLabels(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["schemaPropertyType"] = arg3
-	arg4, err := ec.field_Mutation_updateSchemaProperty_argsUpdateSchemaPropertyInput(ctx, rawArgs)
+	args["labels"] = arg3
+	arg4, err := ec.field_Mutation_createObjectNode_argsProperties(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["updateSchemaPropertyInput"] = arg4
+	args["properties"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_updateSchemaProperty_argsDomain(
+func (ec *executionContext) field_Mutation_createObjectNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1362,12 +1013,12 @@ func (ec *executionContext) field_Mutation_updateSchemaProperty_argsDomain(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaProperty_argsSchemaNodeName(
+func (ec *executionContext) field_Mutation_createObjectNode_argsName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -1375,12 +1026,12 @@ func (ec *executionContext) field_Mutation_updateSchemaProperty_argsSchemaNodeNa
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaProperty_argsSchemaPropertyName(
+func (ec *executionContext) field_Mutation_createObjectNode_argsType(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaPropertyName"))
-	if tmp, ok := rawArgs["schemaPropertyName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -1388,58 +1039,153 @@ func (ec *executionContext) field_Mutation_updateSchemaProperty_argsSchemaProper
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaProperty_argsSchemaPropertyType(
+func (ec *executionContext) field_Mutation_createObjectNode_argsLabels(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaPropertyType"))
-	if tmp, ok := rawArgs["schemaPropertyType"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+) ([]string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+	if tmp, ok := rawArgs["labels"]; ok {
+		return ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal []string
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaProperty_argsUpdateSchemaPropertyInput(
+func (ec *executionContext) field_Mutation_createObjectNode_argsProperties(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.UpdateSchemaPropertyInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("updateSchemaPropertyInput"))
-	if tmp, ok := rawArgs["updateSchemaPropertyInput"]; ok {
-		return ec.unmarshalNUpdateSchemaPropertyInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateSchemaPropertyInput(ctx, tmp)
+) ([]*model.PropertyInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("properties"))
+	if tmp, ok := rawArgs["properties"]; ok {
+		return ec.unmarshalOPropertyInput2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInputᚄ(ctx, tmp)
 	}
 
-	var zeroVal model.UpdateSchemaPropertyInput
+	var zeroVal []*model.PropertyInput
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createObjectRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updateSchemaRelationship_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createObjectRelationship_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	arg1, err := ec.field_Mutation_createObjectRelationship_argsProperties(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["properties"] = arg1
+	arg2, err := ec.field_Mutation_createObjectRelationship_argsFromObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["fromObjectNode"] = arg2
+	arg3, err := ec.field_Mutation_createObjectRelationship_argsToObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["toObjectNode"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createObjectRelationship_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createObjectRelationship_argsProperties(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*model.PropertyInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("properties"))
+	if tmp, ok := rawArgs["properties"]; ok {
+		return ec.unmarshalOPropertyInput2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInputᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*model.PropertyInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createObjectRelationship_argsFromObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("fromObjectNode"))
+	if tmp, ok := rawArgs["fromObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createObjectRelationship_argsToObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("toObjectNode"))
+	if tmp, ok := rawArgs["toObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_cypherMutation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_cypherMutation_argsCypherStatement(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["cypher_statement"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_cypherMutation_argsCypherStatement(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cypher_statement"))
+	if tmp, ok := rawArgs["cypher_statement"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_deleteObjectNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_updateSchemaRelationship_argsSchemaNodeName(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_deleteObjectNode_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Mutation_updateSchemaRelationship_argsSchemaRelationshipName(ctx, rawArgs)
+	args["name"] = arg1
+	arg2, err := ec.field_Mutation_deleteObjectNode_argsType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["schemaRelationshipName"] = arg2
-	arg3, err := ec.field_Mutation_updateSchemaRelationship_argsUpdateSchemaRelationshipInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["updateSchemaRelationshipInput"] = arg3
+	args["type"] = arg2
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_updateSchemaRelationship_argsDomain(
+func (ec *executionContext) field_Mutation_deleteObjectNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1452,12 +1198,12 @@ func (ec *executionContext) field_Mutation_updateSchemaRelationship_argsDomain(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaRelationship_argsSchemaNodeName(
+func (ec *executionContext) field_Mutation_deleteObjectNode_argsName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -1465,12 +1211,12 @@ func (ec *executionContext) field_Mutation_updateSchemaRelationship_argsSchemaNo
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaRelationship_argsSchemaRelationshipName(
+func (ec *executionContext) field_Mutation_deleteObjectNode_argsType(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaRelationshipName"))
-	if tmp, ok := rawArgs["schemaRelationshipName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -1478,16 +1224,447 @@ func (ec *executionContext) field_Mutation_updateSchemaRelationship_argsSchemaRe
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSchemaRelationship_argsUpdateSchemaRelationshipInput(
+func (ec *executionContext) field_Mutation_deleteObjectRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_deleteObjectRelationship_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	arg1, err := ec.field_Mutation_deleteObjectRelationship_argsFromObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["fromObjectNode"] = arg1
+	arg2, err := ec.field_Mutation_deleteObjectRelationship_argsToObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["toObjectNode"] = arg2
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteObjectRelationship_argsName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.UpdateSchemaRelationshipInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("updateSchemaRelationshipInput"))
-	if tmp, ok := rawArgs["updateSchemaRelationshipInput"]; ok {
-		return ec.unmarshalNUpdateSchemaRelationshipInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateSchemaRelationshipInput(ctx, tmp)
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
-	var zeroVal model.UpdateSchemaRelationshipInput
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteObjectRelationship_argsFromObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("fromObjectNode"))
+	if tmp, ok := rawArgs["fromObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteObjectRelationship_argsToObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("toObjectNode"))
+	if tmp, ok := rawArgs["toObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removeLabelsFromObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_removeLabelsFromObjectNode_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	arg1, err := ec.field_Mutation_removeLabelsFromObjectNode_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	arg2, err := ec.field_Mutation_removeLabelsFromObjectNode_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg2
+	arg3, err := ec.field_Mutation_removeLabelsFromObjectNode_argsLabels(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["labels"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_removeLabelsFromObjectNode_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removeLabelsFromObjectNode_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removeLabelsFromObjectNode_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removeLabelsFromObjectNode_argsLabels(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+	if tmp, ok := rawArgs["labels"]; ok {
+		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_removePropertiesFromObjectNode_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	arg1, err := ec.field_Mutation_removePropertiesFromObjectNode_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	arg2, err := ec.field_Mutation_removePropertiesFromObjectNode_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg2
+	arg3, err := ec.field_Mutation_removePropertiesFromObjectNode_argsProperties(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["properties"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsProperties(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("properties"))
+	if tmp, ok := rawArgs["properties"]; ok {
+		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_removePropertiesFromObjectRelationship_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	arg1, err := ec.field_Mutation_removePropertiesFromObjectRelationship_argsProperties(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["properties"] = arg1
+	arg2, err := ec.field_Mutation_removePropertiesFromObjectRelationship_argsFromObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["fromObjectNode"] = arg2
+	arg3, err := ec.field_Mutation_removePropertiesFromObjectRelationship_argsToObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["toObjectNode"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectRelationship_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectRelationship_argsProperties(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("properties"))
+	if tmp, ok := rawArgs["properties"]; ok {
+		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectRelationship_argsFromObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("fromObjectNode"))
+	if tmp, ok := rawArgs["fromObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectRelationship_argsToObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("toObjectNode"))
+	if tmp, ok := rawArgs["toObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_updateObjectNode_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	arg1, err := ec.field_Mutation_updateObjectNode_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	arg2, err := ec.field_Mutation_updateObjectNode_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg2
+	arg3, err := ec.field_Mutation_updateObjectNode_argsUpdateObjectNodeInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["updateObjectNodeInput"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateObjectNode_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateObjectNode_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateObjectNode_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateObjectNode_argsUpdateObjectNodeInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdateObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("updateObjectNodeInput"))
+	if tmp, ok := rawArgs["updateObjectNodeInput"]; ok {
+		return ec.unmarshalNUpdateObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdateObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePropertiesOnObjectRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_updatePropertiesOnObjectRelationship_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	arg1, err := ec.field_Mutation_updatePropertiesOnObjectRelationship_argsProperties(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["properties"] = arg1
+	arg2, err := ec.field_Mutation_updatePropertiesOnObjectRelationship_argsFromObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["fromObjectNode"] = arg2
+	arg3, err := ec.field_Mutation_updatePropertiesOnObjectRelationship_argsToObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["toObjectNode"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updatePropertiesOnObjectRelationship_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePropertiesOnObjectRelationship_argsProperties(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*model.PropertyInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("properties"))
+	if tmp, ok := rawArgs["properties"]; ok {
+		return ec.unmarshalNPropertyInput2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInputᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*model.PropertyInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePropertiesOnObjectRelationship_argsFromObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("fromObjectNode"))
+	if tmp, ok := rawArgs["fromObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePropertiesOnObjectRelationship_argsToObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("toObjectNode"))
+	if tmp, ok := rawArgs["toObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
 	return zeroVal, nil
 }
 
@@ -1514,32 +1691,22 @@ func (ec *executionContext) field_Query___type_argsName(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_getSchemaNodeLabel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_cypherQuery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaNodeLabel_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Query_cypherQuery_argsCypherStatement(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getSchemaNodeLabel_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Query_getSchemaNodeLabel_argsSchemaLabelName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaLabelName"] = arg2
+	args["cypher_statement"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Query_getSchemaNodeLabel_argsDomain(
+func (ec *executionContext) field_Query_cypherQuery_argsCypherStatement(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cypher_statement"))
+	if tmp, ok := rawArgs["cypher_statement"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -1547,320 +1714,27 @@ func (ec *executionContext) field_Query_getSchemaNodeLabel_argsDomain(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_getSchemaNodeLabel_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeLabel_argsSchemaLabelName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaLabelName"))
-	if tmp, ok := rawArgs["schemaLabelName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeLabels_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getObjectNodeRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaNodeLabels_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Query_getObjectNodeRelationship_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getSchemaNodeLabels_argsSchemaNodeName(ctx, rawArgs)
+	args["name"] = arg0
+	arg1, err := ec.field_Query_getObjectNodeRelationship_argsFromObjectNode(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["schemaNodeName"] = arg1
+	args["fromObjectNode"] = arg1
+	arg2, err := ec.field_Query_getObjectNodeRelationship_argsToObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["toObjectNode"] = arg2
 	return args, nil
 }
-func (ec *executionContext) field_Query_getSchemaNodeLabels_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeLabels_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeProperties_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaNodeProperties_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getSchemaNodeProperties_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Query_getSchemaNodeProperties_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeProperties_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeProperty_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaNodeProperty_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getSchemaNodeProperty_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Query_getSchemaNodeProperty_argsSchemaPropertyName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaPropertyName"] = arg2
-	arg3, err := ec.field_Query_getSchemaNodeProperty_argsSchemaPropertyType(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaPropertyType"] = arg3
-	return args, nil
-}
-func (ec *executionContext) field_Query_getSchemaNodeProperty_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeProperty_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeProperty_argsSchemaPropertyName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaPropertyName"))
-	if tmp, ok := rawArgs["schemaPropertyName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeProperty_argsSchemaPropertyType(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaPropertyType"))
-	if tmp, ok := rawArgs["schemaPropertyType"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaNodeRelationship_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getSchemaNodeRelationship_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	arg2, err := ec.field_Query_getSchemaNodeRelationship_argsSchemaRelationshipName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaRelationshipName"] = arg2
-	return args, nil
-}
-func (ec *executionContext) field_Query_getSchemaNodeRelationship_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeRelationship_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeRelationship_argsSchemaRelationshipName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaRelationshipName"))
-	if tmp, ok := rawArgs["schemaRelationshipName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeRelationships_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaNodeRelationships_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getSchemaNodeRelationships_argsSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["schemaNodeName"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Query_getSchemaNodeRelationships_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNodeRelationships_argsSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaNodeName"))
-	if tmp, ok := rawArgs["schemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaNode_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getSchemaNode_argsName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["name"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Query_getSchemaNode_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getSchemaNode_argsName(
+func (ec *executionContext) field_Query_getObjectNodeRelationship_argsName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1873,17 +1747,76 @@ func (ec *executionContext) field_Query_getSchemaNode_argsName(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_getSchemaNodes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getObjectNodeRelationship_argsFromObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("fromObjectNode"))
+	if tmp, ok := rawArgs["fromObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNodeRelationship_argsToObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("toObjectNode"))
+	if tmp, ok := rawArgs["toObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNodeRelationships_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getSchemaNodes_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Query_getObjectNodeRelationships_argsFromObjectNode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["fromObjectNode"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_getObjectNodeRelationships_argsFromObjectNode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ObjectNodeInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("fromObjectNode"))
+	if tmp, ok := rawArgs["fromObjectNode"]; ok {
+		return ec.unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, tmp)
+	}
+
+	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_getObjectNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg0
+	arg1, err := ec.field_Query_getObjectNode_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	arg2, err := ec.field_Query_getObjectNode_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg2
 	return args, nil
 }
-func (ec *executionContext) field_Query_getSchemaNodes_argsDomain(
+func (ec *executionContext) field_Query_getObjectNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1893,6 +1826,91 @@ func (ec *executionContext) field_Query_getSchemaNodes_argsDomain(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNode_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNode_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNodes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_getObjectNodes_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	arg1, err := ec.field_Query_getObjectNodes_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	arg2, err := ec.field_Query_getObjectNodes_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg2
+	return args, nil
+}
+func (ec *executionContext) field_Query_getObjectNodes_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNodes_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNodes_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -1950,8 +1968,8 @@ func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Mutation_createSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createSchemaNode(ctx, field)
+func (ec *executionContext) _Mutation_createObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createObjectNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1964,7 +1982,7 @@ func (ec *executionContext) _Mutation_createSchemaNode(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateSchemaNode(rctx, fc.Args["sourceSchemaNodeName"].(*string), fc.Args["createSchemaNodeInput"].(model.CreateSchemaNodeInput))
+		return ec.resolvers.Mutation().CreateObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["labels"].([]string), fc.Args["properties"].([]*model.PropertyInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1976,12 +1994,12 @@ func (ec *executionContext) _Mutation_createSchemaNode(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SchemaNode)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNSchemaNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNode(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1989,20 +2007,16 @@ func (ec *executionContext) fieldContext_Mutation_createSchemaNode(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaNode_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaNode_domain(ctx, field)
-			case "parentName":
-				return ec.fieldContext_SchemaNode_parentName(ctx, field)
-			case "properties":
-				return ec.fieldContext_SchemaNode_properties(ctx, field)
-			case "relationships":
-				return ec.fieldContext_SchemaNode_relationships(ctx, field)
-			case "labels":
-				return ec.fieldContext_SchemaNode_labels(ctx, field)
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaNode", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
 		},
 	}
 	defer func() {
@@ -2012,15 +2026,15 @@ func (ec *executionContext) fieldContext_Mutation_createSchemaNode(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSchemaNode(ctx, field)
+func (ec *executionContext) _Mutation_updateObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateObjectNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2033,7 +2047,7 @@ func (ec *executionContext) _Mutation_updateSchemaNode(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateSchemaNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["updateSchemaNodeInput"].(model.UpdateSchemaNodeInput))
+		return ec.resolvers.Mutation().UpdateObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["updateObjectNodeInput"].(model.UpdateObjectNodeInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2045,12 +2059,12 @@ func (ec *executionContext) _Mutation_updateSchemaNode(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SchemaNode)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNSchemaNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNodeᚄ(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -2058,20 +2072,16 @@ func (ec *executionContext) fieldContext_Mutation_updateSchemaNode(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaNode_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaNode_domain(ctx, field)
-			case "parentName":
-				return ec.fieldContext_SchemaNode_parentName(ctx, field)
-			case "properties":
-				return ec.fieldContext_SchemaNode_properties(ctx, field)
-			case "relationships":
-				return ec.fieldContext_SchemaNode_relationships(ctx, field)
-			case "labels":
-				return ec.fieldContext_SchemaNode_labels(ctx, field)
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaNode", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
 		},
 	}
 	defer func() {
@@ -2081,15 +2091,15 @@ func (ec *executionContext) fieldContext_Mutation_updateSchemaNode(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteSchemaNode(ctx, field)
+func (ec *executionContext) _Mutation_deleteObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteObjectNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2102,7 +2112,7 @@ func (ec *executionContext) _Mutation_deleteSchemaNode(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteSchemaNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string))
+		return ec.resolvers.Mutation().DeleteObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2114,67 +2124,12 @@ func (ec *executionContext) _Mutation_deleteSchemaNode(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_insertSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_insertSchemaNode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().InsertSchemaNode(rctx, fc.Args["domain"].(string), fc.Args["parentName"].(string), fc.Args["childName"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.SchemaNode)
-	fc.Result = res
-	return ec.marshalNSchemaNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNode(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_insertSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -2182,20 +2137,16 @@ func (ec *executionContext) fieldContext_Mutation_insertSchemaNode(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaNode_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaNode_domain(ctx, field)
-			case "parentName":
-				return ec.fieldContext_SchemaNode_parentName(ctx, field)
-			case "properties":
-				return ec.fieldContext_SchemaNode_properties(ctx, field)
-			case "relationships":
-				return ec.fieldContext_SchemaNode_relationships(ctx, field)
-			case "labels":
-				return ec.fieldContext_SchemaNode_labels(ctx, field)
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaNode", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
 		},
 	}
 	defer func() {
@@ -2205,15 +2156,15 @@ func (ec *executionContext) fieldContext_Mutation_insertSchemaNode(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_insertSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createSchemaProperty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createSchemaProperty(ctx, field)
+func (ec *executionContext) _Mutation_addLabelsToObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_addLabelsToObjectNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2226,7 +2177,7 @@ func (ec *executionContext) _Mutation_createSchemaProperty(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateSchemaProperty(rctx, fc.Args["createSchemaPropertyInput"].(model.CreateSchemaPropertyInput))
+		return ec.resolvers.Mutation().AddLabelsToObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["labels"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2238,12 +2189,12 @@ func (ec *executionContext) _Mutation_createSchemaProperty(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SchemaProperty)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNSchemaProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaProperty(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createSchemaProperty(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_addLabelsToObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -2251,34 +2202,766 @@ func (ec *executionContext) fieldContext_Mutation_createSchemaProperty(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaProperty_name(ctx, field)
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addLabelsToObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeLabelsFromObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_removeLabelsFromObjectNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveLabelsFromObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["labels"].([]string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removeLabelsFromObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeLabelsFromObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addPropertiesToObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_addPropertiesToObjectNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddPropertiesToObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["properties"].([]*model.PropertyInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addPropertiesToObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addPropertiesToObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removePropertiesFromObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_removePropertiesFromObjectNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemovePropertiesFromObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["properties"].([]string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removePropertiesFromObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removePropertiesFromObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createObjectRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createObjectRelationship(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateObjectRelationship(rctx, fc.Args["name"].(string), fc.Args["properties"].([]*model.PropertyInput), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createObjectRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createObjectRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updatePropertiesOnObjectRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePropertiesOnObjectRelationship(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdatePropertiesOnObjectRelationship(rctx, fc.Args["name"].(string), fc.Args["properties"].([]*model.PropertyInput), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updatePropertiesOnObjectRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updatePropertiesOnObjectRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removePropertiesFromObjectRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_removePropertiesFromObjectRelationship(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemovePropertiesFromObjectRelationship(rctx, fc.Args["name"].(string), fc.Args["properties"].([]string), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removePropertiesFromObjectRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removePropertiesFromObjectRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteObjectRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteObjectRelationship(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteObjectRelationship(rctx, fc.Args["name"].(string), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteObjectRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "error":
+				return ec.fieldContext_Response_error(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteObjectRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_cypherMutation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_cypherMutation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CypherMutation(rctx, fc.Args["cypher_statement"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNJSON2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_cypherMutation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_cypherMutation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectNode_domain(ctx context.Context, field graphql.CollectedField, obj *model.ObjectNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectNode_domain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Domain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectNode_domain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectNode_name(ctx context.Context, field graphql.CollectedField, obj *model.ObjectNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectNode_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectNode_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectNode_type(ctx context.Context, field graphql.CollectedField, obj *model.ObjectNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectNode_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectNode_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectNode_labels(ctx context.Context, field graphql.CollectedField, obj *model.ObjectNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectNode_labels(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Labels, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectNode_labels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectNode_properties(ctx context.Context, field graphql.CollectedField, obj *model.ObjectNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectNode_properties(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Properties, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Property)
+	fc.Result = res
+	return ec.marshalOProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectNode_properties(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_Property_key(ctx, field)
+			case "value":
+				return ec.fieldContext_Property_value(ctx, field)
 			case "type":
-				return ec.fieldContext_SchemaProperty_type(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaProperty_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaProperty_parentSchemaNodeName(ctx, field)
+				return ec.fieldContext_Property_type(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaProperty", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Property", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createSchemaProperty_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateSchemaProperty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSchemaProperty(ctx, field)
+func (ec *executionContext) _ObjectRelationship_name(ctx context.Context, field graphql.CollectedField, obj *model.ObjectRelationship) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectRelationship_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2291,7 +2974,7 @@ func (ec *executionContext) _Mutation_updateSchemaProperty(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateSchemaProperty(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaPropertyName"].(string), fc.Args["schemaPropertyType"].(string), fc.Args["updateSchemaPropertyInput"].(model.UpdateSchemaPropertyInput))
+		return obj.Name, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2303,606 +2986,138 @@ func (ec *executionContext) _Mutation_updateSchemaProperty(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SchemaProperty)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNSchemaProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaProperty(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateSchemaProperty(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ObjectRelationship_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mutation",
+		Object:     "ObjectRelationship",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectRelationship_fromObjectNode(ctx context.Context, field graphql.CollectedField, obj *model.ObjectRelationship) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectRelationship_fromObjectNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FromObjectNode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ObjectNode)
+	fc.Result = res
+	return ec.marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectRelationship_fromObjectNode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectRelationship",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "domain":
+				return ec.fieldContext_ObjectNode_domain(ctx, field)
 			case "name":
-				return ec.fieldContext_SchemaProperty_name(ctx, field)
+				return ec.fieldContext_ObjectNode_name(ctx, field)
 			case "type":
-				return ec.fieldContext_SchemaProperty_type(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaProperty_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaProperty_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaProperty", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSchemaProperty_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteSchemaProperty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteSchemaProperty(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteSchemaProperty(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaPropertyName"].(string), fc.Args["schemaPropertyType"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteSchemaProperty(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteSchemaProperty_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_createSchemaRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createSchemaRelationship(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateSchemaRelationship(rctx, fc.Args["createSchemaRelationshipInput"].(model.CreateSchemaRelationshipInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.SchemaRelationship)
-	fc.Result = res
-	return ec.marshalNSchemaRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationship(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createSchemaRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaRelationship_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaRelationship_domain(ctx, field)
-			case "targetSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_targetSchemaNodeName(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaRelationship", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createSchemaRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateSchemaRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSchemaRelationship(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateSchemaRelationship(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaRelationshipName"].(string), fc.Args["updateSchemaRelationshipInput"].(model.UpdateSchemaRelationshipInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.SchemaRelationship)
-	fc.Result = res
-	return ec.marshalNSchemaRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationship(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateSchemaRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaRelationship_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaRelationship_domain(ctx, field)
-			case "targetSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_targetSchemaNodeName(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaRelationship", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSchemaRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteSchemaRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteSchemaRelationship(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteSchemaRelationship(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaRelationshipName"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteSchemaRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteSchemaRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_createSchemaLabel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createSchemaLabel(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateSchemaLabel(rctx, fc.Args["createSchemaLabelInput"].(model.CreateSchemaLabelInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.SchemaLabel)
-	fc.Result = res
-	return ec.marshalNSchemaLabel2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabel(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createSchemaLabel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaLabel_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaLabel_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaLabel_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaLabel", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createSchemaLabel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateSchemaLabel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSchemaLabel(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateSchemaLabel(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaLabelName"].(string), fc.Args["updateSchemaLabelInput"].(model.UpdateSchemaLabelInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.SchemaLabel)
-	fc.Result = res
-	return ec.marshalNSchemaLabel2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabel(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateSchemaLabel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaLabel_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaLabel_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaLabel_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaLabel", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSchemaLabel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteSchemaLabel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteSchemaLabel(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteSchemaLabel(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaLabelName"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteSchemaLabel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteSchemaLabel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_getSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getSchemaNode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.SchemaNode)
-	fc.Result = res
-	return ec.marshalNSchemaNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNode(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_getSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaNode_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaNode_domain(ctx, field)
-			case "parentName":
-				return ec.fieldContext_SchemaNode_parentName(ctx, field)
-			case "properties":
-				return ec.fieldContext_SchemaNode_properties(ctx, field)
-			case "relationships":
-				return ec.fieldContext_SchemaNode_relationships(ctx, field)
+				return ec.fieldContext_ObjectNode_type(ctx, field)
 			case "labels":
-				return ec.fieldContext_SchemaNode_labels(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaNode", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_getSchemaNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getSchemaNodes(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaNodes(rctx, fc.Args["domain"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.SchemaNode)
-	fc.Result = res
-	return ec.marshalNSchemaNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNodeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_getSchemaNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaNode_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaNode_domain(ctx, field)
-			case "parentName":
-				return ec.fieldContext_SchemaNode_parentName(ctx, field)
+				return ec.fieldContext_ObjectNode_labels(ctx, field)
 			case "properties":
-				return ec.fieldContext_SchemaNode_properties(ctx, field)
-			case "relationships":
-				return ec.fieldContext_SchemaNode_relationships(ctx, field)
+				return ec.fieldContext_ObjectNode_properties(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ObjectNode", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectRelationship_toObjectNode(ctx context.Context, field graphql.CollectedField, obj *model.ObjectRelationship) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectRelationship_toObjectNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ToObjectNode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ObjectNode)
+	fc.Result = res
+	return ec.marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectRelationship_toObjectNode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectRelationship",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "domain":
+				return ec.fieldContext_ObjectNode_domain(ctx, field)
+			case "name":
+				return ec.fieldContext_ObjectNode_name(ctx, field)
+			case "type":
+				return ec.fieldContext_ObjectNode_type(ctx, field)
 			case "labels":
-				return ec.fieldContext_SchemaNode_labels(ctx, field)
+				return ec.fieldContext_ObjectNode_labels(ctx, field)
+			case "properties":
+				return ec.fieldContext_ObjectNode_properties(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaNode", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ObjectNode", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getSchemaNodes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getSchemaNodeProperty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getSchemaNodeProperty(ctx, field)
+func (ec *executionContext) _ObjectRelationship_properties(ctx context.Context, field graphql.CollectedField, obj *model.ObjectRelationship) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectRelationship_properties(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2915,59 +3130,43 @@ func (ec *executionContext) _Query_getSchemaNodeProperty(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaNodeProperty(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaPropertyName"].(string), fc.Args["schemaPropertyType"].(string))
+		return obj.Properties, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SchemaProperty)
+	res := resTmp.([]*model.Property)
 	fc.Result = res
-	return ec.marshalNSchemaProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaProperty(ctx, field.Selections, res)
+	return ec.marshalOProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getSchemaNodeProperty(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ObjectRelationship_properties(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Query",
+		Object:     "ObjectRelationship",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaProperty_name(ctx, field)
+			case "key":
+				return ec.fieldContext_Property_key(ctx, field)
+			case "value":
+				return ec.fieldContext_Property_value(ctx, field)
 			case "type":
-				return ec.fieldContext_SchemaProperty_type(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaProperty_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaProperty_parentSchemaNodeName(ctx, field)
+				return ec.fieldContext_Property_type(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaProperty", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Property", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getSchemaNodeProperty_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getSchemaNodeProperties(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getSchemaNodeProperties(ctx, field)
+func (ec *executionContext) _Property_key(ctx context.Context, field graphql.CollectedField, obj *model.Property) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Property_key(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2980,7 +3179,7 @@ func (ec *executionContext) _Query_getSchemaNodeProperties(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaNodeProperties(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string))
+		return obj.Key, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2992,12 +3191,144 @@ func (ec *executionContext) _Query_getSchemaNodeProperties(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SchemaProperty)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNSchemaProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaPropertyᚄ(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getSchemaNodeProperties(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Property_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Property",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Property_value(ctx context.Context, field graphql.CollectedField, obj *model.Property) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Property_value(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Property_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Property",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Property_type(ctx context.Context, field graphql.CollectedField, obj *model.Property) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Property_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PropertyType)
+	fc.Result = res
+	return ec.marshalNPropertyType2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Property_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Property",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type PropertyType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getObjectNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ObjectNode)
+	fc.Result = res
+	return ec.marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -3005,16 +3336,18 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeProperties(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "domain":
+				return ec.fieldContext_ObjectNode_domain(ctx, field)
 			case "name":
-				return ec.fieldContext_SchemaProperty_name(ctx, field)
+				return ec.fieldContext_ObjectNode_name(ctx, field)
 			case "type":
-				return ec.fieldContext_SchemaProperty_type(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaProperty_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaProperty_parentSchemaNodeName(ctx, field)
+				return ec.fieldContext_ObjectNode_type(ctx, field)
+			case "labels":
+				return ec.fieldContext_ObjectNode_labels(ctx, field)
+			case "properties":
+				return ec.fieldContext_ObjectNode_properties(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaProperty", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ObjectNode", field.Name)
 		},
 	}
 	defer func() {
@@ -3024,15 +3357,15 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeProperties(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getSchemaNodeProperties_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_getObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getSchemaNodeRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getSchemaNodeRelationship(ctx, field)
+func (ec *executionContext) _Query_getObjectNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getObjectNodes(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3045,7 +3378,7 @@ func (ec *executionContext) _Query_getSchemaNodeRelationship(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaNodeRelationship(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaRelationshipName"].(string))
+		return ec.resolvers.Query().GetObjectNodes(rctx, fc.Args["domain"].(string), fc.Args["name"].(*string), fc.Args["type"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3057,12 +3390,12 @@ func (ec *executionContext) _Query_getSchemaNodeRelationship(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SchemaRelationship)
+	res := resTmp.([]*model.ObjectNode)
 	fc.Result = res
-	return ec.marshalNSchemaRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationship(ctx, field.Selections, res)
+	return ec.marshalNObjectNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getSchemaNodeRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getObjectNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -3070,16 +3403,18 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeRelationship(ctx con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaRelationship_name(ctx, field)
 			case "domain":
-				return ec.fieldContext_SchemaRelationship_domain(ctx, field)
-			case "targetSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_targetSchemaNodeName(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_parentSchemaNodeName(ctx, field)
+				return ec.fieldContext_ObjectNode_domain(ctx, field)
+			case "name":
+				return ec.fieldContext_ObjectNode_name(ctx, field)
+			case "type":
+				return ec.fieldContext_ObjectNode_type(ctx, field)
+			case "labels":
+				return ec.fieldContext_ObjectNode_labels(ctx, field)
+			case "properties":
+				return ec.fieldContext_ObjectNode_properties(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaRelationship", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ObjectNode", field.Name)
 		},
 	}
 	defer func() {
@@ -3089,15 +3424,15 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeRelationship(ctx con
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getSchemaNodeRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_getObjectNodes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getSchemaNodeRelationships(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getSchemaNodeRelationships(ctx, field)
+func (ec *executionContext) _Query_getObjectNodeRelationship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getObjectNodeRelationship(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3110,7 +3445,7 @@ func (ec *executionContext) _Query_getSchemaNodeRelationships(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaNodeRelationships(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string))
+		return ec.resolvers.Query().GetObjectNodeRelationship(rctx, fc.Args["name"].(string), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3122,12 +3457,12 @@ func (ec *executionContext) _Query_getSchemaNodeRelationships(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SchemaRelationship)
+	res := resTmp.(*model.ObjectRelationship)
 	fc.Result = res
-	return ec.marshalNSchemaRelationship2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationshipᚄ(ctx, field.Selections, res)
+	return ec.marshalNObjectRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationship(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getSchemaNodeRelationships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getObjectNodeRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -3136,15 +3471,15 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeRelationships(ctx co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "name":
-				return ec.fieldContext_SchemaRelationship_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaRelationship_domain(ctx, field)
-			case "targetSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_targetSchemaNodeName(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_parentSchemaNodeName(ctx, field)
+				return ec.fieldContext_ObjectRelationship_name(ctx, field)
+			case "fromObjectNode":
+				return ec.fieldContext_ObjectRelationship_fromObjectNode(ctx, field)
+			case "toObjectNode":
+				return ec.fieldContext_ObjectRelationship_toObjectNode(ctx, field)
+			case "properties":
+				return ec.fieldContext_ObjectRelationship_properties(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaRelationship", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationship", field.Name)
 		},
 	}
 	defer func() {
@@ -3154,15 +3489,15 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeRelationships(ctx co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getSchemaNodeRelationships_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_getObjectNodeRelationship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getSchemaNodeLabel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getSchemaNodeLabel(ctx, field)
+func (ec *executionContext) _Query_getObjectNodeRelationships(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getObjectNodeRelationships(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3175,7 +3510,7 @@ func (ec *executionContext) _Query_getSchemaNodeLabel(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaNodeLabel(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string), fc.Args["schemaLabelName"].(string))
+		return ec.resolvers.Query().GetObjectNodeRelationships(rctx, fc.Args["fromObjectNode"].(model.ObjectNodeInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3187,12 +3522,12 @@ func (ec *executionContext) _Query_getSchemaNodeLabel(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SchemaLabel)
+	res := resTmp.([]*model.ObjectRelationship)
 	fc.Result = res
-	return ec.marshalNSchemaLabel2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabel(ctx, field.Selections, res)
+	return ec.marshalNObjectRelationship2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationshipᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getSchemaNodeLabel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getObjectNodeRelationships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -3201,13 +3536,15 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeLabel(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "name":
-				return ec.fieldContext_SchemaLabel_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaLabel_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaLabel_parentSchemaNodeName(ctx, field)
+				return ec.fieldContext_ObjectRelationship_name(ctx, field)
+			case "fromObjectNode":
+				return ec.fieldContext_ObjectRelationship_fromObjectNode(ctx, field)
+			case "toObjectNode":
+				return ec.fieldContext_ObjectRelationship_toObjectNode(ctx, field)
+			case "properties":
+				return ec.fieldContext_ObjectRelationship_properties(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaLabel", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationship", field.Name)
 		},
 	}
 	defer func() {
@@ -3217,15 +3554,15 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeLabel(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getSchemaNodeLabel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_getObjectNodeRelationships_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getSchemaNodeLabels(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getSchemaNodeLabels(ctx, field)
+func (ec *executionContext) _Query_cypherQuery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_cypherQuery(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3238,7 +3575,7 @@ func (ec *executionContext) _Query_getSchemaNodeLabels(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSchemaNodeLabels(rctx, fc.Args["domain"].(string), fc.Args["schemaNodeName"].(string))
+		return ec.resolvers.Query().CypherQuery(rctx, fc.Args["cypher_statement"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3250,27 +3587,19 @@ func (ec *executionContext) _Query_getSchemaNodeLabels(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SchemaLabel)
+	res := resTmp.(map[string]interface{})
 	fc.Result = res
-	return ec.marshalNSchemaLabel2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNJSON2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getSchemaNodeLabels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_cypherQuery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaLabel_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaLabel_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaLabel_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaLabel", field.Name)
+			return nil, errors.New("field of type JSON does not have child fields")
 		},
 	}
 	defer func() {
@@ -3280,7 +3609,7 @@ func (ec *executionContext) fieldContext_Query_getSchemaNodeLabels(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getSchemaNodeLabels_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_cypherQuery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3416,8 +3745,8 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _SchemaLabel_name(ctx context.Context, field graphql.CollectedField, obj *model.SchemaLabel) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaLabel_name(ctx, field)
+func (ec *executionContext) _Response_success(ctx context.Context, field graphql.CollectedField, obj *model.Response) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Response_success(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3430,7 +3759,7 @@ func (ec *executionContext) _SchemaLabel_name(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return obj.Success, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3442,26 +3771,26 @@ func (ec *executionContext) _SchemaLabel_name(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SchemaLabel_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Response_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SchemaLabel",
+		Object:     "Response",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _SchemaLabel_domain(ctx context.Context, field graphql.CollectedField, obj *model.SchemaLabel) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaLabel_domain(ctx, field)
+func (ec *executionContext) _Response_message(ctx context.Context, field graphql.CollectedField, obj *model.Response) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Response_message(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3474,183 +3803,7 @@ func (ec *executionContext) _SchemaLabel_domain(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Domain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaLabel_domain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaLabel",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaLabel_parentSchemaNodeName(ctx context.Context, field graphql.CollectedField, obj *model.SchemaLabel) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaLabel_parentSchemaNodeName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ParentSchemaNodeName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaLabel_parentSchemaNodeName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaLabel",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaNode_name(ctx context.Context, field graphql.CollectedField, obj *model.SchemaNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaNode_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaNode_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaNode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaNode_domain(ctx context.Context, field graphql.CollectedField, obj *model.SchemaNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaNode_domain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Domain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaNode_domain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaNode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaNode_parentName(ctx context.Context, field graphql.CollectedField, obj *model.SchemaNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaNode_parentName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ParentName, nil
+		return obj.Message, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3664,9 +3817,9 @@ func (ec *executionContext) _SchemaNode_parentName(ctx context.Context, field gr
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SchemaNode_parentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Response_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SchemaNode",
+		Object:     "Response",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3677,8 +3830,8 @@ func (ec *executionContext) fieldContext_SchemaNode_parentName(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _SchemaNode_properties(ctx context.Context, field graphql.CollectedField, obj *model.SchemaNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaNode_properties(ctx, field)
+func (ec *executionContext) _Response_error(ctx context.Context, field graphql.CollectedField, obj *model.Response) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Response_error(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3691,7 +3844,7 @@ func (ec *executionContext) _SchemaNode_properties(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Properties, nil
+		return obj.Error, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3700,168 +3853,14 @@ func (ec *executionContext) _SchemaNode_properties(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SchemaProperty)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOSchemaProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaPropertyᚄ(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SchemaNode_properties(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Response_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SchemaNode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaProperty_name(ctx, field)
-			case "type":
-				return ec.fieldContext_SchemaProperty_type(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaProperty_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaProperty_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaProperty", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaNode_relationships(ctx context.Context, field graphql.CollectedField, obj *model.SchemaNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaNode_relationships(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Relationships, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.SchemaRelationship)
-	fc.Result = res
-	return ec.marshalOSchemaRelationship2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationshipᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaNode_relationships(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaNode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaRelationship_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaRelationship_domain(ctx, field)
-			case "targetSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_targetSchemaNodeName(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaRelationship_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaRelationship", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaNode_labels(ctx context.Context, field graphql.CollectedField, obj *model.SchemaNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaNode_labels(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Labels, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.SchemaLabel)
-	fc.Result = res
-	return ec.marshalOSchemaLabel2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabelᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaNode_labels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaNode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_SchemaLabel_name(ctx, field)
-			case "domain":
-				return ec.fieldContext_SchemaLabel_domain(ctx, field)
-			case "parentSchemaNodeName":
-				return ec.fieldContext_SchemaLabel_parentSchemaNodeName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SchemaLabel", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaProperty_name(ctx context.Context, field graphql.CollectedField, obj *model.SchemaProperty) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaProperty_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaProperty_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaProperty",
+		Object:     "Response",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3872,8 +3871,8 @@ func (ec *executionContext) fieldContext_SchemaProperty_name(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _SchemaProperty_type(ctx context.Context, field graphql.CollectedField, obj *model.SchemaProperty) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaProperty_type(ctx, field)
+func (ec *executionContext) _Response_data(ctx context.Context, field graphql.CollectedField, obj *model.Response) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Response_data(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3886,295 +3885,28 @@ func (ec *executionContext) _SchemaProperty_type(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
+		return obj.Data, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(map[string]interface{})
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOJSON2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SchemaProperty_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Response_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SchemaProperty",
+		Object:     "Response",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaProperty_domain(ctx context.Context, field graphql.CollectedField, obj *model.SchemaProperty) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaProperty_domain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Domain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaProperty_domain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaProperty",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaProperty_parentSchemaNodeName(ctx context.Context, field graphql.CollectedField, obj *model.SchemaProperty) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaProperty_parentSchemaNodeName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ParentSchemaNodeName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaProperty_parentSchemaNodeName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaProperty",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaRelationship_name(ctx context.Context, field graphql.CollectedField, obj *model.SchemaRelationship) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaRelationship_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaRelationship_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaRelationship",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaRelationship_domain(ctx context.Context, field graphql.CollectedField, obj *model.SchemaRelationship) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaRelationship_domain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Domain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaRelationship_domain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaRelationship",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaRelationship_targetSchemaNodeName(ctx context.Context, field graphql.CollectedField, obj *model.SchemaRelationship) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaRelationship_targetSchemaNodeName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TargetSchemaNodeName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaRelationship_targetSchemaNodeName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaRelationship",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchemaRelationship_parentSchemaNodeName(ctx context.Context, field graphql.CollectedField, obj *model.SchemaRelationship) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchemaRelationship_parentSchemaNodeName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ParentSchemaNodeName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchemaRelationship_parentSchemaNodeName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchemaRelationship",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type JSON does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5953,27 +5685,54 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputCreateSchemaLabelInput(ctx context.Context, obj interface{}) (model.CreateSchemaLabelInput, error) {
-	var it model.CreateSchemaLabelInput
+func (ec *executionContext) unmarshalInputCreateObjectRelationshipInput(ctx context.Context, obj interface{}) (model.CreateObjectRelationshipInput, error) {
+	var it model.CreateObjectRelationshipInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "domain", "parentSchemaNodeName"}
+	fieldsInOrder := [...]string{"fromObjectNode", "toObjectNode"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+		case "fromObjectNode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromObjectNode"))
+			data, err := ec.unmarshalNObjectNodeInput2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Name = data
+			it.FromObjectNode = data
+		case "toObjectNode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toObjectNode"))
+			data, err := ec.unmarshalNObjectNodeInput2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToObjectNode = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteObjectNodeInput(ctx context.Context, obj interface{}) (model.DeleteObjectNodeInput, error) {
+	var it model.DeleteObjectNodeInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"domain", "name", "type"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
 		case "domain":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -5981,67 +5740,6 @@ func (ec *executionContext) unmarshalInputCreateSchemaLabelInput(ctx context.Con
 				return it, err
 			}
 			it.Domain = data
-		case "parentSchemaNodeName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentSchemaNodeName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ParentSchemaNodeName = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateSchemaNodeInput(ctx context.Context, obj interface{}) (model.CreateSchemaNodeInput, error) {
-	var it model.CreateSchemaNodeInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "domain"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "domain":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Domain = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateSchemaPropertyInput(ctx context.Context, obj interface{}) (model.CreateSchemaPropertyInput, error) {
-	var it model.CreateSchemaPropertyInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "type", "domain", "parentSchemaNodeName"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -6056,6 +5754,26 @@ func (ec *executionContext) unmarshalInputCreateSchemaPropertyInput(ctx context.
 				return it, err
 			}
 			it.Type = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputObjectNodeInput(ctx context.Context, obj interface{}) (model.ObjectNodeInput, error) {
+	var it model.ObjectNodeInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"domain", "name", "type", "labels", "properties"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
 		case "domain":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -6063,33 +5781,6 @@ func (ec *executionContext) unmarshalInputCreateSchemaPropertyInput(ctx context.
 				return it, err
 			}
 			it.Domain = data
-		case "parentSchemaNodeName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentSchemaNodeName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ParentSchemaNodeName = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateSchemaRelationshipInput(ctx context.Context, obj interface{}) (model.CreateSchemaRelationshipInput, error) {
-	var it model.CreateSchemaRelationshipInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "domain", "targetSchemaNodeName", "parentSchemaNodeName"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -6097,95 +5788,88 @@ func (ec *executionContext) unmarshalInputCreateSchemaRelationshipInput(ctx cont
 				return it, err
 			}
 			it.Name = data
-		case "domain":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Domain = data
-		case "targetSchemaNodeName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetSchemaNodeName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			it.Type = data
+		case "labels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TargetSchemaNodeName = data
-		case "parentSchemaNodeName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentSchemaNodeName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			it.Labels = data
+		case "properties":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("properties"))
+			data, err := ec.unmarshalOPropertyInput2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ParentSchemaNodeName = data
+			it.Properties = data
 		}
 	}
 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateSchemaLabelInput(ctx context.Context, obj interface{}) (model.UpdateSchemaLabelInput, error) {
-	var it model.UpdateSchemaLabelInput
+func (ec *executionContext) unmarshalInputPropertyInput(ctx context.Context, obj interface{}) (model.PropertyInput, error) {
+	var it model.PropertyInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "domain", "parentSchemaNodeName"}
+	fieldsInOrder := [...]string{"key", "value", "type"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Name = data
-		case "domain":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Key = data
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Domain = data
-		case "parentSchemaNodeName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentSchemaNodeName"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Value = data
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalNPropertyType2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyType(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ParentSchemaNodeName = data
+			it.Type = data
 		}
 	}
 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateSchemaNodeInput(ctx context.Context, obj interface{}) (model.UpdateSchemaNodeInput, error) {
-	var it model.UpdateSchemaNodeInput
+func (ec *executionContext) unmarshalInputUpdateObjectNodeInput(ctx context.Context, obj interface{}) (model.UpdateObjectNodeInput, error) {
+	var it model.UpdateObjectNodeInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "domain"}
+	fieldsInOrder := [...]string{"domain", "name", "type", "labels", "properties"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
 		case "domain":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -6193,26 +5877,6 @@ func (ec *executionContext) unmarshalInputUpdateSchemaNodeInput(ctx context.Cont
 				return it, err
 			}
 			it.Domain = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateSchemaPropertyInput(ctx context.Context, obj interface{}) (model.UpdateSchemaPropertyInput, error) {
-	var it model.UpdateSchemaPropertyInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "type", "domain", "parentSchemaNodeName"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -6227,68 +5891,20 @@ func (ec *executionContext) unmarshalInputUpdateSchemaPropertyInput(ctx context.
 				return it, err
 			}
 			it.Type = data
-		case "domain":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "labels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Domain = data
-		case "parentSchemaNodeName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentSchemaNodeName"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Labels = data
+		case "properties":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("properties"))
+			data, err := ec.unmarshalOPropertyInput2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ParentSchemaNodeName = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateSchemaRelationshipInput(ctx context.Context, obj interface{}) (model.UpdateSchemaRelationshipInput, error) {
-	var it model.UpdateSchemaRelationshipInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "domain", "targetSchemaNodeName", "parentSchemaNodeName"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "domain":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Domain = data
-		case "targetSchemaNodeName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetSchemaNodeName"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TargetSchemaNodeName = data
-		case "parentSchemaNodeName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentSchemaNodeName"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ParentSchemaNodeName = data
+			it.Properties = data
 		}
 	}
 
@@ -6322,94 +5938,240 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "createSchemaNode":
+		case "createObjectNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createSchemaNode(ctx, field)
+				return ec._Mutation_createObjectNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateSchemaNode":
+		case "updateObjectNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSchemaNode(ctx, field)
+				return ec._Mutation_updateObjectNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteSchemaNode":
+		case "deleteObjectNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteSchemaNode(ctx, field)
+				return ec._Mutation_deleteObjectNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "insertSchemaNode":
+		case "addLabelsToObjectNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_insertSchemaNode(ctx, field)
+				return ec._Mutation_addLabelsToObjectNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createSchemaProperty":
+		case "removeLabelsFromObjectNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createSchemaProperty(ctx, field)
+				return ec._Mutation_removeLabelsFromObjectNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateSchemaProperty":
+		case "addPropertiesToObjectNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSchemaProperty(ctx, field)
+				return ec._Mutation_addPropertiesToObjectNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteSchemaProperty":
+		case "removePropertiesFromObjectNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteSchemaProperty(ctx, field)
+				return ec._Mutation_removePropertiesFromObjectNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createSchemaRelationship":
+		case "createObjectRelationship":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createSchemaRelationship(ctx, field)
+				return ec._Mutation_createObjectRelationship(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateSchemaRelationship":
+		case "updatePropertiesOnObjectRelationship":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSchemaRelationship(ctx, field)
+				return ec._Mutation_updatePropertiesOnObjectRelationship(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteSchemaRelationship":
+		case "removePropertiesFromObjectRelationship":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteSchemaRelationship(ctx, field)
+				return ec._Mutation_removePropertiesFromObjectRelationship(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createSchemaLabel":
+		case "deleteObjectRelationship":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createSchemaLabel(ctx, field)
+				return ec._Mutation_deleteObjectRelationship(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateSchemaLabel":
+		case "cypherMutation":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSchemaLabel(ctx, field)
+				return ec._Mutation_cypherMutation(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteSchemaLabel":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteSchemaLabel(ctx, field)
-			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var objectNodeImplementors = []string{"ObjectNode"}
+
+func (ec *executionContext) _ObjectNode(ctx context.Context, sel ast.SelectionSet, obj *model.ObjectNode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, objectNodeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ObjectNode")
+		case "domain":
+			out.Values[i] = ec._ObjectNode_domain(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._ObjectNode_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._ObjectNode_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "labels":
+			out.Values[i] = ec._ObjectNode_labels(ctx, field, obj)
+		case "properties":
+			out.Values[i] = ec._ObjectNode_properties(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var objectRelationshipImplementors = []string{"ObjectRelationship"}
+
+func (ec *executionContext) _ObjectRelationship(ctx context.Context, sel ast.SelectionSet, obj *model.ObjectRelationship) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, objectRelationshipImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ObjectRelationship")
+		case "name":
+			out.Values[i] = ec._ObjectRelationship_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fromObjectNode":
+			out.Values[i] = ec._ObjectRelationship_fromObjectNode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "toObjectNode":
+			out.Values[i] = ec._ObjectRelationship_toObjectNode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "properties":
+			out.Values[i] = ec._ObjectRelationship_properties(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var propertyImplementors = []string{"Property"}
+
+func (ec *executionContext) _Property(ctx context.Context, sel ast.SelectionSet, obj *model.Property) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, propertyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Property")
+		case "key":
+			out.Values[i] = ec._Property_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._Property_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._Property_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6455,7 +6217,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "getSchemaNode":
+		case "getObjectNode":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6464,7 +6226,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getSchemaNode(ctx, field)
+				res = ec._Query_getObjectNode(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -6477,7 +6239,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getSchemaNodes":
+		case "getObjectNodes":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6486,7 +6248,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getSchemaNodes(ctx, field)
+				res = ec._Query_getObjectNodes(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -6499,7 +6261,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getSchemaNodeProperty":
+		case "getObjectNodeRelationship":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6508,7 +6270,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getSchemaNodeProperty(ctx, field)
+				res = ec._Query_getObjectNodeRelationship(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -6521,7 +6283,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getSchemaNodeProperties":
+		case "getObjectNodeRelationships":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6530,7 +6292,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getSchemaNodeProperties(ctx, field)
+				res = ec._Query_getObjectNodeRelationships(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -6543,7 +6305,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getSchemaNodeRelationship":
+		case "cypherQuery":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6552,73 +6314,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getSchemaNodeRelationship(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getSchemaNodeRelationships":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getSchemaNodeRelationships(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getSchemaNodeLabel":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getSchemaNodeLabel(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getSchemaNodeLabels":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getSchemaNodeLabels(ctx, field)
+				res = ec._Query_cypherQuery(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -6662,192 +6358,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var schemaLabelImplementors = []string{"SchemaLabel"}
+var responseImplementors = []string{"Response"}
 
-func (ec *executionContext) _SchemaLabel(ctx context.Context, sel ast.SelectionSet, obj *model.SchemaLabel) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, schemaLabelImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SchemaLabel")
-		case "name":
-			out.Values[i] = ec._SchemaLabel_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "domain":
-			out.Values[i] = ec._SchemaLabel_domain(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "parentSchemaNodeName":
-			out.Values[i] = ec._SchemaLabel_parentSchemaNodeName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var schemaNodeImplementors = []string{"SchemaNode"}
-
-func (ec *executionContext) _SchemaNode(ctx context.Context, sel ast.SelectionSet, obj *model.SchemaNode) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, schemaNodeImplementors)
+func (ec *executionContext) _Response(ctx context.Context, sel ast.SelectionSet, obj *model.Response) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, responseImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SchemaNode")
-		case "name":
-			out.Values[i] = ec._SchemaNode_name(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("Response")
+		case "success":
+			out.Values[i] = ec._Response_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "domain":
-			out.Values[i] = ec._SchemaNode_domain(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "parentName":
-			out.Values[i] = ec._SchemaNode_parentName(ctx, field, obj)
-		case "properties":
-			out.Values[i] = ec._SchemaNode_properties(ctx, field, obj)
-		case "relationships":
-			out.Values[i] = ec._SchemaNode_relationships(ctx, field, obj)
-		case "labels":
-			out.Values[i] = ec._SchemaNode_labels(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var schemaPropertyImplementors = []string{"SchemaProperty"}
-
-func (ec *executionContext) _SchemaProperty(ctx context.Context, sel ast.SelectionSet, obj *model.SchemaProperty) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, schemaPropertyImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SchemaProperty")
-		case "name":
-			out.Values[i] = ec._SchemaProperty_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "type":
-			out.Values[i] = ec._SchemaProperty_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "domain":
-			out.Values[i] = ec._SchemaProperty_domain(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "parentSchemaNodeName":
-			out.Values[i] = ec._SchemaProperty_parentSchemaNodeName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var schemaRelationshipImplementors = []string{"SchemaRelationship"}
-
-func (ec *executionContext) _SchemaRelationship(ctx context.Context, sel ast.SelectionSet, obj *model.SchemaRelationship) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, schemaRelationshipImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SchemaRelationship")
-		case "name":
-			out.Values[i] = ec._SchemaRelationship_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "domain":
-			out.Values[i] = ec._SchemaRelationship_domain(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "targetSchemaNodeName":
-			out.Values[i] = ec._SchemaRelationship_targetSchemaNodeName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "parentSchemaNodeName":
-			out.Values[i] = ec._SchemaRelationship_parentSchemaNodeName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
+		case "message":
+			out.Values[i] = ec._Response_message(ctx, field, obj)
+		case "error":
+			out.Values[i] = ec._Response_error(ctx, field, obj)
+		case "data":
+			out.Values[i] = ec._Response_data(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7212,31 +6744,32 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCreateSchemaLabelInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐCreateSchemaLabelInput(ctx context.Context, v interface{}) (model.CreateSchemaLabelInput, error) {
-	res, err := ec.unmarshalInputCreateSchemaLabelInput(ctx, v)
+func (ec *executionContext) unmarshalNJSON2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+	res, err := graphql.UnmarshalMap(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateSchemaNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐCreateSchemaNodeInput(ctx context.Context, v interface{}) (model.CreateSchemaNodeInput, error) {
-	res, err := ec.unmarshalInputCreateSchemaNodeInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) marshalNJSON2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
-func (ec *executionContext) unmarshalNCreateSchemaPropertyInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐCreateSchemaPropertyInput(ctx context.Context, v interface{}) (model.CreateSchemaPropertyInput, error) {
-	res, err := ec.unmarshalInputCreateSchemaPropertyInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) marshalNObjectNode2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx context.Context, sel ast.SelectionSet, v model.ObjectNode) graphql.Marshaler {
+	return ec._ObjectNode(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNCreateSchemaRelationshipInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐCreateSchemaRelationshipInput(ctx context.Context, v interface{}) (model.CreateSchemaRelationshipInput, error) {
-	res, err := ec.unmarshalInputCreateSchemaRelationshipInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSchemaLabel2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabel(ctx context.Context, sel ast.SelectionSet, v model.SchemaLabel) graphql.Marshaler {
-	return ec._SchemaLabel(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSchemaLabel2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchemaLabel) graphql.Marshaler {
+func (ec *executionContext) marshalNObjectNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ObjectNode) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -7260,7 +6793,7 @@ func (ec *executionContext) marshalNSchemaLabel2ᚕᚖgithubᚗcomᚋmikeᚑjack
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSchemaLabel2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabel(ctx, sel, v[i])
+			ret[i] = ec.marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7280,21 +6813,31 @@ func (ec *executionContext) marshalNSchemaLabel2ᚕᚖgithubᚗcomᚋmikeᚑjack
 	return ret
 }
 
-func (ec *executionContext) marshalNSchemaLabel2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabel(ctx context.Context, sel ast.SelectionSet, v *model.SchemaLabel) graphql.Marshaler {
+func (ec *executionContext) marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx context.Context, sel ast.SelectionSet, v *model.ObjectNode) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._SchemaLabel(ctx, sel, v)
+	return ec._ObjectNode(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSchemaNode2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNode(ctx context.Context, sel ast.SelectionSet, v model.SchemaNode) graphql.Marshaler {
-	return ec._SchemaNode(ctx, sel, &v)
+func (ec *executionContext) unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx context.Context, v interface{}) (model.ObjectNodeInput, error) {
+	res, err := ec.unmarshalInputObjectNodeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSchemaNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchemaNode) graphql.Marshaler {
+func (ec *executionContext) unmarshalNObjectNodeInput2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx context.Context, v interface{}) (*model.ObjectNodeInput, error) {
+	res, err := ec.unmarshalInputObjectNodeInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNObjectRelationship2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationship(ctx context.Context, sel ast.SelectionSet, v model.ObjectRelationship) graphql.Marshaler {
+	return ec._ObjectRelationship(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNObjectRelationship2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationshipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ObjectRelationship) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -7318,7 +6861,7 @@ func (ec *executionContext) marshalNSchemaNode2ᚕᚖgithubᚗcomᚋmikeᚑjacks
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSchemaNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNode(ctx, sel, v[i])
+			ret[i] = ec.marshalNObjectRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationship(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7338,130 +6881,70 @@ func (ec *executionContext) marshalNSchemaNode2ᚕᚖgithubᚗcomᚋmikeᚑjacks
 	return ret
 }
 
-func (ec *executionContext) marshalNSchemaNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaNode(ctx context.Context, sel ast.SelectionSet, v *model.SchemaNode) graphql.Marshaler {
+func (ec *executionContext) marshalNObjectRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationship(ctx context.Context, sel ast.SelectionSet, v *model.ObjectRelationship) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._SchemaNode(ctx, sel, v)
+	return ec._ObjectRelationship(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSchemaProperty2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaProperty(ctx context.Context, sel ast.SelectionSet, v model.SchemaProperty) graphql.Marshaler {
-	return ec._SchemaProperty(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSchemaProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaPropertyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchemaProperty) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSchemaProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaProperty(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNSchemaProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaProperty(ctx context.Context, sel ast.SelectionSet, v *model.SchemaProperty) graphql.Marshaler {
+func (ec *executionContext) marshalNProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐProperty(ctx context.Context, sel ast.SelectionSet, v *model.Property) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._SchemaProperty(ctx, sel, v)
+	return ec._Property(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSchemaRelationship2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationship(ctx context.Context, sel ast.SelectionSet, v model.SchemaRelationship) graphql.Marshaler {
-	return ec._SchemaRelationship(ctx, sel, &v)
+func (ec *executionContext) unmarshalNPropertyInput2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInputᚄ(ctx context.Context, v interface{}) ([]*model.PropertyInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.PropertyInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNPropertyInput2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
-func (ec *executionContext) marshalNSchemaRelationship2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationshipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchemaRelationship) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSchemaRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationship(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
+func (ec *executionContext) unmarshalNPropertyInput2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInput(ctx context.Context, v interface{}) (*model.PropertyInput, error) {
+	res, err := ec.unmarshalInputPropertyInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSchemaRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationship(ctx context.Context, sel ast.SelectionSet, v *model.SchemaRelationship) graphql.Marshaler {
+func (ec *executionContext) unmarshalNPropertyType2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyType(ctx context.Context, v interface{}) (model.PropertyType, error) {
+	var res model.PropertyType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPropertyType2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyType(ctx context.Context, sel ast.SelectionSet, v model.PropertyType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx context.Context, sel ast.SelectionSet, v model.Response) graphql.Marshaler {
+	return ec._Response(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx context.Context, sel ast.SelectionSet, v *model.Response) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._SchemaRelationship(ctx, sel, v)
+	return ec._Response(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -7479,23 +6962,40 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdateSchemaLabelInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateSchemaLabelInput(ctx context.Context, v interface{}) (model.UpdateSchemaLabelInput, error) {
-	res, err := ec.unmarshalInputUpdateSchemaLabelInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
-func (ec *executionContext) unmarshalNUpdateSchemaNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateSchemaNodeInput(ctx context.Context, v interface{}) (model.UpdateSchemaNodeInput, error) {
-	res, err := ec.unmarshalInputUpdateSchemaNodeInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
-func (ec *executionContext) unmarshalNUpdateSchemaPropertyInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateSchemaPropertyInput(ctx context.Context, v interface{}) (model.UpdateSchemaPropertyInput, error) {
-	res, err := ec.unmarshalInputUpdateSchemaPropertyInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateSchemaRelationshipInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateSchemaRelationshipInput(ctx context.Context, v interface{}) (model.UpdateSchemaRelationshipInput, error) {
-	res, err := ec.unmarshalInputUpdateSchemaRelationshipInput(ctx, v)
+func (ec *executionContext) unmarshalNUpdateObjectNodeInput2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐUpdateObjectNodeInput(ctx context.Context, v interface{}) (model.UpdateObjectNodeInput, error) {
+	res, err := ec.unmarshalInputUpdateObjectNodeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -7778,7 +7278,23 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOSchemaLabel2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchemaLabel) graphql.Marshaler {
+func (ec *executionContext) unmarshalOJSON2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOJSON2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
+	return res
+}
+
+func (ec *executionContext) marshalOProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Property) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7805,7 +7321,7 @@ func (ec *executionContext) marshalOSchemaLabel2ᚕᚖgithubᚗcomᚋmikeᚑjack
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSchemaLabel2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaLabel(ctx, sel, v[i])
+			ret[i] = ec.marshalNProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐProperty(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7825,90 +7341,54 @@ func (ec *executionContext) marshalOSchemaLabel2ᚕᚖgithubᚗcomᚋmikeᚑjack
 	return ret
 }
 
-func (ec *executionContext) marshalOSchemaProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaPropertyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchemaProperty) graphql.Marshaler {
+func (ec *executionContext) unmarshalOPropertyInput2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInputᚄ(ctx context.Context, v interface{}) ([]*model.PropertyInput, error) {
 	if v == nil {
-		return graphql.Null
+		return nil, nil
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
 	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSchemaProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaProperty(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
+	var err error
+	res := make([]*model.PropertyInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNPropertyInput2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
 		}
 	}
-
-	return ret
+	return res, nil
 }
 
-func (ec *executionContext) marshalOSchemaRelationship2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationshipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchemaRelationship) graphql.Marshaler {
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
 	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSchemaRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐSchemaRelationship(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
 	}
-	wg.Wait()
 
 	for _, e := range ret {
 		if e == graphql.Null {

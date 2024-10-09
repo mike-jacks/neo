@@ -12,109 +12,93 @@ import (
 	"github.com/mike-jacks/neo/model"
 )
 
-// CreateSchemaNode is the resolver for the createSchemaNode field.
-func (r *mutationResolver) CreateSchemaNode(ctx context.Context, sourceSchemaNodeName *string, createSchemaNodeInput model.CreateSchemaNodeInput) (*model.SchemaNode, error) {
-	return r.Database.CreateSchemaNode(ctx, sourceSchemaNodeName, createSchemaNodeInput)
+// CreateObjectNode is the resolver for the createObjectNode field.
+func (r *mutationResolver) CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.Response, error) {
+	result, err := r.Database.CreateObjectNode(ctx, domain, name, typeArg, labels, properties)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-// UpdateSchemaNode is the resolver for the updateSchemaNode field.
-func (r *mutationResolver) UpdateSchemaNode(ctx context.Context, domain string, name string, updateSchemaNodeInput model.UpdateSchemaNodeInput) ([]*model.SchemaNode, error) {
-	return r.Database.UpdateSchemaNode(ctx, domain, name, updateSchemaNodeInput)
+// UpdateObjectNode is the resolver for the updateObjectNode field.
+func (r *mutationResolver) UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: UpdateObjectNode - updateObjectNode"))
 }
 
-// DeleteSchemaNode is the resolver for the deleteSchemaNode field.
-func (r *mutationResolver) DeleteSchemaNode(ctx context.Context, domain string, name string) (bool, error) {
-	return r.Database.DeleteSchemaNode(ctx, domain, name)
+// DeleteObjectNode is the resolver for the deleteObjectNode field.
+func (r *mutationResolver) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: DeleteObjectNode - deleteObjectNode"))
 }
 
-// InsertSchemaNode is the resolver for the insertSchemaNode field.
-func (r *mutationResolver) InsertSchemaNode(ctx context.Context, domain string, parentName string, childName string) (*model.SchemaNode, error) {
-	panic(fmt.Errorf("not implemented: InsertSchemaNode - insertSchemaNode"))
+// AddLabelsToObjectNode is the resolver for the addLabelsToObjectNode field.
+func (r *mutationResolver) AddLabelsToObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: AddLabelsToObjectNode - addLabelsToObjectNode"))
 }
 
-// CreateSchemaProperty is the resolver for the createSchemaProperty field.
-func (r *mutationResolver) CreateSchemaProperty(ctx context.Context, createSchemaPropertyInput model.CreateSchemaPropertyInput) (*model.SchemaProperty, error) {
-	panic(fmt.Errorf("not implemented: CreateSchemaProperty - createSchemaProperty"))
+// RemoveLabelsFromObjectNode is the resolver for the removeLabelsFromObjectNode field.
+func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: RemoveLabelsFromObjectNode - removeLabelsFromObjectNode"))
 }
 
-// UpdateSchemaProperty is the resolver for the updateSchemaProperty field.
-func (r *mutationResolver) UpdateSchemaProperty(ctx context.Context, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string, updateSchemaPropertyInput model.UpdateSchemaPropertyInput) (*model.SchemaProperty, error) {
-	panic(fmt.Errorf("not implemented: UpdateSchemaProperty - updateSchemaProperty"))
+// AddPropertiesToObjectNode is the resolver for the addPropertiesToObjectNode field.
+func (r *mutationResolver) AddPropertiesToObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: AddPropertiesToObjectNode - addPropertiesToObjectNode"))
 }
 
-// DeleteSchemaProperty is the resolver for the deleteSchemaProperty field.
-func (r *mutationResolver) DeleteSchemaProperty(ctx context.Context, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteSchemaProperty - deleteSchemaProperty"))
+// RemovePropertiesFromObjectNode is the resolver for the removePropertiesFromObjectNode field.
+func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: RemovePropertiesFromObjectNode - removePropertiesFromObjectNode"))
 }
 
-// CreateSchemaRelationship is the resolver for the createSchemaRelationship field.
-func (r *mutationResolver) CreateSchemaRelationship(ctx context.Context, createSchemaRelationshipInput model.CreateSchemaRelationshipInput) (*model.SchemaRelationship, error) {
-	panic(fmt.Errorf("not implemented: CreateSchemaRelationship - createSchemaRelationship"))
+// CreateObjectRelationship is the resolver for the createObjectRelationship field.
+func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: CreateObjectRelationship - createObjectRelationship"))
 }
 
-// UpdateSchemaRelationship is the resolver for the updateSchemaRelationship field.
-func (r *mutationResolver) UpdateSchemaRelationship(ctx context.Context, domain string, schemaNodeName string, schemaRelationshipName string, updateSchemaRelationshipInput model.UpdateSchemaRelationshipInput) (*model.SchemaRelationship, error) {
-	panic(fmt.Errorf("not implemented: UpdateSchemaRelationship - updateSchemaRelationship"))
+// UpdatePropertiesOnObjectRelationship is the resolver for the updatePropertiesOnObjectRelationship field.
+func (r *mutationResolver) UpdatePropertiesOnObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: UpdatePropertiesOnObjectRelationship - updatePropertiesOnObjectRelationship"))
 }
 
-// DeleteSchemaRelationship is the resolver for the deleteSchemaRelationship field.
-func (r *mutationResolver) DeleteSchemaRelationship(ctx context.Context, domain string, schemaNodeName string, schemaRelationshipName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteSchemaRelationship - deleteSchemaRelationship"))
+// RemovePropertiesFromObjectRelationship is the resolver for the removePropertiesFromObjectRelationship field.
+func (r *mutationResolver) RemovePropertiesFromObjectRelationship(ctx context.Context, name string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: RemovePropertiesFromObjectRelationship - removePropertiesFromObjectRelationship"))
 }
 
-// CreateSchemaLabel is the resolver for the createSchemaLabel field.
-func (r *mutationResolver) CreateSchemaLabel(ctx context.Context, createSchemaLabelInput model.CreateSchemaLabelInput) (*model.SchemaLabel, error) {
-	panic(fmt.Errorf("not implemented: CreateSchemaLabel - createSchemaLabel"))
+// DeleteObjectRelationship is the resolver for the deleteObjectRelationship field.
+func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: DeleteObjectRelationship - deleteObjectRelationship"))
 }
 
-// UpdateSchemaLabel is the resolver for the updateSchemaLabel field.
-func (r *mutationResolver) UpdateSchemaLabel(ctx context.Context, domain string, schemaNodeName string, schemaLabelName string, updateSchemaLabelInput model.UpdateSchemaLabelInput) (*model.SchemaLabel, error) {
-	panic(fmt.Errorf("not implemented: UpdateSchemaLabel - updateSchemaLabel"))
+// CypherMutation is the resolver for the cypherMutation field.
+func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) (map[string]interface{}, error) {
+	panic(fmt.Errorf("not implemented: CypherMutation - cypherMutation"))
 }
 
-// DeleteSchemaLabel is the resolver for the deleteSchemaLabel field.
-func (r *mutationResolver) DeleteSchemaLabel(ctx context.Context, domain string, schemaNodeName string, schemaLabelName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteSchemaLabel - deleteSchemaLabel"))
+// GetObjectNode is the resolver for the getObjectNode field.
+func (r *queryResolver) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNode, error) {
+	panic(fmt.Errorf("not implemented: GetObjectNode - getObjectNode"))
 }
 
-// GetSchemaNode is the resolver for the getSchemaNode field.
-func (r *queryResolver) GetSchemaNode(ctx context.Context, domain string, name string) (*model.SchemaNode, error) {
-	panic(fmt.Errorf("not implemented: GetSchemaNode - getSchemaNode"))
+// GetObjectNodes is the resolver for the getObjectNodes field.
+func (r *queryResolver) GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string) ([]*model.ObjectNode, error) {
+	panic(fmt.Errorf("not implemented: GetObjectNodes - getObjectNodes"))
 }
 
-// GetSchemaNodes is the resolver for the getSchemaNodes field.
-func (r *queryResolver) GetSchemaNodes(ctx context.Context, domain string) ([]*model.SchemaNode, error) {
-	panic(fmt.Errorf("not implemented: GetSchemaNodes - getSchemaNodes"))
+// GetObjectNodeRelationship is the resolver for the getObjectNodeRelationship field.
+func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.ObjectRelationship, error) {
+	panic(fmt.Errorf("not implemented: GetObjectNodeRelationship - getObjectNodeRelationship"))
 }
 
-// GetSchemaNodeProperty is the resolver for the getSchemaNodeProperty field.
-func (r *queryResolver) GetSchemaNodeProperty(ctx context.Context, domain string, schemaNodeName string, schemaPropertyName string, schemaPropertyType string) (*model.SchemaProperty, error) {
-	panic(fmt.Errorf("not implemented: GetSchemaNodeProperty - getSchemaNodeProperty"))
+// GetObjectNodeRelationships is the resolver for the getObjectNodeRelationships field.
+func (r *queryResolver) GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) ([]*model.ObjectRelationship, error) {
+	panic(fmt.Errorf("not implemented: GetObjectNodeRelationships - getObjectNodeRelationships"))
 }
 
-// GetSchemaNodeProperties is the resolver for the getSchemaNodeProperties field.
-func (r *queryResolver) GetSchemaNodeProperties(ctx context.Context, domain string, schemaNodeName string) ([]*model.SchemaProperty, error) {
-	panic(fmt.Errorf("not implemented: GetSchemaNodeProperties - getSchemaNodeProperties"))
-}
-
-// GetSchemaNodeRelationship is the resolver for the getSchemaNodeRelationship field.
-func (r *queryResolver) GetSchemaNodeRelationship(ctx context.Context, domain string, schemaNodeName string, schemaRelationshipName string) (*model.SchemaRelationship, error) {
-	panic(fmt.Errorf("not implemented: GetSchemaNodeRelationship - getSchemaNodeRelationship"))
-}
-
-// GetSchemaNodeRelationships is the resolver for the getSchemaNodeRelationships field.
-func (r *queryResolver) GetSchemaNodeRelationships(ctx context.Context, domain string, schemaNodeName string) ([]*model.SchemaRelationship, error) {
-	panic(fmt.Errorf("not implemented: GetSchemaNodeRelationships - getSchemaNodeRelationships"))
-}
-
-// GetSchemaNodeLabel is the resolver for the getSchemaNodeLabel field.
-func (r *queryResolver) GetSchemaNodeLabel(ctx context.Context, domain string, schemaNodeName string, schemaLabelName string) (*model.SchemaLabel, error) {
-	panic(fmt.Errorf("not implemented: GetSchemaNodeLabel - getSchemaNodeLabel"))
-}
-
-// GetSchemaNodeLabels is the resolver for the getSchemaNodeLabels field.
-func (r *queryResolver) GetSchemaNodeLabels(ctx context.Context, domain string, schemaNodeName string) ([]*model.SchemaLabel, error) {
-	panic(fmt.Errorf("not implemented: GetSchemaNodeLabels - getSchemaNodeLabels"))
+// CypherQuery is the resolver for the cypherQuery field.
+func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) (map[string]interface{}, error) {
+	panic(fmt.Errorf("not implemented: CypherQuery - cypherQuery"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

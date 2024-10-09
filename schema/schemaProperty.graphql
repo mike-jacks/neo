@@ -1,20 +1,20 @@
-type SchemaProperty {
-  name: String!
-  type: String!
-  domain: String!
-  parentSchemaNodeName: String!
-}
+# type SchemaProperty {
+#   name: String!
+#   type: String!
+#   domain: String!
+#   parentSchemaNodeName: String!
+# }
 
-input CreateSchemaPropertyInput {
-  name: String!
-  type: String!
-  domain: String!
-  parentSchemaNodeName: String!
-}
+# input CreateSchemaPropertyInput {
+#   name: String!
+#   type: String!
+#   domain: String!
+#   parentSchemaNodeName: String!
+# }
 
-input UpdateSchemaPropertyInput {
-  name: String
-  type: String
-  domain: String
-  parentSchemaNodeName: String
-}
+# input UpdateSchemaPropertyInput {
+#   name: String
+#   type: String
+#   domain: String
+#   parentSchemaNodeName: String
+# }

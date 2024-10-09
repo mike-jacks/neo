@@ -8,8 +8,6 @@ import (
 )
 
 type Database interface {
-	CreateSchemaNode(ctx context.Context, sourceSchemaNodeName *string, createSchemaNodeInput model.CreateSchemaNodeInput) (*model.SchemaNode, error)
-	UpdateSchemaNode(ctx context.Context, domain string, name string, updateSchemaNodeInput model.UpdateSchemaNodeInput) ([]*model.SchemaNode, error)
-	DeleteSchemaNode(ctx context.Context, domain string, name string) (bool, error)
 	GetDriver() neo4j.DriverWithContext
+	CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.Response, error)
 }
