@@ -41,9 +41,7 @@ func main() {
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
-		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
-		MaxAge:           300,
 	})
 
 	http.Handle("/graphql", corsHandler.Handler(playground.Handler("GraphQL Playground", "/query")))
