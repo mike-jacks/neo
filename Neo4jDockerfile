@@ -1,0 +1,9 @@
+FROM neo4j:latest
+
+ENV NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+
+EXPOSE 7474 7687
+
+VOLUME /volume/data /volume/logs /volume/plugins
+
+CMD ["neo4j"]

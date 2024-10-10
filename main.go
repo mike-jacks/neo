@@ -12,6 +12,7 @@ import (
 	"github.com/mike-jacks/neo/db"
 	"github.com/mike-jacks/neo/generated"
 	"github.com/mike-jacks/neo/resolver"
+	"github.com/rs/cors"
 )
 
 func setupGraphQLServer(db db.Database) *handler.Server {
@@ -36,8 +37,17 @@ func main() {
 
 	srv := setupGraphQLServer(neo4jdb)
 
-	http.Handle("/graphql", playground.Handler("GraphQL Playground", "/query"))
-	http.Handle("/query", srv)
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*j"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "Accept", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	})
+
+	http.Handle("/graphql", corsHandler.Handler(playground.Handler("GraphQL Playground", "/query")))
+	http.Handle("/query", corsHandler.Handler(srv))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -52,4 +62,5 @@ func main() {
 	log.Printf("Connect to %s/query for GraphQL API", url)
 	log.Printf("Connect to https://console.neo4j.io for Neo4j Browser Console")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+
 }
