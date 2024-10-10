@@ -49,7 +49,12 @@ type Mutation {
     fromObjectNode: ObjectNodeInput!
     toObjectNode: ObjectNodeInput!
   ): Response!
-  removePropertiesFromObjectRelationship(name: String!, properties: [String!]!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  removePropertiesFromObjectRelationship(
+    name: String!
+    properties: [String!]!
+    fromObjectNode: ObjectNodeInput!
+    toObjectNode: ObjectNodeInput!
+  ): Response!
   deleteObjectRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
 
   cypherMutation(cypher_statement: String!): JSON!
@@ -83,7 +88,6 @@ input PropertyInput {
 type Response {
   success: Boolean!
   message: String
-  error: String
   data: JSON
 }
 

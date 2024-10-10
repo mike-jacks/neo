@@ -203,8 +203,7 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	result, err := session.Run(ctx, query, parameters)
 	if err != nil {
 		message := "Failed to update object node"
-		errorMessage := err.Error()
-		return &model.Response{Success: false, Message: &message, Error: &errorMessage, Data: nil}, err
+		return &model.Response{Success: false, Message: &message, Data: nil}, err
 	}
 
 	if result.Next(ctx) {
@@ -212,8 +211,7 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 		node, ok := record.Get("o")
 		if !ok {
 			message := "Failed to retrieve the updated node"
-			errorMessage := "Unable to get 'o' from record"
-			return &model.Response{Success: false, Message: &message, Error: &errorMessage, Data: nil}, nil
+			return &model.Response{Success: false, Message: &message, Data: nil}, nil
 		}
 
 		neo4jNode, ok := node.(dbtype.Node)
@@ -234,7 +232,48 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	message := "Failed to update object node"
-	errorMessage := "Unable to update object node"
 
-	return &model.Response{Success: false, Message: &message, Error: &errorMessage, Data: nil}, fmt.Errorf("failed to update object node")
+	return &model.Response{Success: false, Message: &message, Data: nil}, fmt.Errorf("failed to update object node")
+}
+
+func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(strings.ToUpper(domain), " ")
+	name = strings.Trim(strings.ToUpper(name), " ")
+	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+
+	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain}) DETACH DELETE o RETURN count(o) as deletedCount", typeArg)
+	parameters := map[string]any{
+		"name":    name,
+		"typeArg": typeArg,
+		"domain":  domain,
+	}
+
+	fmt.Println(query)
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		message := "Failed to delete object node"
+		return &model.Response{Success: false, Message: &message, Data: nil}, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		deletedCount, ok := record.Get("deletedCount")
+		if !ok {
+			message := "Failed to retrieve the deleted count"
+			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		}
+		deletedCountInt := deletedCount.(int64)
+		if deletedCountInt > 0 {
+			message := fmt.Sprintf("Successfully deleted object node: %v", name)
+			return &model.Response{Success: true, Message: &message, Data: nil}, nil
+		} else {
+			message := fmt.Sprintf("Object node: %v does not exist", name)
+			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to delete object node")
 }

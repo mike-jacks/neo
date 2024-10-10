@@ -32,7 +32,11 @@ func (r *mutationResolver) UpdateObjectNode(ctx context.Context, domain string, 
 
 // DeleteObjectNode is the resolver for the deleteObjectNode field.
 func (r *mutationResolver) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: DeleteObjectNode - deleteObjectNode"))
+	result, err := r.Database.DeleteObjectNode(ctx, domain, name, typeArg)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // AddLabelsToObjectNode is the resolver for the addLabelsToObjectNode field.

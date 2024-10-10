@@ -92,7 +92,6 @@ type ComplexityRoot struct {
 
 	Response struct {
 		Data    func(childComplexity int) int
-		Error   func(childComplexity int) int
 		Message func(childComplexity int) int
 		Success func(childComplexity int) int
 	}
@@ -434,13 +433,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Response.Data(childComplexity), true
 
-	case "Response.error":
-		if e.complexity.Response.Error == nil {
-			break
-		}
-
-		return e.complexity.Response.Error(childComplexity), true
-
 	case "Response.message":
 		if e.complexity.Response.Message == nil {
 			break
@@ -616,7 +608,12 @@ var sources = []*ast.Source{
     fromObjectNode: ObjectNodeInput!
     toObjectNode: ObjectNodeInput!
   ): Response!
-  removePropertiesFromObjectRelationship(name: String!, properties: [String!]!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  removePropertiesFromObjectRelationship(
+    name: String!
+    properties: [String!]!
+    fromObjectNode: ObjectNodeInput!
+    toObjectNode: ObjectNodeInput!
+  ): Response!
   deleteObjectRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
 
   cypherMutation(cypher_statement: String!): JSON!
@@ -650,7 +647,6 @@ input PropertyInput {
 type Response {
   success: Boolean!
   message: String
-  error: String
   data: JSON
 }
 
@@ -2011,8 +2007,6 @@ func (ec *executionContext) fieldContext_Mutation_createObjectNode(ctx context.C
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2076,8 +2070,6 @@ func (ec *executionContext) fieldContext_Mutation_updateObjectNode(ctx context.C
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2141,8 +2133,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteObjectNode(ctx context.C
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2206,8 +2196,6 @@ func (ec *executionContext) fieldContext_Mutation_addLabelsToObjectNode(ctx cont
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2271,8 +2259,6 @@ func (ec *executionContext) fieldContext_Mutation_removeLabelsFromObjectNode(ctx
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2336,8 +2322,6 @@ func (ec *executionContext) fieldContext_Mutation_addPropertiesToObjectNode(ctx 
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2401,8 +2385,6 @@ func (ec *executionContext) fieldContext_Mutation_removePropertiesFromObjectNode
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2466,8 +2448,6 @@ func (ec *executionContext) fieldContext_Mutation_createObjectRelationship(ctx c
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2531,8 +2511,6 @@ func (ec *executionContext) fieldContext_Mutation_updatePropertiesOnObjectRelati
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2596,8 +2574,6 @@ func (ec *executionContext) fieldContext_Mutation_removePropertiesFromObjectRela
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -2661,8 +2637,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteObjectRelationship(ctx c
 				return ec.fieldContext_Response_success(ctx, field)
 			case "message":
 				return ec.fieldContext_Response_message(ctx, field)
-			case "error":
-				return ec.fieldContext_Response_error(ctx, field)
 			case "data":
 				return ec.fieldContext_Response_data(ctx, field)
 			}
@@ -3818,47 +3792,6 @@ func (ec *executionContext) _Response_message(ctx context.Context, field graphql
 }
 
 func (ec *executionContext) fieldContext_Response_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Response",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Response_error(ctx context.Context, field graphql.CollectedField, obj *model.Response) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Response_error(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Error, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Response_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Response",
 		Field:      field,
@@ -6376,8 +6309,6 @@ func (ec *executionContext) _Response(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "message":
 			out.Values[i] = ec._Response_message(ctx, field, obj)
-		case "error":
-			out.Values[i] = ec._Response_error(ctx, field, obj)
 		case "data":
 			out.Values[i] = ec._Response_data(ctx, field, obj)
 		default:
