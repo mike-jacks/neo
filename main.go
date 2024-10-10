@@ -45,11 +45,11 @@ func main() {
 	}
 	url := os.Getenv("URL")
 	if url == "" {
-		url = "http://localhost"
+		url = "http://localhost" + ":" + port
 	}
 
-	log.Printf("Connect to %s:%s/graphql for GraphQL Playground", url, port)
-	log.Printf("Connect to %s:%s/query for GraphQL API", url, port)
+	log.Printf("Connect to %s/graphql for GraphQL Playground", url)
+	log.Printf("Connect to %s/query for GraphQL API", url)
 	log.Printf("Connect to https://console.neo4j.io for Neo4j Browser Console")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
