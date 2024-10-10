@@ -23,7 +23,7 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println(".env file not found")
 	}
 
 	driver, err := db.SetupNeo4jDriver()
