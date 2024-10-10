@@ -77,7 +77,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		}
 	}
 
-	query = fmt.Sprintf("CREATE (o:_%v:%v", domain, typeArg)
+	query = fmt.Sprintf("CREATE (o:%v", typeArg)
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
