@@ -38,9 +38,9 @@ func main() {
 	srv := setupGraphQLServer(neo4jdb)
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*j"},
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization", "Accept", "X-CSRF-Token"},
+		AllowedHeaders:   []string{"*"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
