@@ -43,9 +43,13 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	url := os.Getenv("URL")
+	if url == "" {
+		url = "http://localhost"
+	}
 
-	log.Printf("Connect to http://localhost:%s/graphql for GraphQL Playground", port)
-	log.Printf("Connect to http://localhost:%s/query for GraphQL API", port)
+	log.Printf("Connect to %s:%s/graphql for GraphQL Playground", url, port)
+	log.Printf("Connect to %s:%s/query for GraphQL API", url, port)
 	log.Printf("Connect to https://console.neo4j.io for Neo4j Browser Console")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
