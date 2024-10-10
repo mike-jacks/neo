@@ -1,9 +1,11 @@
+# Use the official Neo4j image from Docker Hub
 FROM neo4j:latest
 
-ENV NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
-
+# Expose the ports for Neo4j
 EXPOSE 7474 7687
 
-VOLUME /volume/data /volume/logs /volume/plugins
+# Define the volumes for data persistence
+VOLUME /data
 
+# Set the default command to run Neo4j
 CMD ["neo4j"]
