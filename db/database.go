@@ -10,4 +10,5 @@ import (
 type Database interface {
 	GetDriver() neo4j.DriverWithContext
 	CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.Response, error)
+	UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error)
 }
