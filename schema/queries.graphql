@@ -1,20 +1,4 @@
 type Query {
-  # # Schema Node Queries
-  # getSchemaNode(domain: String!, name: String!): SchemaNode!
-  # getSchemaNodes(domain: String!): [SchemaNode!]!
-
-  # # Schema Property Queries
-  # getSchemaNodeProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): SchemaProperty!
-  # getSchemaNodeProperties(domain: String!, schemaNodeName: String!): [SchemaProperty!]!
-
-  # # Schema Relationship Queries
-  # getSchemaNodeRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): SchemaRelationship!
-  # getSchemaNodeRelationships(domain: String!, schemaNodeName: String!): [SchemaRelationship!]!
-
-  # # Schema Label Queries
-  # getSchemaNodeLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): SchemaLabel!
-  # getSchemaNodeLabels(domain: String!, schemaNodeName: String!): [SchemaLabel!]!
-
   # Object Queries
   getObjectNode(domain: String!, name: String!, type: String!): ObjectNode!
   getObjectNodes(domain: String!, name: String, type: String): [ObjectNode!]!

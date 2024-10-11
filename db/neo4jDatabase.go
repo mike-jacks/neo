@@ -277,3 +277,63 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, na
 	}
 	return nil, fmt.Errorf("failed to delete object node")
 }
+
+func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(strings.ToUpper(domain), " ")
+	name = strings.Trim(strings.ToUpper(name), " ")
+	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	for i, label := range labels {
+		labels[i] = strings.ReplaceAll(strings.Trim(strings.ToUpper(label), " "), " ", "_")
+	}
+
+	if len(labels) == 0 {
+		message := "No labels provided"
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
+
+	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain}) SET o", typeArg)
+	for _, label := range labels {
+		query += fmt.Sprintf(":%v", label)
+	}
+	query += " RETURN o"
+
+	parameters := map[string]any{
+		"name":    name,
+		"typeArg": typeArg,
+		"domain":  domain,
+	}
+
+	fmt.Println(query)
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		message := "Failed to add labels to object node"
+		return &model.Response{Success: false, Message: &message, Data: nil}, err
+	}
+	if result.Next(ctx) {
+		record := result.Record()
+		node, ok := record.Get("o")
+		if !ok {
+			message := "Failed to retrieve the updated node"
+			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		}
+		neo4jNode, ok := node.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for node: %T", node)
+		}
+
+		nodeProperties := make(map[string]interface{})
+		for key, value := range neo4jNode.Props {
+			nodeProperties[key] = value
+		}
+		data := map[string]interface{}{
+			"labels":     neo4jNode.Labels,
+			"properties": nodeProperties,
+		}
+		message := "Labels added to object node successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+	return nil, fmt.Errorf("failed to add labels to object node")
+}
