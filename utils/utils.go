@@ -32,3 +32,12 @@ func CreateConstraint(ctx context.Context, driver neo4j.DriverWithContext, queri
 func StringPtr(s string) *string {
 	return &s
 }
+
+func PopString(m map[string]interface{}, key string) string {
+	value, ok := m[key]
+	if !ok {
+		return ""
+	}
+	delete(m, key)
+	return value.(string)
+}

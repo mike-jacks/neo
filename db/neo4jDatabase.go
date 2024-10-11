@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/mike-jacks/neo/model"
+	"github.com/mike-jacks/neo/utils"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j/dbtype"
 )
@@ -121,6 +122,9 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		}
 
 		data := map[string]interface{}{
+			"name":       utils.PopString(nodeProperties, "name"),
+			"type":       utils.PopString(nodeProperties, "type"),
+			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
@@ -236,6 +240,9 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 		}
 
 		data := map[string]interface{}{
+			"name":       utils.PopString(nodeProperties, "name"),
+			"type":       utils.PopString(nodeProperties, "type"),
+			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
@@ -340,6 +347,9 @@ func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain strin
 			nodeProperties[key] = value
 		}
 		data := map[string]interface{}{
+			"name":       utils.PopString(nodeProperties, "name"),
+			"type":       utils.PopString(nodeProperties, "type"),
+			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
@@ -406,6 +416,9 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 			nodeProperties[key] = value
 		}
 		data := map[string]interface{}{
+			"name":       utils.PopString(nodeProperties, "name"),
+			"type":       utils.PopString(nodeProperties, "type"),
+			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
@@ -453,6 +466,9 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 		}
 
 		data := map[string]interface{}{
+			"name":       utils.PopString(nodeProperties, "name"),
+			"type":       utils.PopString(nodeProperties, "type"),
+			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
@@ -460,4 +476,8 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to get object node")
+}
+
+func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string, labels []string) (*model.Response, error) {
+	panic("Not implemented")
 }

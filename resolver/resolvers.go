@@ -102,17 +102,21 @@ func (r *queryResolver) GetObjectNode(ctx context.Context, domain string, name s
 }
 
 // GetObjectNodes is the resolver for the getObjectNodes field.
-func (r *queryResolver) GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string) ([]*model.ObjectNode, error) {
-	panic(fmt.Errorf("not implemented: GetObjectNodes - getObjectNodes"))
+func (r *queryResolver) GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string, labels []string) (*model.Response, error) {
+	result, err := r.Database.GetObjectNodes(ctx, domain, name, typeArg, labels)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetObjectNodeRelationship is the resolver for the getObjectNodeRelationship field.
-func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.ObjectRelationship, error) {
+func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
 	panic(fmt.Errorf("not implemented: GetObjectNodeRelationship - getObjectNodeRelationship"))
 }
 
 // GetObjectNodeRelationships is the resolver for the getObjectNodeRelationships field.
-func (r *queryResolver) GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) ([]*model.ObjectRelationship, error) {
+func (r *queryResolver) GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error) {
 	panic(fmt.Errorf("not implemented: GetObjectNodeRelationships - getObjectNodeRelationships"))
 }
 

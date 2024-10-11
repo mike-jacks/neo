@@ -87,7 +87,7 @@ type ComplexityRoot struct {
 		GetObjectNode              func(childComplexity int, domain string, name string, typeArg string) int
 		GetObjectNodeRelationship  func(childComplexity int, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
 		GetObjectNodeRelationships func(childComplexity int, fromObjectNode model.ObjectNodeInput) int
-		GetObjectNodes             func(childComplexity int, domain string, name *string, typeArg *string) int
+		GetObjectNodes             func(childComplexity int, domain string, name *string, typeArg *string, labels []string) int
 	}
 
 	Response struct {
@@ -113,9 +113,9 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
-	GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string) ([]*model.ObjectNode, error)
-	GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.ObjectRelationship, error)
-	GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) ([]*model.ObjectRelationship, error)
+	GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string, labels []string) (*model.Response, error)
+	GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
+	GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error)
 	CypherQuery(ctx context.Context, cypherStatement string) (map[string]interface{}, error)
 }
 
@@ -424,7 +424,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetObjectNodes(childComplexity, args["domain"].(string), args["name"].(*string), args["type"].(*string)), true
+		return e.complexity.Query.GetObjectNodes(childComplexity, args["domain"].(string), args["name"].(*string), args["type"].(*string), args["labels"].([]string)), true
 
 	case "Response.data":
 		if e.complexity.Response.Data == nil {
@@ -663,14 +663,12 @@ input DeleteObjectNodeInput {
 	{Name: "../schema/queries.graphql", Input: `type Query {
   # Object Queries
   getObjectNode(domain: String!, name: String!, type: String!): Response!
-  getObjectNodes(domain: String!, name: String, type: String): [ObjectNode!]!
-  getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): ObjectRelationship!
-  getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): [ObjectRelationship!]!
+  getObjectNodes(domain: String!, name: String, type: String, labels: [String!]): Response!
+  getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): Response!
 
   cypherQuery(cypher_statement: String!): JSON!
-
 }
-
 `, BuiltIn: false},
 	{Name: "../schema/schema.graphql", Input: `schema {
   query: Query
@@ -1741,6 +1739,11 @@ func (ec *executionContext) field_Query_getObjectNodes_args(ctx context.Context,
 		return nil, err
 	}
 	args["type"] = arg2
+	arg3, err := ec.field_Query_getObjectNodes_argsLabels(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["labels"] = arg3
 	return args, nil
 }
 func (ec *executionContext) field_Query_getObjectNodes_argsDomain(
@@ -1779,6 +1782,19 @@ func (ec *executionContext) field_Query_getObjectNodes_argsType(
 	}
 
 	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getObjectNodes_argsLabels(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+	if tmp, ok := rawArgs["labels"]; ok {
+		return ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
 	return zeroVal, nil
 }
 
@@ -3220,7 +3236,7 @@ func (ec *executionContext) _Query_getObjectNodes(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetObjectNodes(rctx, fc.Args["domain"].(string), fc.Args["name"].(*string), fc.Args["type"].(*string))
+		return ec.resolvers.Query().GetObjectNodes(rctx, fc.Args["domain"].(string), fc.Args["name"].(*string), fc.Args["type"].(*string), fc.Args["labels"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3232,9 +3248,9 @@ func (ec *executionContext) _Query_getObjectNodes(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.ObjectNode)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNObjectNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeᚄ(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getObjectNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3245,18 +3261,14 @@ func (ec *executionContext) fieldContext_Query_getObjectNodes(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "domain":
-				return ec.fieldContext_ObjectNode_domain(ctx, field)
-			case "name":
-				return ec.fieldContext_ObjectNode_name(ctx, field)
-			case "type":
-				return ec.fieldContext_ObjectNode_type(ctx, field)
-			case "labels":
-				return ec.fieldContext_ObjectNode_labels(ctx, field)
-			case "properties":
-				return ec.fieldContext_ObjectNode_properties(ctx, field)
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ObjectNode", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
 		},
 	}
 	defer func() {
@@ -3299,9 +3311,9 @@ func (ec *executionContext) _Query_getObjectNodeRelationship(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.ObjectRelationship)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNObjectRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationship(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getObjectNodeRelationship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3312,16 +3324,14 @@ func (ec *executionContext) fieldContext_Query_getObjectNodeRelationship(ctx con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_ObjectRelationship_name(ctx, field)
-			case "fromObjectNode":
-				return ec.fieldContext_ObjectRelationship_fromObjectNode(ctx, field)
-			case "toObjectNode":
-				return ec.fieldContext_ObjectRelationship_toObjectNode(ctx, field)
-			case "properties":
-				return ec.fieldContext_ObjectRelationship_properties(ctx, field)
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationship", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
 		},
 	}
 	defer func() {
@@ -3364,9 +3374,9 @@ func (ec *executionContext) _Query_getObjectNodeRelationships(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.ObjectRelationship)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNObjectRelationship2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationshipᚄ(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getObjectNodeRelationships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3377,16 +3387,14 @@ func (ec *executionContext) fieldContext_Query_getObjectNodeRelationships(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_ObjectRelationship_name(ctx, field)
-			case "fromObjectNode":
-				return ec.fieldContext_ObjectRelationship_fromObjectNode(ctx, field)
-			case "toObjectNode":
-				return ec.fieldContext_ObjectRelationship_toObjectNode(ctx, field)
-			case "properties":
-				return ec.fieldContext_ObjectRelationship_properties(ctx, field)
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationship", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
 		},
 	}
 	defer func() {
@@ -6564,50 +6572,6 @@ func (ec *executionContext) marshalNJSON2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) marshalNObjectNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ObjectNode) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx context.Context, sel ast.SelectionSet, v *model.ObjectNode) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6626,64 +6590,6 @@ func (ec *executionContext) unmarshalNObjectNodeInput2githubᚗcomᚋmikeᚑjack
 func (ec *executionContext) unmarshalNObjectNodeInput2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeInput(ctx context.Context, v interface{}) (*model.ObjectNodeInput, error) {
 	res, err := ec.unmarshalInputObjectNodeInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNObjectRelationship2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationship(ctx context.Context, sel ast.SelectionSet, v model.ObjectRelationship) graphql.Marshaler {
-	return ec._ObjectRelationship(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNObjectRelationship2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationshipᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ObjectRelationship) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNObjectRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationship(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNObjectRelationship2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationship(ctx context.Context, sel ast.SelectionSet, v *model.ObjectRelationship) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ObjectRelationship(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNProperty2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐProperty(ctx context.Context, sel ast.SelectionSet, v *model.Property) graphql.Marshaler {
