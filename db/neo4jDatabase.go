@@ -571,11 +571,10 @@ func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string
 		return nil, err
 	}
 
-	responseData := []*model.MultiResponse{}
+	data := []map[string]interface{}{}
 	for result.Next(ctx) {
 		record := result.Record()
 		keys := record.Keys
-		data := []map[string]interface{}{}
 		for _, key := range keys {
 			node, ok := record.Get(key)
 			if !ok {
@@ -597,7 +596,7 @@ func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string
 				"properties": nodeProperties,
 			})
 		}
-		responseData = append(responseData, &model.MultiResponse{Success: true, Message: nil, Data: data})
 	}
-	return responseData, nil
+	message := "Cypher query executed successfully"
+	return []*model.MultiResponse{{Success: true, Message: &message, Data: data}}, nil
 }
