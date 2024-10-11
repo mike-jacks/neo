@@ -88,7 +88,7 @@ func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, name st
 }
 
 // CypherMutation is the resolver for the cypherMutation field.
-func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) (map[string]interface{}, error) {
+func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error) {
 	panic(fmt.Errorf("not implemented: CypherMutation - cypherMutation"))
 }
 
@@ -121,8 +121,12 @@ func (r *queryResolver) GetObjectNodeRelationships(ctx context.Context, fromObje
 }
 
 // CypherQuery is the resolver for the cypherQuery field.
-func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) (map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented: CypherQuery - cypherQuery"))
+func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error) {
+	result, err := r.Database.CypherQuery(ctx, cypherStatement)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

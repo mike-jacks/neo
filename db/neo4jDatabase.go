@@ -561,3 +561,43 @@ func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, nam
 	message := "Object nodes retrieved successfully"
 	return &model.MultiResponse{Success: true, Message: &message, Data: data}, nil
 }
+
+func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	result, err := session.Run(ctx, cypherStatement, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	responseData := []*model.MultiResponse{}
+	for result.Next(ctx) {
+		record := result.Record()
+		keys := record.Keys
+		data := []map[string]interface{}{}
+		for _, key := range keys {
+			node, ok := record.Get(key)
+			if !ok {
+				return nil, fmt.Errorf("failed to retrieve the node")
+			}
+			neo4jNode, ok := node.(dbtype.Node)
+			if !ok {
+				return nil, fmt.Errorf("unexpected type for node: %T", node)
+			}
+			nodeProperties := make(map[string]interface{})
+			for key, value := range neo4jNode.Props {
+				nodeProperties[key] = value
+			}
+			data = append(data, map[string]interface{}{
+				"name":       utils.PopString(nodeProperties, "name"),
+				"type":       utils.PopString(nodeProperties, "type"),
+				"domain":     utils.PopString(nodeProperties, "domain"),
+				"labels":     neo4jNode.Labels,
+				"properties": nodeProperties,
+			})
+		}
+		responseData = append(responseData, &model.MultiResponse{Success: true, Message: nil, Data: data})
+	}
+	return responseData, nil
+}

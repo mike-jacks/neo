@@ -16,4 +16,5 @@ type Database interface {
 	RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
 	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
 	GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.MultiResponse, error)
+	CypherQuery(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error)
 }

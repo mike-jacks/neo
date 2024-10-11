@@ -5,5 +5,5 @@ type Query {
   getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): MultiResponse!
 
-  cypherQuery(cypher_statement: String!): JSON!
+  cypherQuery(cypher_statement: String!): [MultiResponse!]!
 }

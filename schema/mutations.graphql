@@ -25,7 +25,7 @@ type Mutation {
   ): Response!
   deleteObjectRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
 
-  cypherMutation(cypher_statement: String!): JSON!
+  cypherMutation(cypher_statement: String!): [MultiResponse!]!
 }
 
 scalar JSON

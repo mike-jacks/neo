@@ -115,14 +115,14 @@ type MutationResolver interface {
 	UpdatePropertiesOnObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	RemovePropertiesFromObjectRelationship(ctx context.Context, name string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	DeleteObjectRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
-	CypherMutation(ctx context.Context, cypherStatement string) (map[string]interface{}, error)
+	CypherMutation(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error)
 }
 type QueryResolver interface {
 	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
 	GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.MultiResponse, error)
 	GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.MultiResponse, error)
-	CypherQuery(ctx context.Context, cypherStatement string) (map[string]interface{}, error)
+	CypherQuery(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error)
 }
 
 type executableSchema struct {
@@ -611,7 +611,7 @@ var sources = []*ast.Source{
   ): Response!
   deleteObjectRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
 
-  cypherMutation(cypher_statement: String!): JSON!
+  cypherMutation(cypher_statement: String!): [MultiResponse!]!
 }
 
 scalar JSON
@@ -700,7 +700,7 @@ input DeleteObjectNodeInput {
   getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): MultiResponse!
 
-  cypherQuery(cypher_statement: String!): JSON!
+  cypherQuery(cypher_statement: String!): [MultiResponse!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/schema.graphql", Input: `schema {
@@ -2730,9 +2730,9 @@ func (ec *executionContext) _Mutation_cypherMutation(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(map[string]interface{})
+	res := resTmp.([]*model.MultiResponse)
 	fc.Result = res
-	return ec.marshalNJSON2map(ctx, field.Selections, res)
+	return ec.marshalNMultiResponse2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponseᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_cypherMutation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2742,7 +2742,15 @@ func (ec *executionContext) fieldContext_Mutation_cypherMutation(ctx context.Con
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type JSON does not have child fields")
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_MultiResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_MultiResponse_message(ctx, field)
+			case "data":
+				return ec.fieldContext_MultiResponse_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MultiResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -3596,9 +3604,9 @@ func (ec *executionContext) _Query_cypherQuery(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(map[string]interface{})
+	res := resTmp.([]*model.MultiResponse)
 	fc.Result = res
-	return ec.marshalNJSON2map(ctx, field.Selections, res)
+	return ec.marshalNMultiResponse2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponseᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_cypherQuery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3608,7 +3616,15 @@ func (ec *executionContext) fieldContext_Query_cypherQuery(ctx context.Context, 
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type JSON does not have child fields")
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_MultiResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_MultiResponse_message(ctx, field)
+			case "data":
+				return ec.fieldContext_MultiResponse_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MultiResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -6776,6 +6792,50 @@ func (ec *executionContext) marshalNJSON2map(ctx context.Context, sel ast.Select
 
 func (ec *executionContext) marshalNMultiResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponse(ctx context.Context, sel ast.SelectionSet, v model.MultiResponse) graphql.Marshaler {
 	return ec._MultiResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMultiResponse2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MultiResponse) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMultiResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponse(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNMultiResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponse(ctx context.Context, sel ast.SelectionSet, v *model.MultiResponse) graphql.Marshaler {
