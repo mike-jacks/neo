@@ -112,7 +112,7 @@ type MutationResolver interface {
 	CypherMutation(ctx context.Context, cypherStatement string) (map[string]interface{}, error)
 }
 type QueryResolver interface {
-	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNode, error)
+	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
 	GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string) ([]*model.ObjectNode, error)
 	GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.ObjectRelationship, error)
 	GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) ([]*model.ObjectRelationship, error)
@@ -558,38 +558,6 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "../schema/mutations.graphql", Input: `type Mutation {
-  # # Schema Node Mutations
-  # createSchemaNode(sourceSchemaNodeName: String, createSchemaNodeInput: CreateSchemaNodeInput!): SchemaNode!
-  # updateSchemaNode(domain: String!, name: String!, updateSchemaNodeInput: UpdateSchemaNodeInput!): [SchemaNode!]!
-  # deleteSchemaNode(domain: String!, name: String!): Boolean!
-  # insertSchemaNode(domain: String!, parentName: String!, childName: String!): SchemaNode!
-
-  # # Schema Property Mutations
-  # createSchemaProperty(createSchemaPropertyInput: CreateSchemaPropertyInput!): SchemaProperty!
-  # updateSchemaProperty(
-  #   domain: String!
-  #   schemaNodeName: String!
-  #   schemaPropertyName: String!
-  #   schemaPropertyType: String!
-  #   updateSchemaPropertyInput: UpdateSchemaPropertyInput!
-  # ): SchemaProperty!
-  # deleteSchemaProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): Boolean!
-
-  # # Schema Relationship Mutations
-  # createSchemaRelationship(createSchemaRelationshipInput: CreateSchemaRelationshipInput!): SchemaRelationship!
-  # updateSchemaRelationship(
-  #   domain: String!
-  #   schemaNodeName: String!
-  #   schemaRelationshipName: String!
-  #   updateSchemaRelationshipInput: UpdateSchemaRelationshipInput!
-  # ): SchemaRelationship!
-  # deleteSchemaRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): Boolean!
-
-  # # Schema Label Mutations
-  # createSchemaLabel(createSchemaLabelInput: CreateSchemaLabelInput!): SchemaLabel!
-  # updateSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!, updateSchemaLabelInput: UpdateSchemaLabelInput!): SchemaLabel!
-  # deleteSchemaLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): Boolean!
-
   # Object Mutations
   createObjectNode(domain: String!, name: String!, type: String!, labels: [String!], properties: [PropertyInput!]): Response!
   updateObjectNode(domain: String!, name: String!, type: String!, updateObjectNodeInput: UpdateObjectNodeInput!): Response!
@@ -693,24 +661,8 @@ input DeleteObjectNodeInput {
 }
 `, BuiltIn: false},
 	{Name: "../schema/queries.graphql", Input: `type Query {
-  # # Schema Node Queries
-  # getSchemaNode(domain: String!, name: String!): SchemaNode!
-  # getSchemaNodes(domain: String!): [SchemaNode!]!
-
-  # # Schema Property Queries
-  # getSchemaNodeProperty(domain: String!, schemaNodeName: String!, schemaPropertyName: String!, schemaPropertyType: String!): SchemaProperty!
-  # getSchemaNodeProperties(domain: String!, schemaNodeName: String!): [SchemaProperty!]!
-
-  # # Schema Relationship Queries
-  # getSchemaNodeRelationship(domain: String!, schemaNodeName: String!, schemaRelationshipName: String!): SchemaRelationship!
-  # getSchemaNodeRelationships(domain: String!, schemaNodeName: String!): [SchemaRelationship!]!
-
-  # # Schema Label Queries
-  # getSchemaNodeLabel(domain: String!, schemaNodeName: String!, schemaLabelName: String!): SchemaLabel!
-  # getSchemaNodeLabels(domain: String!, schemaNodeName: String!): [SchemaLabel!]!
-
   # Object Queries
-  getObjectNode(domain: String!, name: String!, type: String!): ObjectNode!
+  getObjectNode(domain: String!, name: String!, type: String!): Response!
   getObjectNodes(domain: String!, name: String, type: String): [ObjectNode!]!
   getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): ObjectRelationship!
   getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): [ObjectRelationship!]!
@@ -724,86 +676,6 @@ input DeleteObjectNodeInput {
   query: Query
   mutation: Mutation
 }
-`, BuiltIn: false},
-	{Name: "../schema/schemaLabel.graphql", Input: `# type SchemaLabel {
-#   name: String!
-#   domain: String!
-#   parentSchemaNodeName: String!
-# }
-
-# input CreateSchemaLabelInput {
-#   name: String!
-#   domain: String!
-#   parentSchemaNodeName: String!
-# }
-
-# input UpdateSchemaLabelInput {
-#   name: String
-#   domain: String
-#   parentSchemaNodeName: String
-# }
-`, BuiltIn: false},
-	{Name: "../schema/schemaNode.graphql", Input: `# type SchemaNode {
-#   name: String!
-#   domain: String!
-#   parentName: String
-#   properties: [SchemaProperty!]
-#   relationships: [SchemaRelationship!]
-#   labels: [SchemaLabel!]
-# }
-
-# input CreateSchemaNodeInput {
-#   name: String!
-#   domain: String!
-# }
-
-# input UpdateSchemaNodeInput {
-#   name: String
-#   domain: String
-# }
-
-`, BuiltIn: false},
-	{Name: "../schema/schemaProperty.graphql", Input: `# type SchemaProperty {
-#   name: String!
-#   type: String!
-#   domain: String!
-#   parentSchemaNodeName: String!
-# }
-
-# input CreateSchemaPropertyInput {
-#   name: String!
-#   type: String!
-#   domain: String!
-#   parentSchemaNodeName: String!
-# }
-
-# input UpdateSchemaPropertyInput {
-#   name: String
-#   type: String
-#   domain: String
-#   parentSchemaNodeName: String
-# }
-`, BuiltIn: false},
-	{Name: "../schema/schemaRelationship.graphql", Input: `# type SchemaRelationship {
-#   name: String!
-#   domain: String!
-#   targetSchemaNodeName: String!
-#   parentSchemaNodeName: String!
-# }
-
-# input CreateSchemaRelationshipInput {
-#   name: String!
-#   domain: String!
-#   targetSchemaNodeName: String!
-#   parentSchemaNodeName: String!
-# }
-
-# input UpdateSchemaRelationshipInput {
-#   name: String
-#   domain: String
-#   targetSchemaNodeName: String
-#   parentSchemaNodeName: String
-# }
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -3297,9 +3169,9 @@ func (ec *executionContext) _Query_getObjectNode(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.ObjectNode)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3310,18 +3182,14 @@ func (ec *executionContext) fieldContext_Query_getObjectNode(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "domain":
-				return ec.fieldContext_ObjectNode_domain(ctx, field)
-			case "name":
-				return ec.fieldContext_ObjectNode_name(ctx, field)
-			case "type":
-				return ec.fieldContext_ObjectNode_type(ctx, field)
-			case "labels":
-				return ec.fieldContext_ObjectNode_labels(ctx, field)
-			case "properties":
-				return ec.fieldContext_ObjectNode_properties(ctx, field)
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ObjectNode", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
 		},
 	}
 	defer func() {
@@ -6694,10 +6562,6 @@ func (ec *executionContext) marshalNJSON2map(ctx context.Context, sel ast.Select
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNObjectNode2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx context.Context, sel ast.SelectionSet, v model.ObjectNode) graphql.Marshaler {
-	return ec._ObjectNode(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNObjectNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ObjectNode) graphql.Marshaler {

@@ -1,6 +1,6 @@
 type Query {
   # Object Queries
-  getObjectNode(domain: String!, name: String!, type: String!): ObjectNode!
+  getObjectNode(domain: String!, name: String!, type: String!): Response!
   getObjectNodes(domain: String!, name: String, type: String): [ObjectNode!]!
   getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): ObjectRelationship!
   getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): [ObjectRelationship!]!

@@ -93,8 +93,12 @@ func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement s
 }
 
 // GetObjectNode is the resolver for the getObjectNode field.
-func (r *queryResolver) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNode, error) {
-	panic(fmt.Errorf("not implemented: GetObjectNode - getObjectNode"))
+func (r *queryResolver) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
+	result, err := r.Database.GetObjectNode(ctx, domain, name, typeArg)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetObjectNodes is the resolver for the getObjectNodes field.

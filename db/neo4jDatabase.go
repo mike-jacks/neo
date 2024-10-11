@@ -414,3 +414,50 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 	}
 	return nil, fmt.Errorf("failed to remove labels from object node")
 }
+
+func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(strings.ToUpper(domain), " ")
+	name = strings.Trim(strings.ToUpper(name), " ")
+	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+
+	query := "MATCH (o{name: $name, type: $typeArg, domain: $domain}) RETURN o"
+
+	parameters := map[string]any{
+		"name":    name,
+		"typeArg": typeArg,
+		"domain":  domain,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		node, ok := record.Get("o")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the node")
+		}
+		neo4jNode, ok := node.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for node: %T", node)
+		}
+
+		nodeProperties := make(map[string]interface{})
+		for key, value := range neo4jNode.Props {
+			nodeProperties[key] = value
+		}
+
+		data := map[string]interface{}{
+			"labels":     neo4jNode.Labels,
+			"properties": nodeProperties,
+		}
+		message := "Object node retrieved successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+	return nil, fmt.Errorf("failed to get object node")
+}
