@@ -13,4 +13,5 @@ type Database interface {
 	UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error)
 	DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
 	AddLabelsToObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
+	RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
 }

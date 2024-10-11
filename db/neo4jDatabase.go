@@ -47,8 +47,9 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	domain = strings.Trim(strings.ToUpper(domain), " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	labelFromTypeArg := strings.ReplaceAll(typeArg, " ", "_")
 	for i, label := range labels {
-		labels[i] = strings.Trim(strings.ToUpper(label), " ")
+		labels[i] = strings.ReplaceAll(strings.Trim(strings.ToUpper(label), " "), " ", "_")
 	}
 	for i := range properties {
 		properties[i].Key = strings.Trim(strings.ToLower(properties[i].Key), " ")
@@ -58,7 +59,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		CREATE CONSTRAINT IF NOT EXISTS
 		FOR (n:%v)
 		REQUIRE (n.name, n.type, n.domain) IS NODE KEY
-		`, typeArg)
+		`, labelFromTypeArg)
 
 	_, err := session.Run(ctx, query, nil)
 	if err != nil {
@@ -77,7 +78,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		}
 	}
 
-	query = fmt.Sprintf("CREATE (o:%v", typeArg)
+	query = fmt.Sprintf("CREATE (o:%v", labelFromTypeArg)
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
@@ -137,6 +138,7 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	domain = strings.Trim(strings.ToUpper(domain), " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	labelFromTypeArg := strings.ReplaceAll(typeArg, " ", "_")
 
 	var updatedProperties = []map[string]any{}
 	if updateObjectNodeInput.Properties != nil {
@@ -161,8 +163,10 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	if updateObjectNodeInput.Domain != nil {
 		newDomain = strings.Trim(strings.ToUpper(*updateObjectNodeInput.Domain), " ")
 	}
+	newLabelFromTypeArg := strings.ReplaceAll(newTypeArg, " ", "_")
 
-	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain})\n", typeArg)
+	replaceLabelQuery := ""
+	query := "MATCH (o{name: $name, type: $typeArg, domain: $domain})\n"
 	if newName != "" || newTypeArg != "" || newDomain != "" || len(updateObjectNodeInput.Labels) > 0 || len(updateObjectNodeInput.Properties) > 0 {
 		query += "SET "
 	}
@@ -171,6 +175,7 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	}
 	if newTypeArg != "" {
 		query += fmt.Sprintf("o.type = \"%v\", ", newTypeArg)
+		replaceLabelQuery += fmt.Sprintf("MATCH (o{name: $name, type: \"%v\", domain: $domain}) REMOVE o:%v SET o:%v RETURN o", newTypeArg, labelFromTypeArg, newLabelFromTypeArg)
 	}
 	if newDomain != "" {
 		query += fmt.Sprintf("o.domain = \"%v\", ", newDomain)
@@ -193,6 +198,7 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	}
 	query = strings.TrimSuffix(query, ", ") + " RETURN o;"
 	fmt.Println(query)
+	fmt.Println(replaceLabelQuery)
 
 	parameters := map[string]any{
 		"name":    name,
@@ -200,10 +206,15 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 		"domain":  domain,
 	}
 
-	result, err := session.Run(ctx, query, parameters)
+	_, err := session.Run(ctx, query, parameters)
 	if err != nil {
 		message := "Failed to update object node"
 		return &model.Response{Success: false, Message: &message, Data: nil}, err
+	}
+
+	result, err := session.Run(ctx, replaceLabelQuery, parameters)
+	if err != nil {
+		return nil, err
 	}
 
 	if result.Next(ctx) {
@@ -336,4 +347,70 @@ func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain strin
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to add labels to object node")
+}
+
+func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(strings.ToUpper(domain), " ")
+	name = strings.Trim(strings.ToUpper(name), " ")
+	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	for i := 0; i < len(labels); i++ {
+		label := strings.ReplaceAll(strings.Trim(strings.ToUpper(labels[i]), " "), " ", "_")
+		if label == typeArg {
+			labels = append(labels[:i], labels[i+1:]...)
+			i--
+			continue
+		}
+		labels[i] = label
+	}
+
+	if len(labels) == 0 {
+		message := "No labels provided"
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
+
+	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain}) REMOVE o", typeArg)
+	for _, label := range labels {
+		query += fmt.Sprintf(":%v", label)
+	}
+	query += " RETURN o"
+
+	parameters := map[string]any{
+		"name":    name,
+		"typeArg": typeArg,
+		"domain":  domain,
+	}
+
+	fmt.Println(query)
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		message := "Failed to add labels to object node"
+		return &model.Response{Success: false, Message: &message, Data: nil}, err
+	}
+	if result.Next(ctx) {
+		record := result.Record()
+		node, ok := record.Get("o")
+		if !ok {
+			message := "Failed to retrieve the updated node"
+			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		}
+		neo4jNode, ok := node.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for node: %T", node)
+		}
+
+		nodeProperties := make(map[string]interface{})
+		for key, value := range neo4jNode.Props {
+			nodeProperties[key] = value
+		}
+		data := map[string]interface{}{
+			"labels":     neo4jNode.Labels,
+			"properties": nodeProperties,
+		}
+		message := "Labels added to object node successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+	return nil, fmt.Errorf("failed to remove labels from object node")
 }

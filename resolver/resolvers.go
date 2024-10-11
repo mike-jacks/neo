@@ -50,7 +50,11 @@ func (r *mutationResolver) AddLabelsToObjectNode(ctx context.Context, domain str
 
 // RemoveLabelsFromObjectNode is the resolver for the removeLabelsFromObjectNode field.
 func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: RemoveLabelsFromObjectNode - removeLabelsFromObjectNode"))
+	result, err := r.Database.RemoveLabelsFromObjectNode(ctx, domain, name, typeArg, labels)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // AddPropertiesToObjectNode is the resolver for the addPropertiesToObjectNode field.
