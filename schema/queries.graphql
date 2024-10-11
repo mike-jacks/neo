@@ -1,9 +1,9 @@
 type Query {
   # Object Queries
   getObjectNode(domain: String!, name: String!, type: String!): Response!
-  getObjectNodes(domain: String!, name: String, type: String, labels: [String!]): Response!
+  getObjectNodes(domain: String, name: String, type: String, labels: [String!]): MultiResponse!
   getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
-  getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): Response!
+  getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): MultiResponse!
 
   cypherQuery(cypher_statement: String!): JSON!
 }

@@ -19,6 +19,12 @@ type DeleteObjectNodeInput struct {
 	Type   string `json:"type"`
 }
 
+type MultiResponse struct {
+	Success bool                     `json:"success"`
+	Message *string                  `json:"message,omitempty"`
+	Data    []map[string]interface{} `json:"data,omitempty"`
+}
+
 type Mutation struct {
 }
 

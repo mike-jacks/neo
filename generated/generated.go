@@ -46,6 +46,12 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	MultiResponse struct {
+		Data    func(childComplexity int) int
+		Message func(childComplexity int) int
+		Success func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AddLabelsToObjectNode                  func(childComplexity int, domain string, name string, typeArg string, labels []string) int
 		AddPropertiesToObjectNode              func(childComplexity int, domain string, name string, typeArg string, properties []*model.PropertyInput) int
@@ -87,7 +93,7 @@ type ComplexityRoot struct {
 		GetObjectNode              func(childComplexity int, domain string, name string, typeArg string) int
 		GetObjectNodeRelationship  func(childComplexity int, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
 		GetObjectNodeRelationships func(childComplexity int, fromObjectNode model.ObjectNodeInput) int
-		GetObjectNodes             func(childComplexity int, domain string, name *string, typeArg *string, labels []string) int
+		GetObjectNodes             func(childComplexity int, domain *string, name *string, typeArg *string, labels []string) int
 	}
 
 	Response struct {
@@ -113,9 +119,9 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
-	GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string, labels []string) (*model.Response, error)
+	GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.MultiResponse, error)
 	GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
-	GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error)
+	GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.MultiResponse, error)
 	CypherQuery(ctx context.Context, cypherStatement string) (map[string]interface{}, error)
 }
 
@@ -137,6 +143,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "MultiResponse.data":
+		if e.complexity.MultiResponse.Data == nil {
+			break
+		}
+
+		return e.complexity.MultiResponse.Data(childComplexity), true
+
+	case "MultiResponse.message":
+		if e.complexity.MultiResponse.Message == nil {
+			break
+		}
+
+		return e.complexity.MultiResponse.Message(childComplexity), true
+
+	case "MultiResponse.success":
+		if e.complexity.MultiResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.MultiResponse.Success(childComplexity), true
 
 	case "Mutation.addLabelsToObjectNode":
 		if e.complexity.Mutation.AddLabelsToObjectNode == nil {
@@ -424,7 +451,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetObjectNodes(childComplexity, args["domain"].(string), args["name"].(*string), args["type"].(*string), args["labels"].([]string)), true
+		return e.complexity.Query.GetObjectNodes(childComplexity, args["domain"].(*string), args["name"].(*string), args["type"].(*string), args["labels"].([]string)), true
 
 	case "Response.data":
 		if e.complexity.Response.Data == nil {
@@ -618,6 +645,12 @@ type Response {
   data: JSON
 }
 
+type MultiResponse {
+  success: Boolean!
+  message: String
+  data: [JSON!]
+}
+
 type ObjectNode {
   domain: String!
   name: String!
@@ -663,9 +696,9 @@ input DeleteObjectNodeInput {
 	{Name: "../schema/queries.graphql", Input: `type Query {
   # Object Queries
   getObjectNode(domain: String!, name: String!, type: String!): Response!
-  getObjectNodes(domain: String!, name: String, type: String, labels: [String!]): Response!
+  getObjectNodes(domain: String, name: String, type: String, labels: [String!]): MultiResponse!
   getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
-  getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): Response!
+  getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): MultiResponse!
 
   cypherQuery(cypher_statement: String!): JSON!
 }
@@ -1749,13 +1782,13 @@ func (ec *executionContext) field_Query_getObjectNodes_args(ctx context.Context,
 func (ec *executionContext) field_Query_getObjectNodes_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (string, error) {
+) (*string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
 	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -1851,6 +1884,132 @@ func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _MultiResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.MultiResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MultiResponse_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MultiResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MultiResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MultiResponse_message(ctx context.Context, field graphql.CollectedField, obj *model.MultiResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MultiResponse_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MultiResponse_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MultiResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MultiResponse_data(ctx context.Context, field graphql.CollectedField, obj *model.MultiResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MultiResponse_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]map[string]interface{})
+	fc.Result = res
+	return ec.marshalOJSON2ᚕmapᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MultiResponse_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MultiResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Mutation_createObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createObjectNode(ctx, field)
@@ -3236,7 +3395,7 @@ func (ec *executionContext) _Query_getObjectNodes(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetObjectNodes(rctx, fc.Args["domain"].(string), fc.Args["name"].(*string), fc.Args["type"].(*string), fc.Args["labels"].([]string))
+		return ec.resolvers.Query().GetObjectNodes(rctx, fc.Args["domain"].(*string), fc.Args["name"].(*string), fc.Args["type"].(*string), fc.Args["labels"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3248,9 +3407,9 @@ func (ec *executionContext) _Query_getObjectNodes(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Response)
+	res := resTmp.(*model.MultiResponse)
 	fc.Result = res
-	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+	return ec.marshalNMultiResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getObjectNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3262,13 +3421,13 @@ func (ec *executionContext) fieldContext_Query_getObjectNodes(ctx context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_Response_success(ctx, field)
+				return ec.fieldContext_MultiResponse_success(ctx, field)
 			case "message":
-				return ec.fieldContext_Response_message(ctx, field)
+				return ec.fieldContext_MultiResponse_message(ctx, field)
 			case "data":
-				return ec.fieldContext_Response_data(ctx, field)
+				return ec.fieldContext_MultiResponse_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MultiResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -3374,9 +3533,9 @@ func (ec *executionContext) _Query_getObjectNodeRelationships(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Response)
+	res := resTmp.(*model.MultiResponse)
 	fc.Result = res
-	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+	return ec.marshalNMultiResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getObjectNodeRelationships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3388,13 +3547,13 @@ func (ec *executionContext) fieldContext_Query_getObjectNodeRelationships(ctx co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_Response_success(ctx, field)
+				return ec.fieldContext_MultiResponse_success(ctx, field)
 			case "message":
-				return ec.fieldContext_Response_message(ctx, field)
+				return ec.fieldContext_MultiResponse_message(ctx, field)
 			case "data":
-				return ec.fieldContext_Response_data(ctx, field)
+				return ec.fieldContext_MultiResponse_data(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MultiResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -5728,6 +5887,49 @@ func (ec *executionContext) unmarshalInputUpdateObjectNodeInput(ctx context.Cont
 
 // region    **************************** object.gotpl ****************************
 
+var multiResponseImplementors = []string{"MultiResponse"}
+
+func (ec *executionContext) _MultiResponse(ctx context.Context, sel ast.SelectionSet, obj *model.MultiResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, multiResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MultiResponse")
+		case "success":
+			out.Values[i] = ec._MultiResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._MultiResponse_message(ctx, field, obj)
+		case "data":
+			out.Values[i] = ec._MultiResponse_data(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -6572,6 +6774,20 @@ func (ec *executionContext) marshalNJSON2map(ctx context.Context, sel ast.Select
 	return res
 }
 
+func (ec *executionContext) marshalNMultiResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponse(ctx context.Context, sel ast.SelectionSet, v model.MultiResponse) graphql.Marshaler {
+	return ec._MultiResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMultiResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐMultiResponse(ctx context.Context, sel ast.SelectionSet, v *model.MultiResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MultiResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNObjectNode2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNode(ctx context.Context, sel ast.SelectionSet, v *model.ObjectNode) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6993,6 +7209,44 @@ func (ec *executionContext) marshalOJSON2map(ctx context.Context, sel ast.Select
 	}
 	res := graphql.MarshalMap(v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOJSON2ᚕmapᚄ(ctx context.Context, v interface{}) ([]map[string]interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]map[string]interface{}, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNJSON2map(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOJSON2ᚕmapᚄ(ctx context.Context, sel ast.SelectionSet, v []map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNJSON2map(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalOProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Property) graphql.Marshaler {

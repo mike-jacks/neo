@@ -59,6 +59,12 @@ type Response {
   data: JSON
 }
 
+type MultiResponse {
+  success: Boolean!
+  message: String
+  data: [JSON!]
+}
+
 type ObjectNode {
   domain: String!
   name: String!

@@ -478,6 +478,86 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 	return nil, fmt.Errorf("failed to get object node")
 }
 
-func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain string, name *string, typeArg *string, labels []string) (*model.Response, error) {
-	panic("Not implemented")
+func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.MultiResponse, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	if domain != nil {
+		*domain = strings.Trim(strings.ToUpper(*domain), " ")
+	}
+	if name != nil {
+		*name = strings.Trim(strings.ToUpper(*name), " ")
+	}
+	if typeArg != nil {
+		*typeArg = strings.Trim(strings.ToUpper(*typeArg), " ")
+	}
+	for i := 0; i < len(labels); i++ {
+		labels[i] = strings.ReplaceAll(strings.Trim(strings.ToUpper(labels[i]), " "), " ", "_")
+	}
+
+	query := "MATCH (o"
+
+	if len(labels) > 0 {
+		for _, label := range labels {
+			query += fmt.Sprintf(":%v", label)
+		}
+	}
+	query += "{"
+	if domain != nil {
+		query += "domain: $domain, "
+	}
+	if name != nil {
+		query += "name: $name, "
+	}
+	if typeArg != nil {
+		query += "type: $typeArg, "
+	}
+	query = strings.TrimSuffix(query, ", ")
+	query += "}) RETURN o"
+
+	fmt.Println(query)
+
+	parameters := map[string]any{}
+	if domain != nil {
+		parameters["domain"] = *domain
+	}
+	if name != nil {
+		parameters["name"] = *name
+	}
+	if typeArg != nil {
+		parameters["typeArg"] = *typeArg
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []map[string]interface{}{}
+	for result.Next(ctx) {
+		record := result.Record()
+		node, ok := record.Get("o")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the node")
+		}
+		neo4jNode, ok := node.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for node: %T", node)
+		}
+
+		nodeProperties := make(map[string]interface{})
+		for key, value := range neo4jNode.Props {
+			nodeProperties[key] = value
+		}
+
+		data = append(data, map[string]interface{}{
+			"name":       utils.PopString(nodeProperties, "name"),
+			"type":       utils.PopString(nodeProperties, "type"),
+			"domain":     utils.PopString(nodeProperties, "domain"),
+			"labels":     neo4jNode.Labels,
+			"properties": nodeProperties,
+		})
+	}
+	message := "Object nodes retrieved successfully"
+	return &model.MultiResponse{Success: true, Message: &message, Data: data}, nil
 }
