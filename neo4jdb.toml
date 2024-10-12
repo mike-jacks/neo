@@ -1,0 +1,24 @@
+  [services.neo4j]
+  # Docker image
+  image = "neo4j:latest"
+  
+  # Environment variables
+  [services.neo4j.environment]
+    NEO4J_AUTH = "neo4j/neo4j"  # Default username and password
+    NEO4J_DBMS_MEMORY_PAGECACHE_SIZE = "1G"  # Adjust memory settings as needed
+  
+  # Ports
+  [services.neo4j.ports]
+    http = "7474:7474"  # HTTP port
+    bolt = "7687:7687"  # Bolt port
+  
+  # Volumes
+  [services.neo4j.volumes]
+    data = "./data:/data"  # Persistent storage for Neo4j data
+  
+  # Health check
+  [services.neo4j.healthCheck]
+    interval = 10000  # 10 seconds
+    timeout = 5000  # 5 seconds
+    retries = 3
+    command = ["curl", "-f", "http://localhost:7474"]
