@@ -1,0 +1,28 @@
+# Use the official Neo4j image from Docker Hub
+FROM neo4j:latest
+
+# Create a directory inside the container for SSL certificates
+RUN mkdir -p /var/lib/neo4j/certificates
+
+# Write the SSL key and certificate from environment variables to files inside the container
+RUN echo "$NEO4J_SSL_KEY" > /var/lib/neo4j/certificates/neo4j.key
+RUN echo "$NEO4J_SSL_CERT" > /var/lib/neo4j/certificates/neo4j.cert
+
+# Set correct permissions on the private key
+RUN chmod 600 /var/lib/neo4j/certificates/neo4j.key
+
+# Set environment variables to configure SSL for both Bolt and HTTPS protocols
+ENV NEO4J_dbms_ssl_policy_bolt_enabled=true
+ENV NEO4J_dbms_ssl_policy_bolt_base_directory=/var/lib/neo4j/certificates
+ENV NEO4J_dbms_ssl_policy_bolt_private_key=/var/lib/neo4j/certificates/neo4j.key
+ENV NEO4J_dbms_ssl_policy_bolt_certificate=/var/lib/neo4j/certificates/neo4j.cert
+ENV NEO4J_dbms_ssl_policy_https_enabled=true
+ENV NEO4J_dbms_ssl_policy_https_base_directory=/var/lib/neo4j/certificates
+ENV NEO4J_dbms_ssl_policy_https_private_key=/var/lib/neo4j/certificates/neo4j.key
+ENV NEO4J_dbms_ssl_policy_https_certificate=/var/lib/neo4j/certificates/neo4j.cert
+
+# Expose Neo4j HTTP and HTTPS ports (7473 for HTTPS, 7474 for HTTP, and 7687 for Bolt)
+EXPOSE 7473 7474 7687
+
+# Start Neo4j
+CMD ["neo4j"]
