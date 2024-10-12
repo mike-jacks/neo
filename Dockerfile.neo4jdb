@@ -2,18 +2,24 @@
 FROM neo4j:latest
 
 # Create a directory inside the container for SSL certificates
-RUN mkdir -p /var/lib/neo4j/certificates/https
-RUN mkdir -p /var/lib/neo4j/certificates/bolt
+RUN mkdir -p /var/lib/neo4j/certificates/https /var/lib/neo4j/certificates/bolt
 
-RUN echo "$NEO4J_SSL_KEY"
-RUN echo "$NEO4J_SSL_CERT"
+# Log the environment variables for SSL key and certificate (just for debugging)
+RUN echo "=== NEO4J_SSL_KEY ===" && echo "$NEO4J_SSL_KEY"
+RUN echo "=== NEO4J_SSL_CERT ===" && echo "$NEO4J_SSL_CERT"
 
 # Write the SSL key and certificate from environment variables to files inside the container
-RUN echo "$NEO4J_SSL_KEY" > /var/lib/neo4j/certificates/https/neo4j.key
-RUN echo "$NEO4J_SSL_CERT" > /var/lib/neo4j/certificates/https/neo4j.cert
-RUN echo "$NEO4J_SSL_KEY" > /var/lib/neo4j/certificates/bolt/neo4j.key
-RUN echo "$NEO4J_SSL_CERT" > /var/lib/neo4j/certificates/bolt/neo4j.cert
+RUN echo "$NEO4J_SSL_KEY" > /var/lib/neo4j/certificates/https/neo4j.key && \
+    echo "=== neo4j.key for HTTPS ===" && cat /var/lib/neo4j/certificates/https/neo4j.key
 
+RUN echo "$NEO4J_SSL_CERT" > /var/lib/neo4j/certificates/https/neo4j.cert && \
+    echo "=== neo4j.cert for HTTPS ===" && cat /var/lib/neo4j/certificates/https/neo4j.cert
+
+RUN echo "$NEO4J_SSL_KEY" > /var/lib/neo4j/certificates/bolt/neo4j.key && \
+    echo "=== neo4j.key for Bolt ===" && cat /var/lib/neo4j/certificates/bolt/neo4j.key
+
+RUN echo "$NEO4J_SSL_CERT" > /var/lib/neo4j/certificates/bolt/neo4j.cert && \
+    echo "=== neo4j.cert for Bolt ===" && cat /var/lib/neo4j/certificates/bolt/neo4j.cert
 
 # Set correct permissions on the private key
 RUN chmod 600 /var/lib/neo4j/certificates/https/neo4j.key
