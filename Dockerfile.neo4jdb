@@ -5,6 +5,9 @@ FROM neo4j:latest
 RUN mkdir -p /var/lib/neo4j/certificates/https
 RUN mkdir -p /var/lib/neo4j/certificates/bolt
 
+RUN echo "$NEO4J_SSL_KEY"
+RUN echo "$NEO4J_SSL_CERT"
+
 # Write the SSL key and certificate from environment variables to files inside the container
 RUN echo "$NEO4J_SSL_KEY" > /var/lib/neo4j/certificates/https/neo4j.key
 RUN echo "$NEO4J_SSL_CERT" > /var/lib/neo4j/certificates/https/neo4j.cert
