@@ -1,0 +1,29 @@
+type ObjectNode {
+  domain: String!
+  name: String!
+  type: String!
+  labels: [String!]
+  properties: [Property!]
+}
+
+input ObjectNodeInput {
+  domain: String!
+  name: String!
+  type: String!
+  labels: [String!]
+  properties: [PropertyInput!]
+}
+
+input UpdateObjectNodeInput {
+  domain: String
+  name: String
+  type: String
+  labels: [String!]
+  properties: [PropertyInput!]
+}
+
+input DeleteObjectNodeInput {
+  domain: String!
+  name: String!
+  type: String!
+}

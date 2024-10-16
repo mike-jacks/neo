@@ -128,8 +128,9 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
+		listData := []map[string]interface{}{data}
 		message := "Object node created successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.Response{Success: true, Message: &message, Data: listData}, nil
 	}
 
 	return nil, err
@@ -246,8 +247,9 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
+		listData := []map[string]interface{}{data}
 		message := "Object node updated successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.Response{Success: true, Message: &message, Data: listData}, nil
 	}
 	message := "Failed to update object node"
 
@@ -353,8 +355,9 @@ func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain strin
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
+		listData := []map[string]interface{}{data}
 		message := "Labels added to object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.Response{Success: true, Message: &message, Data: listData}, nil
 	}
 	return nil, fmt.Errorf("failed to add labels to object node")
 }
@@ -423,8 +426,9 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
+		listData := []map[string]interface{}{data}
 		message := "Labels removed from object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.Response{Success: true, Message: &message, Data: listData}, nil
 	}
 	return nil, fmt.Errorf("failed to remove labels from object node")
 }
@@ -488,7 +492,8 @@ func (db *Neo4jDatabase) AddPropertiesToObjectNode(ctx context.Context, domain s
 			"properties": nodeProperties,
 		}
 		message := "Properties added to object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		listData := []map[string]interface{}{data}
+		return &model.Response{Success: true, Message: &message, Data: listData}, nil
 	}
 	return nil, fmt.Errorf("failed to add properties to object node")
 }
@@ -547,8 +552,9 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, dom
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
+		listData := []map[string]interface{}{data}
 		message := "Properties removed from object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.Response{Success: true, Message: &message, Data: listData}, nil
 	}
 	return nil, fmt.Errorf("failed to remove properties from object node")
 }
@@ -597,13 +603,14 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
+		listData := []map[string]interface{}{data}
 		message := "Object node retrieved successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.Response{Success: true, Message: &message, Data: listData}, nil
 	}
 	return nil, fmt.Errorf("failed to get object node")
 }
 
-func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.MultiResponse, error) {
+func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
@@ -684,10 +691,10 @@ func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, nam
 		})
 	}
 	message := "Object nodes retrieved successfully"
-	return &model.MultiResponse{Success: true, Message: &message, Data: data}, nil
+	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
 
-func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error) {
+func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
@@ -723,5 +730,51 @@ func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string
 		}
 	}
 	message := "Cypher query executed successfully"
-	return []*model.MultiResponse{{Success: true, Message: &message, Data: data}}, nil
+	return []*model.Response{{Success: true, Message: &message, Data: data}}, nil
+}
+
+func (db *Neo4jDatabase) CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	result, err := session.Run(ctx, cypherStatement, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []map[string]interface{}{}
+	for result.Next(ctx) {
+		record := result.Record()
+		keys := record.Keys
+		for _, key := range keys {
+			node, ok := record.Get(key)
+			if !ok {
+				return nil, fmt.Errorf("failed to retrieve the node")
+			}
+			neo4jNode, ok := node.(dbtype.Node)
+			if !ok {
+				return nil, fmt.Errorf("unexpected type for node: %T", node)
+			}
+			nodeProperties := make(map[string]interface{})
+			for key, value := range neo4jNode.Props {
+				nodeProperties[key] = value
+			}
+			data = append(data, map[string]interface{}{
+				"name":       utils.PopString(nodeProperties, "name"),
+				"type":       utils.PopString(nodeProperties, "type"),
+				"domain":     utils.PopString(nodeProperties, "domain"),
+				"labels":     neo4jNode.Labels,
+				"properties": nodeProperties,
+			})
+		}
+	}
+	message := "Cypher query executed successfully"
+	return []*model.Response{{Success: true, Message: &message, Data: data}}, nil
+}
+
+func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	return nil, nil
 }

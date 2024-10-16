@@ -1,0 +1,7 @@
+scalar JSON
+
+type Response {
+  success: Boolean!
+  message: String
+  data: [JSON!]
+}

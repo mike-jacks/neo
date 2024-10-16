@@ -77,7 +77,11 @@ func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, d
 
 // CreateObjectRelationship is the resolver for the createObjectRelationship field.
 func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: CreateObjectRelationship - createObjectRelationship"))
+	result, err := r.Database.CreateObjectRelationship(ctx, name, properties, fromObjectNode, toObjectNode)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // UpdatePropertiesOnObjectRelationship is the resolver for the updatePropertiesOnObjectRelationship field.
@@ -96,7 +100,7 @@ func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, name st
 }
 
 // CypherMutation is the resolver for the cypherMutation field.
-func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error) {
+func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
 	panic(fmt.Errorf("not implemented: CypherMutation - cypherMutation"))
 }
 
@@ -110,7 +114,7 @@ func (r *queryResolver) GetObjectNode(ctx context.Context, domain string, name s
 }
 
 // GetObjectNodes is the resolver for the getObjectNodes field.
-func (r *queryResolver) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.MultiResponse, error) {
+func (r *queryResolver) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.Response, error) {
 	result, err := r.Database.GetObjectNodes(ctx, domain, name, typeArg, labels)
 	if err != nil {
 		return nil, err
@@ -124,12 +128,12 @@ func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, name stri
 }
 
 // GetObjectNodeRelationships is the resolver for the getObjectNodeRelationships field.
-func (r *queryResolver) GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.MultiResponse, error) {
+func (r *queryResolver) GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error) {
 	panic(fmt.Errorf("not implemented: GetObjectNodeRelationships - getObjectNodeRelationships"))
 }
 
 // CypherQuery is the resolver for the cypherQuery field.
-func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error) {
+func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
 	result, err := r.Database.CypherQuery(ctx, cypherStatement)
 	if err != nil {
 		return nil, err

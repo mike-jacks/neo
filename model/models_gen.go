@@ -19,12 +19,6 @@ type DeleteObjectNodeInput struct {
 	Type   string `json:"type"`
 }
 
-type MultiResponse struct {
-	Success bool                     `json:"success"`
-	Message *string                  `json:"message,omitempty"`
-	Data    []map[string]interface{} `json:"data,omitempty"`
-}
-
 type Mutation struct {
 }
 
@@ -67,9 +61,9 @@ type Query struct {
 }
 
 type Response struct {
-	Success bool                   `json:"success"`
-	Message *string                `json:"message,omitempty"`
-	Data    map[string]interface{} `json:"data,omitempty"`
+	Success bool                     `json:"success"`
+	Message *string                  `json:"message,omitempty"`
+	Data    []map[string]interface{} `json:"data,omitempty"`
 }
 
 type UpdateObjectNodeInput struct {

@@ -1,0 +1,22 @@
+enum PropertyType {
+  STRING
+  INTEGER
+  FLOAT
+  BOOLEAN
+  ARRAY_STRING
+  ARRAY_INTEGER
+  ARRAY_FLOAT
+  ARRAY_BOOLEAN
+}
+
+type Property {
+  key: String!
+  value: String!
+  type: PropertyType!
+}
+
+input PropertyInput {
+  key: String!
+  value: String!
+  type: PropertyType!
+}

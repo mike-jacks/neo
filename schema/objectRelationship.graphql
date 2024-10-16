@@ -1,0 +1,11 @@
+type ObjectRelationship {
+  name: String!
+  fromObjectNode: ObjectNode!
+  toObjectNode: ObjectNode!
+  properties: [Property!]
+}
+
+input CreateObjectRelationshipInput {
+  fromObjectNode: ObjectNodeInput!
+  toObjectNode: ObjectNodeInput!
+}
