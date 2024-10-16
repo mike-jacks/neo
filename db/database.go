@@ -25,5 +25,5 @@ type Database interface {
 	CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error)
 	CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error)
 
-	CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
+	CreateObjectRelationship(ctx context.Context, typeArg string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 }

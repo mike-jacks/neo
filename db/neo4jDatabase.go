@@ -772,9 +772,103 @@ func (db *Neo4jDatabase) CypherMutation(ctx context.Context, cypherStatement str
 	return []*model.Response{{Success: true, Message: &message, Data: data}}, nil
 }
 
-func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, typeArg string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	return nil, nil
+	fromObjectNode.Domain = strings.Trim(strings.ToUpper(fromObjectNode.Domain), " ")
+	fromObjectNode.Name = strings.Trim(strings.ToUpper(fromObjectNode.Name), " ")
+	fromObjectNode.Type = strings.Trim(strings.ToUpper(fromObjectNode.Type), " ")
+
+	toObjectNode.Domain = strings.Trim(strings.ToUpper(toObjectNode.Domain), " ")
+	toObjectNode.Name = strings.Trim(strings.ToUpper(toObjectNode.Name), " ")
+	toObjectNode.Type = strings.Trim(strings.ToUpper(toObjectNode.Type), " ")
+	typeArg = strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
+
+	for i, property := range properties {
+		properties[i].Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
+	}
+
+	query := fmt.Sprintf("MATCH (fromObjectNode{name: $fromName, type: $fromType, domain: $fromDomain}), (toObjectNode{name: $toName, type: $toType, domain: $toDomain}) MERGE (fromObjectNode)-[relationship:%v]->(toObjectNode)", typeArg)
+	if len(properties) > 0 {
+		query += " SET "
+		for _, property := range properties {
+			if property.Type == "STRING" {
+				query += fmt.Sprintf("relationship.%v = \"%v\", ", property.Key, property.Value)
+			} else {
+				query += fmt.Sprintf("relationship.%v = %v, ", property.Key, property.Value)
+			}
+		}
+		query = strings.TrimSuffix(query, ", ")
+	}
+	query += " WITH toObjectNode, relationship, fromObjectNode RETURN toObjectNode, relationship, fromObjectNode"
+
+	parameters := map[string]any{
+		"fromName":   fromObjectNode.Name,
+		"fromType":   fromObjectNode.Type,
+		"fromDomain": fromObjectNode.Domain,
+		"toName":     toObjectNode.Name,
+		"toType":     toObjectNode.Type,
+		"toDomain":   toObjectNode.Domain,
+	}
+
+	fmt.Println(query)
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		toObjectNode, ok := record.Get("toObjectNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the toObjectNode")
+		}
+		relationship, ok := record.Get("relationship")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationship")
+		}
+		fromObjectNode, ok := record.Get("fromObjectNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the fromObjectNode")
+		}
+		neo4jFromObjectNode, ok := fromObjectNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for fromObjectNode: %T", fromObjectNode)
+		}
+		neo4jRelationship, ok := relationship.(dbtype.Relationship)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
+		}
+		neo4jToObjectNode, ok := toObjectNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
+		}
+		neo4jToObjectNode.GetProperties()
+		data := map[string]interface{}{
+			"fromObjectNode": map[string]interface{}{
+				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
+				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
+				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
+				"properties": neo4jFromObjectNode.GetProperties(),
+				"labels":     neo4jFromObjectNode.Labels,
+			},
+			"relationship": map[string]interface{}{
+				"type":       neo4jRelationship.Type,
+				"properties": neo4jRelationship.GetProperties(),
+			},
+			"toObjectNode": map[string]interface{}{
+				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
+				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
+				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
+				"properties": neo4jToObjectNode.GetProperties(),
+				"labels":     neo4jToObjectNode.Labels,
+			},
+		}
+		listData := []map[string]interface{}{data}
+		message := "Object relationship created successfully"
+		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+	}
+	return nil, fmt.Errorf("failed to create object relationship")
 }

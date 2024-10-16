@@ -10,20 +10,20 @@ type Mutation {
   addPropertiesToObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
   removePropertiesFromObjectNode(domain: String!, name: String!, type: String!, properties: [String!]!): Response!
 
-  createObjectRelationship(name: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  createObjectRelationship(type: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   updatePropertiesOnObjectRelationship(
-    name: String!
+    type: String!
     properties: [PropertyInput!]!
     fromObjectNode: ObjectNodeInput!
     toObjectNode: ObjectNodeInput!
   ): Response!
   removePropertiesFromObjectRelationship(
-    name: String!
+    type: String!
     properties: [String!]!
     fromObjectNode: ObjectNodeInput!
     toObjectNode: ObjectNodeInput!
   ): Response!
-  deleteObjectRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  deleteObjectRelationship(type: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
 
   cypherMutation(cypher_statement: String!): [Response!]!
 }

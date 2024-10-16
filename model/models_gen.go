@@ -39,7 +39,7 @@ type ObjectNodeInput struct {
 }
 
 type ObjectRelationship struct {
-	Name           string      `json:"name"`
+	Type           string      `json:"type"`
 	FromObjectNode *ObjectNode `json:"fromObjectNode"`
 	ToObjectNode   *ObjectNode `json:"toObjectNode"`
 	Properties     []*Property `json:"properties,omitempty"`
