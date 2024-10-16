@@ -59,12 +59,20 @@ func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, domai
 
 // AddPropertiesToObjectNode is the resolver for the addPropertiesToObjectNode field.
 func (r *mutationResolver) AddPropertiesToObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: AddPropertiesToObjectNode - addPropertiesToObjectNode"))
+	result, err := r.Database.AddPropertiesToObjectNode(ctx, domain, name, typeArg, properties)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // RemovePropertiesFromObjectNode is the resolver for the removePropertiesFromObjectNode field.
 func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: RemovePropertiesFromObjectNode - removePropertiesFromObjectNode"))
+	result, err := r.Database.RemovePropertiesFromObjectNode(ctx, domain, name, typeArg, properties)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // CreateObjectRelationship is the resolver for the createObjectRelationship field.

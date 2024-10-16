@@ -12,9 +12,16 @@ type Database interface {
 	CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.Response, error)
 	UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error)
 	DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
+
 	AddLabelsToObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
 	RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
+
+	AddPropertiesToObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error)
+	RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error)
+
 	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
 	GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.MultiResponse, error)
+
 	CypherQuery(ctx context.Context, cypherStatement string) ([]*model.MultiResponse, error)
+
 }

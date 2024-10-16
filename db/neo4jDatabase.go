@@ -366,9 +366,10 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 	domain = strings.Trim(strings.ToUpper(domain), " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	typeArgAsLabel := strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
 	for i := 0; i < len(labels); i++ {
 		label := strings.ReplaceAll(strings.Trim(strings.ToUpper(labels[i]), " "), " ", "_")
-		if label == typeArg {
+		if label == typeArgAsLabel {
 			labels = append(labels[:i], labels[i+1:]...)
 			i--
 			continue
@@ -381,7 +382,7 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain}) REMOVE o", typeArg)
+	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain}) REMOVE o", typeArgAsLabel)
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
@@ -422,10 +423,134 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
 		}
-		message := "Labels added to object node successfully"
+		message := "Labels removed from object node successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to remove labels from object node")
+}
+
+func (db *Neo4jDatabase) AddPropertiesToObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
+	for _, property := range properties {
+		property.Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
+	}
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(strings.ToUpper(domain), " ")
+	name = strings.Trim(strings.ToUpper(name), " ")
+	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+
+	query := "MATCH (o{name: $name, type: $typeArg, domain: $domain}) SET o"
+
+	for _, property := range properties {
+		if property.Type == model.PropertyTypeString {
+			query += fmt.Sprintf(".%v = \"%v\", ", property.Key, property.Value)
+		} else {
+			query += fmt.Sprintf(".%v = %v, ", property.Key, property.Value)
+		}
+	}
+	query = strings.TrimSuffix(query, ", ")
+	query += " RETURN o"
+
+	parameters := map[string]any{
+		"name":    name,
+		"typeArg": typeArg,
+		"domain":  domain,
+	}
+
+	fmt.Println(query)
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		node, ok := record.Get("o")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the updated node")
+		}
+		neo4jNode, ok := node.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for node: %T", node)
+		}
+
+		nodeProperties := make(map[string]interface{})
+		for key, value := range neo4jNode.Props {
+			nodeProperties[key] = value
+		}
+
+		data := map[string]interface{}{
+			"name":       utils.PopString(nodeProperties, "name"),
+			"type":       utils.PopString(nodeProperties, "type"),
+			"domain":     utils.PopString(nodeProperties, "domain"),
+			"labels":     neo4jNode.Labels,
+			"properties": nodeProperties,
+		}
+		message := "Properties added to object node successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+	return nil, fmt.Errorf("failed to add properties to object node")
+}
+
+func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error) {
+	for i, property := range properties {
+		properties[i] = strings.ReplaceAll(strings.Trim(strings.ToLower(property), " "), " ", "_")
+	}
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(strings.ToUpper(domain), " ")
+	name = strings.Trim(strings.ToUpper(name), " ")
+	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+
+	query := "MATCH (o{name: $name, type: $typeArg, domain: $domain}) REMOVE "
+
+	for _, property := range properties {
+		query += fmt.Sprintf("o.%v, ", property)
+	}
+	query = strings.TrimSuffix(query, ", ")
+	query += " RETURN o"
+
+	parameters := map[string]any{
+		"name":    name,
+		"typeArg": typeArg,
+		"domain":  domain,
+	}
+
+	fmt.Println(query)
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		node, ok := record.Get("o")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the updated node")
+		}
+		neo4jNode, ok := node.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for node: %T", node)
+		}
+
+		nodeProperties := make(map[string]interface{})
+		for key, value := range neo4jNode.Props {
+			nodeProperties[key] = value
+		}
+
+		data := map[string]interface{}{
+			"name":       utils.PopString(nodeProperties, "name"),
+			"type":       utils.PopString(nodeProperties, "type"),
+			"domain":     utils.PopString(nodeProperties, "domain"),
+			"labels":     neo4jNode.Labels,
+			"properties": nodeProperties,
+		}
+		message := "Properties removed from object node successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+	return nil, fmt.Errorf("failed to remove properties from object node")
 }
 
 func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
