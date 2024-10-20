@@ -1,3 +1,5 @@
+scalar Any
+
 enum PropertyType {
   STRING
   INTEGER
@@ -11,7 +13,7 @@ enum PropertyType {
 
 type Property {
   key: String!
-  value: String!
+  value: Any!
   type: PropertyType!
 }
 

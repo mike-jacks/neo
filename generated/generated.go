@@ -628,7 +628,9 @@ input CreateObjectRelationshipInput {
   fromObjectNode: ObjectNodeInput!
   toObjectNode: ObjectNodeInput!
 }`, BuiltIn: false},
-	{Name: "../schema/property.graphql", Input: `enum PropertyType {
+	{Name: "../schema/property.graphql", Input: `scalar Any
+
+enum PropertyType {
   STRING
   INTEGER
   FLOAT
@@ -641,7 +643,7 @@ input CreateObjectRelationshipInput {
 
 type Property {
   key: String!
-  value: String!
+  value: Any!
   type: PropertyType!
 }
 
@@ -649,7 +651,8 @@ input PropertyInput {
   key: String!
   value: String!
   type: PropertyType!
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 	{Name: "../schema/queries.graphql", Input: `type Query {
   # Object Queries
   getObjectNode(domain: String!, name: String!, type: String!): Response!
@@ -3102,9 +3105,9 @@ func (ec *executionContext) _Property_value(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(any)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNAny2interface(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Property_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3114,7 +3117,7 @@ func (ec *executionContext) fieldContext_Property_value(_ context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Any does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6548,6 +6551,27 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAny2interface(ctx context.Context, v interface{}) (any, error) {
+	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalAny(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)

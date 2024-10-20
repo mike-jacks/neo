@@ -47,7 +47,7 @@ type ObjectRelationship struct {
 
 type Property struct {
 	Key   string       `json:"key"`
-	Value string       `json:"value"`
+	Value any          `json:"value"`
 	Type  PropertyType `json:"type"`
 }
 

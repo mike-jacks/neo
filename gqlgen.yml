@@ -101,3 +101,6 @@ models:
   JSON:
     model:
       - github.com/99designs/gqlgen/graphql.Map
+  Any:
+    model:
+      - github.com/99designs/gqlgen/graphql.Any
