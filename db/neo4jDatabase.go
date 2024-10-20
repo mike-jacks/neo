@@ -121,16 +121,16 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 			nodeProperties[key] = value
 		}
 
-		data := map[string]interface{}{
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
 			"name":       utils.PopString(nodeProperties, "name"),
 			"type":       utils.PopString(nodeProperties, "type"),
 			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
-		}
-		listData := []map[string]interface{}{data}
+		})
 		message := "Object node created successfully"
-		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 
 	return nil, err
@@ -240,16 +240,16 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 			nodeProperties[key] = value
 		}
 
-		data := map[string]interface{}{
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
 			"name":       utils.PopString(nodeProperties, "name"),
 			"type":       utils.PopString(nodeProperties, "type"),
 			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
-		}
-		listData := []map[string]interface{}{data}
+		})
 		message := "Object node updated successfully"
-		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	message := "Failed to update object node"
 
@@ -348,16 +348,16 @@ func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain strin
 		for key, value := range neo4jNode.Props {
 			nodeProperties[key] = value
 		}
-		data := map[string]interface{}{
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
 			"name":       utils.PopString(nodeProperties, "name"),
 			"type":       utils.PopString(nodeProperties, "type"),
 			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
-		}
-		listData := []map[string]interface{}{data}
+		})
 		message := "Labels added to object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to add labels to object node")
 }
@@ -419,16 +419,16 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 		for key, value := range neo4jNode.Props {
 			nodeProperties[key] = value
 		}
-		data := map[string]interface{}{
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
 			"name":       utils.PopString(nodeProperties, "name"),
 			"type":       utils.PopString(nodeProperties, "type"),
 			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
-		}
-		listData := []map[string]interface{}{data}
+		})
 		message := "Labels removed from object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to remove labels from object node")
 }
@@ -484,16 +484,16 @@ func (db *Neo4jDatabase) AddPropertiesToObjectNode(ctx context.Context, domain s
 			nodeProperties[key] = value
 		}
 
-		data := map[string]interface{}{
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
 			"name":       utils.PopString(nodeProperties, "name"),
 			"type":       utils.PopString(nodeProperties, "type"),
 			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
-		}
+		})
 		message := "Properties added to object node successfully"
-		listData := []map[string]interface{}{data}
-		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to add properties to object node")
 }
@@ -545,16 +545,16 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, dom
 			nodeProperties[key] = value
 		}
 
-		data := map[string]interface{}{
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
 			"name":       utils.PopString(nodeProperties, "name"),
 			"type":       utils.PopString(nodeProperties, "type"),
 			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
-		}
-		listData := []map[string]interface{}{data}
+		})
 		message := "Properties removed from object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to remove properties from object node")
 }
@@ -595,17 +595,16 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 		for key, value := range neo4jNode.Props {
 			nodeProperties[key] = value
 		}
-
-		data := map[string]interface{}{
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
 			"name":       utils.PopString(nodeProperties, "name"),
 			"type":       utils.PopString(nodeProperties, "type"),
 			"domain":     utils.PopString(nodeProperties, "domain"),
 			"labels":     neo4jNode.Labels,
 			"properties": nodeProperties,
-		}
-		listData := []map[string]interface{}{data}
+		})
 		message := "Object node retrieved successfully"
-		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to get object node")
 }
@@ -712,21 +711,32 @@ func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string
 			if !ok {
 				return nil, fmt.Errorf("failed to retrieve the node")
 			}
-			neo4jNode, ok := node.(dbtype.Node)
-			if !ok {
+
+			var nodeData map[string]interface{}
+
+			switch v := node.(type) {
+			case dbtype.Node:
+				nodeProperties := make(map[string]interface{})
+				for key, value := range v.Props {
+					nodeProperties[key] = value
+				}
+				nodeData = map[string]interface{}{
+					"name":       utils.PopString(nodeProperties, "name"),
+					"type":       utils.PopString(nodeProperties, "type"),
+					"domain":     utils.PopString(nodeProperties, "domain"),
+					"labels":     v.Labels,
+					"properties": nodeProperties,
+				}
+			case dbtype.Relationship:
+				nodeData = map[string]interface{}{
+					"type":       v.Type,
+					"properties": v.Props,
+				}
+			default:
 				return nil, fmt.Errorf("unexpected type for node: %T", node)
 			}
-			nodeProperties := make(map[string]interface{})
-			for key, value := range neo4jNode.Props {
-				nodeProperties[key] = value
-			}
-			data = append(data, map[string]interface{}{
-				"name":       utils.PopString(nodeProperties, "name"),
-				"type":       utils.PopString(nodeProperties, "type"),
-				"domain":     utils.PopString(nodeProperties, "domain"),
-				"labels":     neo4jNode.Labels,
-				"properties": nodeProperties,
-			})
+
+			data = append(data, nodeData)
 		}
 	}
 	message := "Cypher query executed successfully"
@@ -845,8 +855,8 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, typeArg s
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
 		}
-		neo4jToObjectNode.GetProperties()
-		data := map[string]interface{}{
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
 			"fromObjectNode": map[string]interface{}{
 				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
 				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
@@ -865,10 +875,111 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, typeArg s
 				"properties": neo4jToObjectNode.GetProperties(),
 				"labels":     neo4jToObjectNode.Labels,
 			},
-		}
-		listData := []map[string]interface{}{data}
+		})
 		message := "Object relationship created successfully"
-		return &model.Response{Success: true, Message: &message, Data: listData}, nil
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	return nil, fmt.Errorf("failed to create object relationship")
+}
+
+func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Context, typeArg string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	typeArg = strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
+	if len(properties) > 0 {
+		for i, property := range properties {
+			properties[i].Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
+		}
+	} else {
+		return nil, fmt.Errorf("properties are required")
+	}
+
+	fromObjectNode.Domain = strings.Trim(strings.ToUpper(fromObjectNode.Domain), " ")
+	fromObjectNode.Name = strings.Trim(strings.ToUpper(fromObjectNode.Name), " ")
+	fromObjectNode.Type = strings.Trim(strings.ToUpper(fromObjectNode.Type), " ")
+
+	toObjectNode.Domain = strings.Trim(strings.ToUpper(toObjectNode.Domain), " ")
+	toObjectNode.Name = strings.Trim(strings.ToUpper(toObjectNode.Name), " ")
+	toObjectNode.Type = strings.Trim(strings.ToUpper(toObjectNode.Type), " ")
+
+	query := fmt.Sprintf("MATCH (fromObjectNode{name: $fromName, type: $fromType, domain: $fromDomain}), (toObjectNode{name: $toName, type: $toType, domain: $toDomain}) MATCH (fromObjectNode)-[relationship:%v]->(toObjectNode) SET ", typeArg)
+	for _, property := range properties {
+		if property.Type == "STRING" {
+			query += fmt.Sprintf("relationship.%v = \"%v\", ", property.Key, property.Value)
+		} else {
+			query += fmt.Sprintf("relationship.%v = %v, ", property.Key, property.Value)
+		}
+	}
+	query = strings.TrimSuffix(query, ", ")
+	query += " WITH toObjectNode, relationship, fromObjectNode RETURN toObjectNode, relationship, fromObjectNode"
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"fromName":   fromObjectNode.Name,
+		"fromType":   fromObjectNode.Type,
+		"fromDomain": fromObjectNode.Domain,
+		"toName":     toObjectNode.Name,
+		"toType":     toObjectNode.Type,
+		"toDomain":   toObjectNode.Domain,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		toObjectNode, ok := record.Get("toObjectNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the toObjectNode")
+		}
+		relationship, ok := record.Get("relationship")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationship")
+		}
+		fromObjectNode, ok := record.Get("fromObjectNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the fromObjectNode")
+		}
+		neo4jToObjectNode, ok := toObjectNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
+		}
+		neo4jRelationship, ok := relationship.(dbtype.Relationship)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
+		}
+		neo4jFromObjectNode, ok := fromObjectNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for fromObjectNode: %T", fromObjectNode)
+		}
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
+			"fromObjectNode": map[string]interface{}{
+				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
+				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
+				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
+				"properties": neo4jFromObjectNode.GetProperties(),
+				"labels":     neo4jFromObjectNode.Labels,
+			},
+			"relationship": map[string]interface{}{
+				"type":       neo4jRelationship.Type,
+				"properties": neo4jRelationship.GetProperties(),
+			},
+			"toObjectNode": map[string]interface{}{
+				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
+				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
+				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
+				"properties": neo4jToObjectNode.GetProperties(),
+				"labels":     neo4jToObjectNode.Labels,
+			},
+		})
+		message := "Object relationship created successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+
+	return nil, nil
 }
