@@ -19,6 +19,6 @@ type Property {
 
 input PropertyInput {
   key: String!
-  value: String!
+  value: Any!
   type: PropertyType!
 }

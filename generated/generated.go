@@ -649,7 +649,7 @@ type Property {
 
 input PropertyInput {
   key: String!
-  value: String!
+  value: Any!
   type: PropertyType!
 }
 `, BuiltIn: false},
@@ -5663,7 +5663,7 @@ func (ec *executionContext) unmarshalInputPropertyInput(ctx context.Context, obj
 			it.Key = data
 		case "value":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNAny2interface(ctx, v)
 			if err != nil {
 				return it, err
 			}
