@@ -907,6 +907,21 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Contex
 	for _, property := range properties {
 		if property.Type == "STRING" {
 			query += fmt.Sprintf("relationship.%v = \"%v\", ", property.Key, property.Value)
+		} else if property.Type == "ARRAY_STRING" {
+			interfaceSlice, ok := property.Value.([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("unexpected type for property value: %T", property.Value)
+			}
+			propertyValue := make([]string, len(interfaceSlice))
+			for i, value := range interfaceSlice {
+				propertyValue[i] = fmt.Sprintf("%v", value)
+			}
+			query += fmt.Sprintf("relationship.%v = [", property.Key)
+			for _, value := range propertyValue {
+				query += fmt.Sprintf("\"%v\", ", value)
+			}
+			query = strings.TrimSuffix(query, ", ")
+			query += "], "
 		} else {
 			query += fmt.Sprintf("relationship.%v = %v, ", property.Key, property.Value)
 		}
