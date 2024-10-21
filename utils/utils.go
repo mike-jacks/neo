@@ -49,35 +49,65 @@ func CreatePropertiesQuery(query string, properties []*model.PropertyInput, pref
 	for _, property := range properties {
 		if len(prefix) > 0 {
 			query += fmt.Sprintf("%v.", prefix[0])
+			if property.Type.String() == "STRING" {
+				query += fmt.Sprintf("%v= \"%v\", ", property.Key, property.Value)
+			} else if property.Type.String() == "BOOLEAN" {
+				query += fmt.Sprintf("%v= %v, ", property.Key, property.Value)
+			} else if property.Type.String() == "NUMBER" {
+				query += fmt.Sprintf("%v= %v, ", property.Key, property.Value)
+			} else if property.Type.String() == "ARRAY_STRING" {
+				query += fmt.Sprintf("%v= [", property.Key)
+				for _, value := range property.Value.([]interface{}) {
+					query += fmt.Sprintf("\"%v\", ", value)
+				}
+				query = strings.TrimSuffix(query, ", ")
+				query += "], "
+			} else if property.Type.String() == "ARRAY_NUMBER" {
+				query += fmt.Sprintf("%v= [", property.Key)
+				for _, value := range property.Value.([]interface{}) {
+					query += fmt.Sprintf("%v, ", value)
+				}
+				query = strings.TrimSuffix(query, ", ")
+				query += "], "
+			} else if property.Type.String() == "ARRAY_BOOLEAN" {
+				query += fmt.Sprintf("%v= [", property.Key)
+				for _, value := range property.Value.([]interface{}) {
+					query += fmt.Sprintf("%v, ", value)
+				}
+				query = strings.TrimSuffix(query, ", ")
+				query += "], "
+			}
+		} else {
+			if property.Type.String() == "STRING" {
+				query += fmt.Sprintf("%v: \"%v\", ", property.Key, property.Value)
+			} else if property.Type.String() == "BOOLEAN" {
+				query += fmt.Sprintf("%v: %v, ", property.Key, property.Value)
+			} else if property.Type.String() == "NUMBER" {
+				query += fmt.Sprintf("%v: %v, ", property.Key, property.Value)
+			} else if property.Type.String() == "ARRAY_STRING" {
+				query += fmt.Sprintf("%v: [", property.Key)
+				for _, value := range property.Value.([]interface{}) {
+					query += fmt.Sprintf("\"%v\", ", value)
+				}
+				query = strings.TrimSuffix(query, ", ")
+				query += "], "
+			} else if property.Type.String() == "ARRAY_NUMBER" {
+				query += fmt.Sprintf("%v: [", property.Key)
+				for _, value := range property.Value.([]interface{}) {
+					query += fmt.Sprintf("%v, ", value)
+				}
+				query = strings.TrimSuffix(query, ", ")
+				query += "], "
+			} else if property.Type.String() == "ARRAY_BOOLEAN" {
+				query += fmt.Sprintf("%v: [", property.Key)
+				for _, value := range property.Value.([]interface{}) {
+					query += fmt.Sprintf("%v, ", value)
+				}
+				query = strings.TrimSuffix(query, ", ")
+				query += "], "
+			}
 		}
-		if property.Type.String() == "STRING" {
-			query += fmt.Sprintf("%v: \"%v\", ", property.Key, property.Value)
-		} else if property.Type.String() == "BOOLEAN" {
-			query += fmt.Sprintf("%v: %v, ", property.Key, property.Value)
-		} else if property.Type.String() == "NUMBER" {
-			query += fmt.Sprintf("%v: %v, ", property.Key, property.Value)
-		} else if property.Type.String() == "ARRAY_STRING" {
-			query += fmt.Sprintf("%v: [", property.Key)
-			for _, value := range property.Value.([]interface{}) {
-				query += fmt.Sprintf("\"%v\", ", value)
-			}
-			query = strings.TrimSuffix(query, ", ")
-			query += "], "
-		} else if property.Type.String() == "ARRAY_NUMBER" {
-			query += fmt.Sprintf("%v: [", property.Key)
-			for _, value := range property.Value.([]interface{}) {
-				query += fmt.Sprintf("%v, ", value)
-			}
-			query = strings.TrimSuffix(query, ", ")
-			query += "], "
-		} else if property.Type.String() == "ARRAY_BOOLEAN" {
-			query += fmt.Sprintf("%v: [", property.Key)
-			for _, value := range property.Value.([]interface{}) {
-				query += fmt.Sprintf("%v, ", value)
-			}
-			query = strings.TrimSuffix(query, ", ")
-			query += "], "
-		}
+
 	}
 	return query
 }
