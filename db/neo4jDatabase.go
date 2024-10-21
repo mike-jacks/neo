@@ -53,7 +53,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		labels[i] = strings.ReplaceAll(strings.Trim(strings.ToUpper(label), " "), " ", "_")
 	}
 	for i := range properties {
-		properties[i].Key = strings.Trim(strings.ToLower(properties[i].Key), " ")
+		properties[i].Key = strings.ReplaceAll(strings.Trim(strings.ToLower(properties[i].Key), " "), " ", "_")
 	}
 
 	query := fmt.Sprintf(`
@@ -83,14 +83,9 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
-	query += " {name: $name, type: $typeArg, domain: $domain "
-	for _, property := range properties {
-		if property.Type == "STRING" {
-			query += fmt.Sprintf(", %v: \"%v\"", property.Key, property.Value)
-		} else {
-			query += fmt.Sprintf(", %v: %v", property.Key, property.Value)
-		}
-	}
+	query += " {name: $name, type: $typeArg, domain: $domain, "
+	query = utils.CreatePropertiesQuery(query, properties)
+	query = strings.TrimSuffix(query, ", ")
 	query += "}) RETURN o"
 
 	parameters := map[string]any{
@@ -145,14 +140,9 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
 	labelFromTypeArg := strings.ReplaceAll(typeArg, " ", "_")
 
-	var updatedProperties = []map[string]any{}
 	if updateObjectNodeInput.Properties != nil {
-		for _, property := range updateObjectNodeInput.Properties {
-			updatedProperties = append(updatedProperties, map[string]any{
-				"key":   strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_"),
-				"value": property.Value,
-				"type":  property.Type,
-			})
+		for i, property := range updateObjectNodeInput.Properties {
+			updateObjectNodeInput.Properties[i].Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
 		}
 	}
 
@@ -192,16 +182,11 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 		}
 		query += ", "
 	}
-	if len(updatedProperties) > 0 {
-		for _, property := range updatedProperties {
-			if property["type"] == "STRING" {
-				query += fmt.Sprintf("o.%v = \"%v\", ", strings.Trim(strings.ToLower(property["key"].(string)), " "), property["value"])
-			} else {
-				query += fmt.Sprintf("o.%v = %v, ", strings.ReplaceAll(strings.Trim(strings.ToLower(property["key"].(string)), " "), " ", "_"), property["value"])
-			}
-		}
+	if len(updateObjectNodeInput.Properties) > 0 {
+		query = utils.CreatePropertiesQuery(query, updateObjectNodeInput.Properties, "o")
 	}
-	query = strings.TrimSuffix(query, ", ") + " RETURN o;"
+	query = strings.TrimSuffix(query, ", ")
+	query += " RETURN o;"
 	fmt.Println(query)
 	fmt.Println(replaceLabelQuery)
 
@@ -802,13 +787,7 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, typeArg s
 	query := fmt.Sprintf("MATCH (fromObjectNode{name: $fromName, type: $fromType, domain: $fromDomain}), (toObjectNode{name: $toName, type: $toType, domain: $toDomain}) MERGE (fromObjectNode)-[relationship:%v]->(toObjectNode)", typeArg)
 	if len(properties) > 0 {
 		query += " SET "
-		for _, property := range properties {
-			if property.Type == "STRING" {
-				query += fmt.Sprintf("relationship.%v = \"%v\", ", property.Key, property.Value)
-			} else {
-				query += fmt.Sprintf("relationship.%v = %v, ", property.Key, property.Value)
-			}
-		}
+		query = utils.CreatePropertiesQuery(query, properties, "relationship")
 		query = strings.TrimSuffix(query, ", ")
 	}
 	query += " WITH toObjectNode, relationship, fromObjectNode RETURN toObjectNode, relationship, fromObjectNode"
@@ -904,28 +883,7 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Contex
 	toObjectNode.Type = strings.Trim(strings.ToUpper(toObjectNode.Type), " ")
 
 	query := fmt.Sprintf("MATCH (fromObjectNode{name: $fromName, type: $fromType, domain: $fromDomain}), (toObjectNode{name: $toName, type: $toType, domain: $toDomain}) MATCH (fromObjectNode)-[relationship:%v]->(toObjectNode) SET ", typeArg)
-	for _, property := range properties {
-		if property.Type == "STRING" {
-			query += fmt.Sprintf("relationship.%v = \"%v\", ", property.Key, property.Value)
-		} else if property.Type == "ARRAY_STRING" {
-			interfaceSlice, ok := property.Value.([]interface{})
-			if !ok {
-				return nil, fmt.Errorf("unexpected type for property value: %T", property.Value)
-			}
-			propertyValue := make([]string, len(interfaceSlice))
-			for i, value := range interfaceSlice {
-				propertyValue[i] = fmt.Sprintf("%v", value)
-			}
-			query += fmt.Sprintf("relationship.%v = [", property.Key)
-			for _, value := range propertyValue {
-				query += fmt.Sprintf("\"%v\", ", value)
-			}
-			query = strings.TrimSuffix(query, ", ")
-			query += "], "
-		} else {
-			query += fmt.Sprintf("relationship.%v = %v, ", property.Key, property.Value)
-		}
-	}
+	query = utils.CreatePropertiesQuery(query, properties, "relationship")
 	query = strings.TrimSuffix(query, ", ")
 	query += " WITH toObjectNode, relationship, fromObjectNode RETURN toObjectNode, relationship, fromObjectNode"
 

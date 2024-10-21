@@ -632,12 +632,10 @@ input CreateObjectRelationshipInput {
 
 enum PropertyType {
   STRING
-  INTEGER
-  FLOAT
+  NUMBER
   BOOLEAN
   ARRAY_STRING
-  ARRAY_INTEGER
-  ARRAY_FLOAT
+  ARRAY_NUMBER
   ARRAY_BOOLEAN
 }
 

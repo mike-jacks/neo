@@ -78,29 +78,25 @@ type PropertyType string
 
 const (
 	PropertyTypeString       PropertyType = "STRING"
-	PropertyTypeInteger      PropertyType = "INTEGER"
-	PropertyTypeFloat        PropertyType = "FLOAT"
+	PropertyTypeNumber       PropertyType = "NUMBER"
 	PropertyTypeBoolean      PropertyType = "BOOLEAN"
 	PropertyTypeArrayString  PropertyType = "ARRAY_STRING"
-	PropertyTypeArrayInteger PropertyType = "ARRAY_INTEGER"
-	PropertyTypeArrayFloat   PropertyType = "ARRAY_FLOAT"
+	PropertyTypeArrayNumber  PropertyType = "ARRAY_NUMBER"
 	PropertyTypeArrayBoolean PropertyType = "ARRAY_BOOLEAN"
 )
 
 var AllPropertyType = []PropertyType{
 	PropertyTypeString,
-	PropertyTypeInteger,
-	PropertyTypeFloat,
+	PropertyTypeNumber,
 	PropertyTypeBoolean,
 	PropertyTypeArrayString,
-	PropertyTypeArrayInteger,
-	PropertyTypeArrayFloat,
+	PropertyTypeArrayNumber,
 	PropertyTypeArrayBoolean,
 }
 
 func (e PropertyType) IsValid() bool {
 	switch e {
-	case PropertyTypeString, PropertyTypeInteger, PropertyTypeFloat, PropertyTypeBoolean, PropertyTypeArrayString, PropertyTypeArrayInteger, PropertyTypeArrayFloat, PropertyTypeArrayBoolean:
+	case PropertyTypeString, PropertyTypeNumber, PropertyTypeBoolean, PropertyTypeArrayString, PropertyTypeArrayNumber, PropertyTypeArrayBoolean:
 		return true
 	}
 	return false
