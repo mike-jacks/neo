@@ -1300,7 +1300,7 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 		message := "Object outgoing relationships retrieved successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	} else {
-		message := "Object outgoing relationships retrieval failed"
+		message := "No outgoing relationships found"
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 }
@@ -1382,7 +1382,7 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 		message := "Object outgoing relationships retrieved successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	} else {
-		message := "Object outgoing relationships retrieval failed"
+		message := "No incoming relationships found"
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 }
