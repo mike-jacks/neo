@@ -1389,3 +1389,89 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 	message := "Object outgoing relationships retrieved successfully"
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
+
+func (db *Neo4jDatabase) GetAllSchemaDomainNodes(ctx context.Context) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	query := `
+		MATCH (schemaDomainNode:SchemaDomain)
+		RETURN schemaDomainNode
+	`
+
+	result, err := session.Run(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []map[string]interface{}{}
+	for result.Next(ctx) {
+		record := result.Record()
+		schemaDomainNode, ok := record.Get("schemaDomainNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the schemaDomainNode")
+		}
+		neo4jSchemaDomainNode, ok := schemaDomainNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for schemaDomainNode: %T", schemaDomainNode)
+		}
+		data = append(data, map[string]interface{}{
+			"name":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "name"),
+			"type":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "type"),
+			"domain":     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "domain"),
+			"properties": neo4jSchemaDomainNode.GetProperties(),
+			"labels":     neo4jSchemaDomainNode.Labels,
+		})
+	}
+	if len(data) == 0 {
+		message := "No schema domain nodes found"
+		return &model.Response{Success: false, Message: &message, Data: data}, nil
+	}
+	message := "Schema domain nodes retrieved successfully"
+	return &model.Response{Success: true, Message: &message, Data: data}, nil
+}
+
+func (db *Neo4jDatabase) CreateSchemaDomainNode(ctx context.Context, domain string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
+
+	query := `
+		CREATE (schemaDomainNode:SchemaDomain {domain: $domain, type: "schemaDomain", name: $domain})
+		RETURN schemaDomainNode
+	`
+
+	parameters := map[string]any{
+		"domain": domain,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		schemaDomainNode, ok := record.Get("schemaDomainNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the schemaDomainNode")
+		}
+		neo4jSchemaDomainNode, ok := schemaDomainNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for schemaDomainNode: %T", schemaDomainNode)
+		}
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
+			"name":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "name"),
+			"type":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "type"),
+			"domain":     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "domain"),
+			"properties": neo4jSchemaDomainNode.GetProperties(),
+			"labels":     neo4jSchemaDomainNode.Labels,
+		})
+		message := "Schema domain node created successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+	message := "Schema domain node creation failed"
+	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+}
