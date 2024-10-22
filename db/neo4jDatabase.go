@@ -1250,7 +1250,8 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 		return nil, err
 	}
 
-	if result.Next(ctx) {
+	data := []map[string]interface{}{}
+	for result.Next(ctx) {
 		record := result.Record()
 		fromObjectNode, ok := record.Get("fromObjectNode")
 		if !ok {
@@ -1276,7 +1277,6 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
 		}
-		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
 			"fromObjectNode": map[string]interface{}{
 				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
@@ -1297,12 +1297,14 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 				"labels":     neo4jToObjectNode.Labels,
 			},
 		})
-		message := "Object outgoing relationships retrieved successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
-	} else {
-		message := "No outgoing relationships found"
-		return &model.Response{Success: false, Message: &message, Data: []map[string]interface{}{}}, nil
 	}
+	if len(data) == 0 {
+		message := "No outgoing relationships found"
+		return &model.Response{Success: false, Message: &message, Data: data}, nil
+	}
+	message := "Object outgoing relationships retrieved successfully"
+	return &model.Response{Success: true, Message: &message, Data: data}, nil
+
 }
 
 func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
@@ -1332,7 +1334,8 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 		return nil, err
 	}
 
-	if result.Next(ctx) {
+	data := []map[string]interface{}{}
+	for result.Next(ctx) {
 		record := result.Record()
 		fromObjectNode, ok := record.Get("fromObjectNode")
 		if !ok {
@@ -1358,7 +1361,6 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
 		}
-		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
 			"toObjectNode": map[string]interface{}{
 				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
@@ -1379,10 +1381,11 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 				"labels":     neo4jFromObjectNode.Labels,
 			},
 		})
-		message := "Object outgoing relationships retrieved successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
-	} else {
-		message := "No incoming relationships found"
-		return &model.Response{Success: false, Message: &message, Data: []map[string]interface{}{}}, nil
 	}
+	if len(data) == 0 {
+		message := "No incoming relationships found"
+		return &model.Response{Success: false, Message: &message, Data: data}, nil
+	}
+	message := "Object outgoing relationships retrieved successfully"
+	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
