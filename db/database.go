@@ -34,6 +34,6 @@ type Database interface {
 	GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error)
 	GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 
-	CreateSchemaDomainNode(ctx context.Context, domain string) (*model.Response, error)
-	GetAllSchemaDomainNodes(ctx context.Context) (*model.Response, error)
+	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error)
+	GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error)
 }

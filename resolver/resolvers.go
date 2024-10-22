@@ -110,9 +110,9 @@ func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, relatio
 	return result, nil
 }
 
-// CreateSchemaDomainNode is the resolver for the createSchemaDomainNode field.
-func (r *mutationResolver) CreateSchemaDomainNode(ctx context.Context, domain string) (*model.Response, error) {
-	result, err := r.Database.CreateSchemaDomainNode(ctx, domain)
+// CreateDomainSchemaNode is the resolver for the createDomainSchemaNode field.
+func (r *mutationResolver) CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error) {
+	result, err := r.Database.CreateDomainSchemaNode(ctx, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -173,9 +173,9 @@ func (r *queryResolver) GetObjectNodeIncomingRelationships(ctx context.Context, 
 	return result, nil
 }
 
-// GetAllSchemaDomainNodes is the resolver for the getAllSchemaDomainNodes field.
-func (r *queryResolver) GetAllSchemaDomainNodes(ctx context.Context) (*model.Response, error) {
-	result, err := r.Database.GetAllSchemaDomainNodes(ctx)
+// GetAllDomainSchemaNodes is the resolver for the getAllDomainSchemaNodes field.
+func (r *queryResolver) GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error) {
+	result, err := r.Database.GetAllDomainSchemaNodes(ctx)
 	if err != nil {
 		return nil, err
 	}

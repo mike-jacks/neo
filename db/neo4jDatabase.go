@@ -1390,12 +1390,12 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
 
-func (db *Neo4jDatabase) GetAllSchemaDomainNodes(ctx context.Context) (*model.Response, error) {
+func (db *Neo4jDatabase) GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
 	query := `
-		MATCH (schemaDomainNode:SchemaDomain)
+		MATCH (schemaDomainNode:DOMAIN_SCHEMA)
 		RETURN schemaDomainNode
 	`
 
@@ -1431,14 +1431,25 @@ func (db *Neo4jDatabase) GetAllSchemaDomainNodes(ctx context.Context) (*model.Re
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
 
-func (db *Neo4jDatabase) CreateSchemaDomainNode(ctx context.Context, domain string) (*model.Response, error) {
+func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
 	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
-
+	
 	query := `
-		CREATE (schemaDomainNode:SchemaDomain {domain: $domain, type: "schemaDomain", name: $domain})
+		CREATE CONSTRAINT IF NOT EXISTS
+		FOR (n:DOMAIN_SCHEMA)
+		REQUIRE (n.name, n.type, n.domain) IS NODE KEY
+		`
+
+	_, err := session.Run(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	query = `
+		CREATE (schemaDomainNode:DOMAIN_SCHEMA {domain: $domain, type: "DOMAIN SCHEMA", name: $domain})
 		RETURN schemaDomainNode
 	`
 

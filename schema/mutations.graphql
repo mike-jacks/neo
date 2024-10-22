@@ -25,7 +25,7 @@ type Mutation {
   ): Response!
   deleteObjectRelationship(relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
 
-  createSchemaDomainNode(domain: String!): Response!
+  createDomainSchemaNode(domain: String!): Response!
 
   cypherMutation(cypher_statement: String!): [Response!]!
 }
