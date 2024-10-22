@@ -1,5 +1,5 @@
 type ObjectRelationship {
-  type: String!
+  relationshipName: String!
   fromObjectNode: ObjectNode!
   toObjectNode: ObjectNode!
   properties: [Property!]

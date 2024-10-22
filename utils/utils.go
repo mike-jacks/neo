@@ -111,3 +111,16 @@ func CreatePropertiesQuery(query string, properties []*model.PropertyInput, pref
 	}
 	return query
 }
+
+func RemovePropertiesQuery(query string, properties []string, prefix ...string) string {
+	if len(prefix) > 0 {
+		for _, property := range properties {
+			query += fmt.Sprintf("%v.%v = null, ", prefix[0], property)
+		}
+	} else {
+		for _, property := range properties {
+			query += fmt.Sprintf("%v = null, ", property)
+		}
+	}
+	return query
+}

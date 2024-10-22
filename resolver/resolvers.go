@@ -76,8 +76,8 @@ func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, d
 }
 
 // CreateObjectRelationship is the resolver for the createObjectRelationship field.
-func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, typeArg string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.CreateObjectRelationship(ctx, typeArg, properties, fromObjectNode, toObjectNode)
+func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	result, err := r.Database.CreateObjectRelationship(ctx, relationshipName, properties, fromObjectNode, toObjectNode)
 	if err != nil {
 		return nil, err
 	}
@@ -85,8 +85,8 @@ func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, typeArg
 }
 
 // UpdatePropertiesOnObjectRelationship is the resolver for the updatePropertiesOnObjectRelationship field.
-func (r *mutationResolver) UpdatePropertiesOnObjectRelationship(ctx context.Context, typeArg string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.UpdatePropertiesOnObjectRelationship(ctx, typeArg, properties, fromObjectNode, toObjectNode)
+func (r *mutationResolver) UpdatePropertiesOnObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	result, err := r.Database.UpdatePropertiesOnObjectRelationship(ctx, relationshipName, properties, fromObjectNode, toObjectNode)
 	if err != nil {
 		return nil, err
 	}
@@ -94,18 +94,26 @@ func (r *mutationResolver) UpdatePropertiesOnObjectRelationship(ctx context.Cont
 }
 
 // RemovePropertiesFromObjectRelationship is the resolver for the removePropertiesFromObjectRelationship field.
-func (r *mutationResolver) RemovePropertiesFromObjectRelationship(ctx context.Context, typeArg string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: RemovePropertiesFromObjectRelationship - removePropertiesFromObjectRelationship"))
+func (r *mutationResolver) RemovePropertiesFromObjectRelationship(ctx context.Context, relationshipName string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	result, err := r.Database.RemovePropertiesFromObjectRelationship(ctx, relationshipName, properties, fromObjectNode, toObjectNode)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // DeleteObjectRelationship is the resolver for the deleteObjectRelationship field.
-func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, typeArg string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
 	panic(fmt.Errorf("not implemented: DeleteObjectRelationship - deleteObjectRelationship"))
 }
 
 // CypherMutation is the resolver for the cypherMutation field.
 func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
-	panic(fmt.Errorf("not implemented: CypherMutation - cypherMutation"))
+	result, err := r.Database.CypherMutation(ctx, cypherStatement)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetObjectNode is the resolver for the getObjectNode field.

@@ -39,10 +39,10 @@ type ObjectNodeInput struct {
 }
 
 type ObjectRelationship struct {
-	Type           string      `json:"type"`
-	FromObjectNode *ObjectNode `json:"fromObjectNode"`
-	ToObjectNode   *ObjectNode `json:"toObjectNode"`
-	Properties     []*Property `json:"properties,omitempty"`
+	RelationshipName string      `json:"relationshipName"`
+	FromObjectNode   *ObjectNode `json:"fromObjectNode"`
+	ToObjectNode     *ObjectNode `json:"toObjectNode"`
+	Properties       []*Property `json:"properties,omitempty"`
 }
 
 type Property struct {
