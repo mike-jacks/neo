@@ -129,11 +129,14 @@ func CleanUpRelationshipName(relationshipName string) string {
 	return strings.ReplaceAll(strings.Trim(strings.ToUpper(relationshipName), " "), " ", "_")
 }
 
-func CleanUpObjectNode(objectNode model.ObjectNodeInput) model.ObjectNodeInput {
+func CleanUpObjectNode(objectNode *model.ObjectNodeInput) error {
+	if objectNode == nil {
+		return fmt.Errorf("objectNode is required")
+	}
 	objectNode.Domain = strings.Trim(strings.ToUpper(objectNode.Domain), " ")
 	objectNode.Name = strings.Trim(strings.ToUpper(objectNode.Name), " ")
 	objectNode.Type = strings.Trim(strings.ToUpper(objectNode.Type), " ")
-	return objectNode
+	return nil
 }
 
 func CleanUpPropertyObjects(properties []*model.PropertyInput) error {

@@ -781,9 +781,15 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, relations
 
 	relationshipName = utils.CleanUpRelationshipName(relationshipName)
 
-	fromObjectNode = utils.CleanUpObjectNode(fromObjectNode)
+	if err := utils.CleanUpObjectNode(&fromObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
-	toObjectNode = utils.CleanUpObjectNode(toObjectNode)
+	if err := utils.CleanUpObjectNode(&toObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
 	for i, property := range properties {
 		properties[i].Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
@@ -879,7 +885,10 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Contex
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	fromObjectNode = utils.CleanUpObjectNode(fromObjectNode)
+	if err := utils.CleanUpObjectNode(&fromObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
 	toObjectNode.Domain = strings.Trim(strings.ToUpper(toObjectNode.Domain), " ")
 	toObjectNode.Name = strings.Trim(strings.ToUpper(toObjectNode.Name), " ")
@@ -972,9 +981,15 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectRelationship(ctx context.Cont
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	fromObjectNode = utils.CleanUpObjectNode(fromObjectNode)
+	if err := utils.CleanUpObjectNode(&fromObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
-	toObjectNode = utils.CleanUpObjectNode(toObjectNode)
+	if err := utils.CleanUpObjectNode(&toObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
 	query := fmt.Sprintf("MATCH (fromObjectNode{name: $fromName, type: $fromType, domain: $fromDomain}), (toObjectNode{name: $toName, type: $toType, domain: $toDomain}) MATCH (fromObjectNode)-[relationship:%v]->(toObjectNode) SET ", relationshipName)
 	query = utils.RemovePropertiesQuery(query, properties, "relationship")
@@ -1058,9 +1073,15 @@ func (db *Neo4jDatabase) DeleteObjectRelationship(ctx context.Context, relations
 
 	relationshipName = utils.CleanUpRelationshipName(relationshipName)
 
-	fromObjectNode = utils.CleanUpObjectNode(fromObjectNode)
+	if err := utils.CleanUpObjectNode(&fromObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
-	toObjectNode = utils.CleanUpObjectNode(toObjectNode)
+	if err := utils.CleanUpObjectNode(&toObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
 	query := fmt.Sprintf(`
 		MATCH (fromObjectNode {name: $fromName, type: $fromType, domain: $fromDomain})
@@ -1114,9 +1135,15 @@ func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, relation
 
 	relationshipName = utils.CleanUpRelationshipName(relationshipName)
 
-	fromObjectNode = utils.CleanUpObjectNode(fromObjectNode)
+	if err := utils.CleanUpObjectNode(&fromObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
-	toObjectNode = utils.CleanUpObjectNode(toObjectNode)
+	if err := utils.CleanUpObjectNode(&toObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
 	query := fmt.Sprintf(`
 		MATCH (fromObjectNode {name: $fromName, type: $fromType, domain: $fromDomain})
@@ -1192,6 +1219,170 @@ func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, relation
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	} else {
 		message := "Object relationship retrieval failed"
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
+}
+
+func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	if err := utils.CleanUpObjectNode(&fromObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
+
+	query := `
+		MATCH (fromObjectNode {name: $fromName, type: $fromType, domain: $fromDomain})
+		-[relationship]->(toObjectNode)
+		RETURN fromObjectNode, relationship, toObjectNode`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"fromName":   fromObjectNode.Name,
+		"fromType":   fromObjectNode.Type,
+		"fromDomain": fromObjectNode.Domain,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		fromObjectNode, ok := record.Get("fromObjectNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the fromObjectNode")
+		}
+		relationship, ok := record.Get("relationship")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationship")
+		}
+		toObjectNode, ok := record.Get("toObjectNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the toObjectNode")
+		}
+		neo4jFromObjectNode, ok := fromObjectNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for fromObjectNode: %T", fromObjectNode)
+		}
+		neo4jRelationship, ok := relationship.(dbtype.Relationship)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
+		}
+		neo4jToObjectNode, ok := toObjectNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
+		}
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
+			"fromObjectNode": map[string]interface{}{
+				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
+				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
+				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
+				"properties": neo4jFromObjectNode.GetProperties(),
+				"labels":     neo4jFromObjectNode.Labels,
+			},
+			"relationship": map[string]interface{}{
+				"relationshipName": neo4jRelationship.Type,
+				"properties":       neo4jRelationship.GetProperties(),
+			},
+			"toObjectNode": map[string]interface{}{
+				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
+				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
+				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
+				"properties": neo4jToObjectNode.GetProperties(),
+				"labels":     neo4jToObjectNode.Labels,
+			},
+		})
+		message := "Object outgoing relationships retrieved successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	} else {
+		message := "Object outgoing relationships retrieval failed"
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
+}
+
+func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	if err := utils.CleanUpObjectNode(&toObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
+
+	query := `
+		MATCH (toObjectNode {name: $fromName, type: $fromType, domain: $fromDomain})
+		<-[relationship]-(fromObjectNode)
+		RETURN fromObjectNode, relationship, toObjectNode`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"fromName":   toObjectNode.Name,
+		"fromType":   toObjectNode.Type,
+		"fromDomain": toObjectNode.Domain,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		fromObjectNode, ok := record.Get("fromObjectNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the fromObjectNode")
+		}
+		relationship, ok := record.Get("relationship")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationship")
+		}
+		toObjectNode, ok := record.Get("toObjectNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the toObjectNode")
+		}
+		neo4jFromObjectNode, ok := fromObjectNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for fromObjectNode: %T", fromObjectNode)
+		}
+		neo4jRelationship, ok := relationship.(dbtype.Relationship)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
+		}
+		neo4jToObjectNode, ok := toObjectNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
+		}
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
+			"toObjectNode": map[string]interface{}{
+				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
+				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
+				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
+				"properties": neo4jToObjectNode.GetProperties(),
+				"labels":     neo4jToObjectNode.Labels,
+			},
+			"relationship": map[string]interface{}{
+				"relationshipName": neo4jRelationship.Type,
+				"properties":       neo4jRelationship.GetProperties(),
+			},
+			"fromObjectNode": map[string]interface{}{
+				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
+				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
+				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
+				"properties": neo4jFromObjectNode.GetProperties(),
+				"labels":     neo4jFromObjectNode.Labels,
+			},
+		})
+		message := "Object outgoing relationships retrieved successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	} else {
+		message := "Object outgoing relationships retrieval failed"
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 }

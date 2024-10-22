@@ -6,7 +6,6 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mike-jacks/neo/generated"
 	"github.com/mike-jacks/neo/model"
@@ -147,9 +146,22 @@ func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, relations
 	return result, nil
 }
 
-// GetObjectNodeRelationships is the resolver for the getObjectNodeRelationships field.
-func (r *queryResolver) GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: GetObjectNodeRelationships - getObjectNodeRelationships"))
+// GetObjectNodeOutgoingRelationships is the resolver for the getObjectNodeOutgoingRelationships field.
+func (r *queryResolver) GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	result, err := r.Database.GetObjectNodeOutgoingRelationships(ctx, fromObjectNode)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetObjectNodeIncomingRelationships is the resolver for the getObjectNodeIncomingRelationships field.
+func (r *queryResolver) GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	result, err := r.Database.GetObjectNodeIncomingRelationships(ctx, toObjectNode)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // CypherQuery is the resolver for the cypherQuery field.

@@ -2,8 +2,10 @@ type Query {
   # Object Queries
   getObjectNode(domain: String!, name: String!, type: String!): Response!
   getObjectNodes(domain: String, name: String, type: String, labels: [String!]): Response!
+
   getObjectNodeRelationship(relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
-  getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): Response!
+  getObjectNodeOutgoingRelationships(fromObjectNode: ObjectNodeInput!): Response!
+  getObjectNodeIncomingRelationships(toObjectNode: ObjectNodeInput!): Response!
 
   cypherQuery(cypher_statement: String!): [Response!]!
 }
