@@ -104,7 +104,11 @@ func (r *mutationResolver) RemovePropertiesFromObjectRelationship(ctx context.Co
 
 // DeleteObjectRelationship is the resolver for the deleteObjectRelationship field.
 func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: DeleteObjectRelationship - deleteObjectRelationship"))
+	result, err := r.Database.DeleteObjectRelationship(ctx, relationshipName, fromObjectNode, toObjectNode)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // CypherMutation is the resolver for the cypherMutation field.
@@ -135,8 +139,12 @@ func (r *queryResolver) GetObjectNodes(ctx context.Context, domain *string, name
 }
 
 // GetObjectNodeRelationship is the resolver for the getObjectNodeRelationship field.
-func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: GetObjectNodeRelationship - getObjectNodeRelationship"))
+func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+	result, err := r.Database.GetObjectNodeRelationship(ctx, relationshipName, fromObjectNode, toObjectNode)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetObjectNodeRelationships is the resolver for the getObjectNodeRelationships field.

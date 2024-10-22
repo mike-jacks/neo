@@ -85,7 +85,7 @@ type ComplexityRoot struct {
 	Query struct {
 		CypherQuery                func(childComplexity int, cypherStatement string) int
 		GetObjectNode              func(childComplexity int, domain string, name string, typeArg string) int
-		GetObjectNodeRelationship  func(childComplexity int, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		GetObjectNodeRelationship  func(childComplexity int, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
 		GetObjectNodeRelationships func(childComplexity int, fromObjectNode model.ObjectNodeInput) int
 		GetObjectNodes             func(childComplexity int, domain *string, name *string, typeArg *string, labels []string) int
 	}
@@ -114,7 +114,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
 	GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.Response, error)
-	GetObjectNodeRelationship(ctx context.Context, name string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
+	GetObjectNodeRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	GetObjectNodeRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error)
 	CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error)
 }
@@ -400,7 +400,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetObjectNodeRelationship(childComplexity, args["name"].(string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
+		return e.complexity.Query.GetObjectNodeRelationship(childComplexity, args["relationshipName"].(string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
 	case "Query.getObjectNodeRelationships":
 		if e.complexity.Query.GetObjectNodeRelationships == nil {
@@ -656,7 +656,7 @@ input PropertyInput {
   # Object Queries
   getObjectNode(domain: String!, name: String!, type: String!): Response!
   getObjectNodes(domain: String, name: String, type: String, labels: [String!]): Response!
-  getObjectNodeRelationship(name: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  getObjectNodeRelationship(relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   getObjectNodeRelationships(fromObjectNode: ObjectNodeInput!): Response!
 
   cypherQuery(cypher_statement: String!): [Response!]!
@@ -1582,11 +1582,11 @@ func (ec *executionContext) field_Query_cypherQuery_argsCypherStatement(
 func (ec *executionContext) field_Query_getObjectNodeRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getObjectNodeRelationship_argsName(ctx, rawArgs)
+	arg0, err := ec.field_Query_getObjectNodeRelationship_argsRelationshipName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["name"] = arg0
+	args["relationshipName"] = arg0
 	arg1, err := ec.field_Query_getObjectNodeRelationship_argsFromObjectNode(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1599,12 +1599,12 @@ func (ec *executionContext) field_Query_getObjectNodeRelationship_args(ctx conte
 	args["toObjectNode"] = arg2
 	return args, nil
 }
-func (ec *executionContext) field_Query_getObjectNodeRelationship_argsName(
+func (ec *executionContext) field_Query_getObjectNodeRelationship_argsRelationshipName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("relationshipName"))
+	if tmp, ok := rawArgs["relationshipName"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -3306,7 +3306,7 @@ func (ec *executionContext) _Query_getObjectNodeRelationship(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetObjectNodeRelationship(rctx, fc.Args["name"].(string), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
+		return ec.resolvers.Query().GetObjectNodeRelationship(rctx, fc.Args["relationshipName"].(string), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

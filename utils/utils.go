@@ -124,3 +124,34 @@ func RemovePropertiesQuery(query string, properties []string, prefix ...string) 
 	}
 	return query
 }
+
+func CleanUpRelationshipName(relationshipName string) string {
+	return strings.ReplaceAll(strings.Trim(strings.ToUpper(relationshipName), " "), " ", "_")
+}
+
+func CleanUpObjectNode(objectNode model.ObjectNodeInput) model.ObjectNodeInput {
+	objectNode.Domain = strings.Trim(strings.ToUpper(objectNode.Domain), " ")
+	objectNode.Name = strings.Trim(strings.ToUpper(objectNode.Name), " ")
+	objectNode.Type = strings.Trim(strings.ToUpper(objectNode.Type), " ")
+	return objectNode
+}
+
+func CleanUpPropertyObjects(properties []*model.PropertyInput) error {
+	if len(properties) == 0 {
+		return fmt.Errorf("properties are required")
+	}
+	for _, property := range properties {
+		property.Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
+	}
+	return nil
+}
+
+func CleanUpPropertyKeys(properties []string) error {
+	if len(properties) == 0 {
+		return fmt.Errorf("properties are required")
+	}
+	for i, property := range properties {
+		properties[i] = strings.ReplaceAll(strings.Trim(strings.ToLower(property), " "), " ", "_")
+	}
+	return nil
+}
