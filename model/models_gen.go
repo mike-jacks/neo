@@ -83,6 +83,7 @@ const (
 	PropertyTypeArrayString  PropertyType = "ARRAY_STRING"
 	PropertyTypeArrayNumber  PropertyType = "ARRAY_NUMBER"
 	PropertyTypeArrayBoolean PropertyType = "ARRAY_BOOLEAN"
+	PropertyTypeRelationship PropertyType = "RELATIONSHIP"
 )
 
 var AllPropertyType = []PropertyType{
@@ -92,11 +93,12 @@ var AllPropertyType = []PropertyType{
 	PropertyTypeArrayString,
 	PropertyTypeArrayNumber,
 	PropertyTypeArrayBoolean,
+	PropertyTypeRelationship,
 }
 
 func (e PropertyType) IsValid() bool {
 	switch e {
-	case PropertyTypeString, PropertyTypeNumber, PropertyTypeBoolean, PropertyTypeArrayString, PropertyTypeArrayNumber, PropertyTypeArrayBoolean:
+	case PropertyTypeString, PropertyTypeNumber, PropertyTypeBoolean, PropertyTypeArrayString, PropertyTypeArrayNumber, PropertyTypeArrayBoolean, PropertyTypeRelationship:
 		return true
 	}
 	return false

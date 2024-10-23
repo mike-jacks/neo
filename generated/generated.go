@@ -262,7 +262,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemovePropertiesFromObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["properties"].([]string)), true
+		return e.complexity.Mutation.RemovePropertiesFromObjectNode(childComplexity, args["_domain"].(string), args["name"].(string), args["type"].(string), args["properties"].([]string)), true
 
 	case "Mutation.removePropertiesFromObjectRelationship":
 		if e.complexity.Mutation.RemovePropertiesFromObjectRelationship == nil {
@@ -449,7 +449,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetObjectNodeRelationship(childComplexity, args["relationshipName"].(string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
+		return e.complexity.Query.GetObjectNodeRelationship(childComplexity, args["_relationshipName"].(string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
 	case "Query.getObjectNodes":
 		if e.complexity.Query.GetObjectNodes == nil {
@@ -604,7 +604,7 @@ var sources = []*ast.Source{
   removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
 
   addPropertiesToObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
-  removePropertiesFromObjectNode(domain: String!, name: String!, type: String!, properties: [String!]!): Response!
+  removePropertiesFromObjectNode(_domain: String!, name: String!, type: String!, properties: [String!]!): Response!
 
   createObjectRelationship(relationshipName: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   updatePropertiesOnObjectRelationship(
@@ -677,6 +677,7 @@ enum PropertyType {
   ARRAY_STRING
   ARRAY_NUMBER
   ARRAY_BOOLEAN
+  RELATIONSHIP
 }
 
 type Property {
@@ -696,7 +697,7 @@ input PropertyInput {
   getObjectNode(domain: String!, name: String!, type: String!): Response!
   getObjectNodes(domain: String, name: String, type: String, labels: [String!]): Response!
 
-  getObjectNodeRelationship(relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  getObjectNodeRelationship(_relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   getObjectNodeOutgoingRelationships(fromObjectNode: ObjectNodeInput!): Response!
   getObjectNodeIncomingRelationships(toObjectNode: ObjectNodeInput!): Response!
 
@@ -1298,7 +1299,7 @@ func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_args(c
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
+	args["_domain"] = arg0
 	arg1, err := ec.field_Mutation_removePropertiesFromObjectNode_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1320,8 +1321,8 @@ func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsDo
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("_domain"))
+	if tmp, ok := rawArgs["_domain"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -1698,7 +1699,7 @@ func (ec *executionContext) field_Query_getObjectNodeRelationship_args(ctx conte
 	if err != nil {
 		return nil, err
 	}
-	args["relationshipName"] = arg0
+	args["_relationshipName"] = arg0
 	arg1, err := ec.field_Query_getObjectNodeRelationship_argsFromObjectNode(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1715,8 +1716,8 @@ func (ec *executionContext) field_Query_getObjectNodeRelationship_argsRelationsh
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("relationshipName"))
-	if tmp, ok := rawArgs["relationshipName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("_relationshipName"))
+	if tmp, ok := rawArgs["_relationshipName"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -2332,7 +2333,7 @@ func (ec *executionContext) _Mutation_removePropertiesFromObjectNode(ctx context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemovePropertiesFromObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["properties"].([]string))
+		return ec.resolvers.Mutation().RemovePropertiesFromObjectNode(rctx, fc.Args["_domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["properties"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3458,7 +3459,7 @@ func (ec *executionContext) _Query_getObjectNodeRelationship(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetObjectNodeRelationship(rctx, fc.Args["relationshipName"].(string), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
+		return ec.resolvers.Query().GetObjectNodeRelationship(rctx, fc.Args["_relationshipName"].(string), fc.Args["fromObjectNode"].(model.ObjectNodeInput), fc.Args["toObjectNode"].(model.ObjectNodeInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
