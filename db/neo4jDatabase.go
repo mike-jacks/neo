@@ -1508,7 +1508,6 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	typeArg := strings.TrimSpace(strings.ToUpper(domain))
 	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
 	name = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(name)), " ", "_")
 
@@ -1524,16 +1523,15 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 	}
 
 	query = `
-		CREATE (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _type: $typeArg, _name: $name})
+		CREATE (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _type: "TYPE SCHEMA", _name: $name})
 		RETURN schemaTypeNode
 	`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"domain":  domain,
-		"typeArg": typeArg,
-		"name":    name,
+		"domain": domain,
+		"name":   name,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
