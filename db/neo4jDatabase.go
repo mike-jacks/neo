@@ -61,7 +61,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	query := fmt.Sprintf(`
 		CREATE CONSTRAINT IF NOT EXISTS
 		FOR (n:%v)
-		REQUIRE (n.name, n.type, n.domain) IS NODE KEY
+		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
 		`, labelFromTypeArg)
 
 	_, err := session.Run(ctx, query, nil)
@@ -73,7 +73,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		query = fmt.Sprintf(`
 		CREATE CONSTRAINT IF NOT EXISTS
 		FOR (n:%v)
-		REQUIRE (n.name, n.type, n.domain) IS NODE KEY
+		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
 		`, label)
 		_, err = session.Run(ctx, query, nil)
 		if err != nil {
@@ -85,7 +85,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
-	query += " {name: $name, type: $typeArg, domain: $domain, "
+	query += " {_name: $name, _type: $typeArg, _domain: $domain, "
 	query = utils.CreatePropertiesQuery(query, properties)
 	query = strings.TrimSuffix(query, ", ")
 	query += "}) RETURN o"
@@ -120,11 +120,11 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(nodeProperties, "name"),
-			"type":       utils.PopString(nodeProperties, "type"),
-			"domain":     utils.PopString(nodeProperties, "domain"),
-			"labels":     neo4jNode.Labels,
-			"properties": nodeProperties,
+			"_name":       utils.PopString(nodeProperties, "_name"),
+			"_type":       utils.PopString(nodeProperties, "_type"),
+			"_domain":     utils.PopString(nodeProperties, "_domain"),
+			"_labels":     neo4jNode.Labels,
+			"_properties": nodeProperties,
 		})
 		message := "Object node created successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
@@ -164,19 +164,19 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	newLabelFromTypeArg := strings.ReplaceAll(newTypeArg, " ", "_")
 
 	replaceLabelQuery := ""
-	query := "MATCH (o{name: $name, type: $typeArg, domain: $domain})\n"
+	query := "MATCH (o{_name: $name, _type: $typeArg, _domain: $domain})\n"
 	if newName != "" || newTypeArg != "" || newDomain != "" || len(updateObjectNodeInput.Labels) > 0 || len(updateObjectNodeInput.Properties) > 0 {
 		query += "SET "
 	}
 	if newName != "" {
-		query += fmt.Sprintf("o.name = \"%v\", ", newName)
+		query += fmt.Sprintf("o._name = \"%v\", ", newName)
 	}
 	if newTypeArg != "" {
-		query += fmt.Sprintf("o.type = \"%v\", ", newTypeArg)
-		replaceLabelQuery += fmt.Sprintf("MATCH (o{name: $name, type: \"%v\", domain: $domain}) REMOVE o:%v SET o:%v RETURN o", newTypeArg, labelFromTypeArg, newLabelFromTypeArg)
+		query += fmt.Sprintf("o._type = \"%v\", ", newTypeArg)
+		replaceLabelQuery += fmt.Sprintf("MATCH (o{_name: $name, _type: \"%v\", _domain: $domain}) REMOVE o:%v SET o:%v RETURN o", newTypeArg, labelFromTypeArg, newLabelFromTypeArg)
 	}
 	if newDomain != "" {
-		query += fmt.Sprintf("o.domain = \"%v\", ", newDomain)
+		query += fmt.Sprintf("o._domain = \"%v\", ", newDomain)
 	}
 	if len(updateObjectNodeInput.Labels) > 0 {
 		query += "o"
@@ -207,7 +207,8 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 
 	result, err := session.Run(ctx, replaceLabelQuery, parameters)
 	if err != nil {
-		return nil, err
+		message := "Failed to replace label"
+		return &model.Response{Success: false, Message: &message, Data: nil}, err
 	}
 
 	if result.Next(ctx) {
@@ -220,7 +221,8 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 
 		neo4jNode, ok := node.(dbtype.Node)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type for node: %T", node)
+			message := "Unexpected type for node"
+			return &model.Response{Success: false, Message: &message, Data: nil}, nil
 		}
 
 		nodeProperties := make(map[string]interface{})
@@ -230,11 +232,11 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(nodeProperties, "name"),
-			"type":       utils.PopString(nodeProperties, "type"),
-			"domain":     utils.PopString(nodeProperties, "domain"),
-			"labels":     neo4jNode.Labels,
-			"properties": nodeProperties,
+			"_name":       utils.PopString(nodeProperties, "_name"),
+			"_type":       utils.PopString(nodeProperties, "_type"),
+			"_domain":     utils.PopString(nodeProperties, "_domain"),
+			"_labels":     neo4jNode.Labels,
+			"_properties": nodeProperties,
 		})
 		message := "Object node updated successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
@@ -252,7 +254,7 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, na
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
 
-	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain}) DETACH DELETE o RETURN count(o) as deletedCount", typeArg)
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) DETACH DELETE o RETURN count(o) as deletedCount", typeArg)
 	parameters := map[string]any{
 		"name":    name,
 		"typeArg": typeArg,
@@ -302,7 +304,7 @@ func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain strin
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain}) SET o", typeArg)
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) SET o", typeArg)
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
@@ -338,11 +340,11 @@ func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain strin
 		}
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(nodeProperties, "name"),
-			"type":       utils.PopString(nodeProperties, "type"),
-			"domain":     utils.PopString(nodeProperties, "domain"),
-			"labels":     neo4jNode.Labels,
-			"properties": nodeProperties,
+			"_name":       utils.PopString(nodeProperties, "_name"),
+			"_type":       utils.PopString(nodeProperties, "_type"),
+			"_domain":     utils.PopString(nodeProperties, "_domain"),
+			"_labels":     neo4jNode.Labels,
+			"_properties": nodeProperties,
 		})
 		message := "Labels added to object node successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
@@ -373,7 +375,7 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	query := fmt.Sprintf("MATCH (o:%v {name: $name, type: $typeArg, domain: $domain}) REMOVE o", typeArgAsLabel)
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) REMOVE o", typeArgAsLabel)
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
@@ -409,11 +411,11 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 		}
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(nodeProperties, "name"),
-			"type":       utils.PopString(nodeProperties, "type"),
-			"domain":     utils.PopString(nodeProperties, "domain"),
-			"labels":     neo4jNode.Labels,
-			"properties": nodeProperties,
+			"_name":       utils.PopString(nodeProperties, "_name"),
+			"_type":       utils.PopString(nodeProperties, "_type"),
+			"_domain":     utils.PopString(nodeProperties, "_domain"),
+			"_labels":     neo4jNode.Labels,
+			"_properties": nodeProperties,
 		})
 		message := "Labels removed from object node successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
@@ -437,7 +439,7 @@ func (db *Neo4jDatabase) AddPropertiesToObjectNode(ctx context.Context, domain s
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	query := "MATCH (o{name: $name, type: $typeArg, domain: $domain}) SET o"
+	query := "MATCH (o{_name: $name, _type: $typeArg, _domain: $domain}) SET o"
 
 	for _, property := range properties {
 		if property.Type == model.PropertyTypeString {
@@ -479,11 +481,11 @@ func (db *Neo4jDatabase) AddPropertiesToObjectNode(ctx context.Context, domain s
 
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(nodeProperties, "name"),
-			"type":       utils.PopString(nodeProperties, "type"),
-			"domain":     utils.PopString(nodeProperties, "domain"),
-			"labels":     neo4jNode.Labels,
-			"properties": nodeProperties,
+			"_name":       utils.PopString(nodeProperties, "_name"),
+			"_type":       utils.PopString(nodeProperties, "_type"),
+			"_domain":     utils.PopString(nodeProperties, "_domain"),
+			"_labels":     neo4jNode.Labels,
+			"_properties": nodeProperties,
 		})
 		message := "Properties added to object node successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
@@ -502,7 +504,7 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, dom
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
 
-	query := "MATCH (o{name: $name, type: $typeArg, domain: $domain}) REMOVE "
+	query := "MATCH (o{_name: $name, _type: $typeArg, _domain: $domain}) REMOVE "
 
 	for _, property := range properties {
 		query += fmt.Sprintf("o.%v, ", property)
@@ -540,11 +542,11 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, dom
 
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(nodeProperties, "name"),
-			"type":       utils.PopString(nodeProperties, "type"),
-			"domain":     utils.PopString(nodeProperties, "domain"),
-			"labels":     neo4jNode.Labels,
-			"properties": nodeProperties,
+			"_name":       utils.PopString(nodeProperties, "_name"),
+			"_type":       utils.PopString(nodeProperties, "_type"),
+			"_domain":     utils.PopString(nodeProperties, "_domain"),
+			"_labels":     neo4jNode.Labels,
+			"_properties": nodeProperties,
 		})
 		message := "Properties removed from object node successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
@@ -560,7 +562,7 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
 
-	query := "MATCH (o{name: $name, type: $typeArg, domain: $domain}) RETURN o"
+	query := "MATCH (o{_name: $name, _type: $typeArg, _domain: $domain}) RETURN o"
 
 	parameters := map[string]any{
 		"name":    name,
@@ -590,11 +592,11 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 		}
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(nodeProperties, "name"),
-			"type":       utils.PopString(nodeProperties, "type"),
-			"domain":     utils.PopString(nodeProperties, "domain"),
-			"labels":     neo4jNode.Labels,
-			"properties": nodeProperties,
+			"_name":       utils.PopString(nodeProperties, "_name"),
+			"_type":       utils.PopString(nodeProperties, "_type"),
+			"_domain":     utils.PopString(nodeProperties, "_domain"),
+			"_labels":     neo4jNode.Labels,
+			"_properties": nodeProperties,
 		})
 		message := "Object node retrieved successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
@@ -628,13 +630,13 @@ func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, nam
 	}
 	query += "{"
 	if domain != nil {
-		query += "domain: $domain, "
+		query += "_domain: $domain, "
 	}
 	if name != nil {
-		query += "name: $name, "
+		query += "_name: $name, "
 	}
 	if typeArg != nil {
-		query += "type: $typeArg, "
+		query += "_type: $typeArg, "
 	}
 	query = strings.TrimSuffix(query, ", ")
 	query += "}) RETURN o"
@@ -675,11 +677,11 @@ func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, nam
 		}
 
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(nodeProperties, "name"),
-			"type":       utils.PopString(nodeProperties, "type"),
-			"domain":     utils.PopString(nodeProperties, "domain"),
-			"labels":     neo4jNode.Labels,
-			"properties": nodeProperties,
+			"_name":       utils.PopString(nodeProperties, "_name"),
+			"_type":       utils.PopString(nodeProperties, "_type"),
+			"_domain":     utils.PopString(nodeProperties, "_domain"),
+			"_labels":     neo4jNode.Labels,
+			"_properties": nodeProperties,
 		})
 	}
 	message := "Object nodes retrieved successfully"
@@ -714,16 +716,16 @@ func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string
 					nodeProperties[key] = value
 				}
 				nodeData = map[string]interface{}{
-					"name":       utils.PopString(nodeProperties, "name"),
-					"type":       utils.PopString(nodeProperties, "type"),
-					"domain":     utils.PopString(nodeProperties, "domain"),
-					"labels":     v.Labels,
-					"properties": nodeProperties,
+					"_name":       utils.PopString(nodeProperties, "_name"),
+					"_type":       utils.PopString(nodeProperties, "_type"),
+					"_domain":     utils.PopString(nodeProperties, "_domain"),
+					"_labels":     v.Labels,
+					"_properties": nodeProperties,
 				}
 			case dbtype.Relationship:
 				nodeData = map[string]interface{}{
-					"type":       v.Type,
-					"properties": v.Props,
+					"_relationshipName": v.Type,
+					"_properties":       v.Props,
 				}
 			default:
 				return nil, fmt.Errorf("unexpected type for node: %T", node)
@@ -754,24 +756,35 @@ func (db *Neo4jDatabase) CypherMutation(ctx context.Context, cypherStatement str
 			if !ok {
 				return nil, fmt.Errorf("failed to retrieve the node")
 			}
-			neo4jNode, ok := node.(dbtype.Node)
-			if !ok {
+
+			var nodeData map[string]interface{}
+
+			switch v := node.(type) {
+			case dbtype.Node:
+				nodeProperties := make(map[string]interface{})
+				for key, value := range v.Props {
+					nodeProperties[key] = value
+				}
+				nodeData = map[string]interface{}{
+					"_name":       utils.PopString(nodeProperties, "_name"),
+					"_type":       utils.PopString(nodeProperties, "_type"),
+					"_domain":     utils.PopString(nodeProperties, "_domain"),
+					"_labels":     v.Labels,
+					"_properties": nodeProperties,
+				}
+			case dbtype.Relationship:
+				nodeData = map[string]interface{}{
+					"_relationshipName": v.Type,
+					"_properties":       v.Props,
+				}
+			default:
 				return nil, fmt.Errorf("unexpected type for node: %T", node)
 			}
-			nodeProperties := make(map[string]interface{})
-			for key, value := range neo4jNode.Props {
-				nodeProperties[key] = value
-			}
-			data = append(data, map[string]interface{}{
-				"name":       utils.PopString(nodeProperties, "name"),
-				"type":       utils.PopString(nodeProperties, "type"),
-				"domain":     utils.PopString(nodeProperties, "domain"),
-				"labels":     neo4jNode.Labels,
-				"properties": nodeProperties,
-			})
+
+			data = append(data, nodeData)
 		}
 	}
-	message := "Cypher query executed successfully"
+	message := "Cypher mutation executed successfully"
 	return []*model.Response{{Success: true, Message: &message, Data: data}}, nil
 }
 
@@ -795,7 +808,7 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, relations
 		properties[i].Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
 	}
 
-	query := fmt.Sprintf("MATCH (fromObjectNode{name: $fromName, type: $fromType, domain: $fromDomain}), (toObjectNode{name: $toName, type: $toType, domain: $toDomain}) MERGE (fromObjectNode)-[relationship:%v]->(toObjectNode)", relationshipName)
+	query := fmt.Sprintf("MATCH (fromObjectNode{_name: $fromName, _type: $fromType, _domain: $fromDomain}), (toObjectNode{_name: $toName, _type: $toType, _domain: $toDomain}) MERGE (fromObjectNode)-[relationship:%v]->(toObjectNode)", relationshipName)
 	if len(properties) > 0 {
 		query += " SET "
 		query = utils.CreatePropertiesQuery(query, properties, "relationship")
@@ -848,22 +861,22 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, relations
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
 			"fromObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
-				"properties": neo4jFromObjectNode.GetProperties(),
-				"labels":     neo4jFromObjectNode.Labels,
+				"_name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jFromObjectNode.GetProperties(),
+				"_labels":     neo4jFromObjectNode.Labels,
 			},
 			"relationship": map[string]interface{}{
-				"relationshipName": neo4jRelationship.Type,
-				"properties":       neo4jRelationship.GetProperties(),
+				"_relationshipName": neo4jRelationship.Type,
+				"_properties":       neo4jRelationship.GetProperties(),
 			},
 			"toObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
-				"properties": neo4jToObjectNode.GetProperties(),
-				"labels":     neo4jToObjectNode.Labels,
+				"_name":       utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jToObjectNode.GetProperties(),
+				"_labels":     neo4jToObjectNode.Labels,
 			},
 		})
 		message := "Object relationship created successfully"
@@ -894,7 +907,7 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Contex
 	toObjectNode.Name = strings.Trim(strings.ToUpper(toObjectNode.Name), " ")
 	toObjectNode.Type = strings.Trim(strings.ToUpper(toObjectNode.Type), " ")
 
-	query := fmt.Sprintf("MATCH (fromObjectNode{name: $fromName, type: $fromType, domain: $fromDomain}), (toObjectNode{name: $toName, type: $toType, domain: $toDomain}) MATCH (fromObjectNode)-[relationship:%v]->(toObjectNode) SET ", relationshipName)
+	query := fmt.Sprintf("MATCH (fromObjectNode{_name: $fromName, _type: $fromType, _domain: $fromDomain}), (toObjectNode{_name: $toName, _type: $toType, _domain: $toDomain}) MATCH (fromObjectNode)-[relationship:%v]->(toObjectNode) SET ", relationshipName)
 	query = utils.CreatePropertiesQuery(query, properties, "relationship")
 	query = strings.TrimSuffix(query, ", ")
 	query += " WITH toObjectNode, relationship, fromObjectNode RETURN toObjectNode, relationship, fromObjectNode"
@@ -944,22 +957,22 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Contex
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
 			"fromObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
-				"properties": neo4jFromObjectNode.GetProperties(),
-				"labels":     neo4jFromObjectNode.Labels,
+				"_name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jFromObjectNode.GetProperties(),
+				"_labels":     neo4jFromObjectNode.Labels,
 			},
 			"relationship": map[string]interface{}{
-				"relationshipName": neo4jRelationship.Type,
-				"properties":       neo4jRelationship.GetProperties(),
+				"_relationshipName": neo4jRelationship.Type,
+				"_properties":       neo4jRelationship.GetProperties(),
 			},
 			"toObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
-				"properties": neo4jToObjectNode.GetProperties(),
-				"labels":     neo4jToObjectNode.Labels,
+				"_name":       utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jToObjectNode.GetProperties(),
+				"_labels":     neo4jToObjectNode.Labels,
 			},
 		})
 		message := "Object relationship created successfully"
@@ -991,7 +1004,7 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectRelationship(ctx context.Cont
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	query := fmt.Sprintf("MATCH (fromObjectNode{name: $fromName, type: $fromType, domain: $fromDomain}), (toObjectNode{name: $toName, type: $toType, domain: $toDomain}) MATCH (fromObjectNode)-[relationship:%v]->(toObjectNode) SET ", relationshipName)
+	query := fmt.Sprintf("MATCH (fromObjectNode{_name: $fromName, _type: $fromType, _domain: $fromDomain}), (toObjectNode{_name: $toName, _type: $toType, _domain: $toDomain}) MATCH (fromObjectNode)-[relationship:%v]->(toObjectNode) SET ", relationshipName)
 	query = utils.RemovePropertiesQuery(query, properties, "relationship")
 	query = strings.TrimSuffix(query, ", ")
 	query += " WITH toObjectNode, relationship, fromObjectNode RETURN toObjectNode, relationship, fromObjectNode"
@@ -1041,22 +1054,22 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectRelationship(ctx context.Cont
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
 			"fromObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
-				"properties": neo4jFromObjectNode.GetProperties(),
-				"labels":     neo4jFromObjectNode.Labels,
+				"_name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jFromObjectNode.GetProperties(),
+				"_labels":     neo4jFromObjectNode.Labels,
 			},
 			"relationship": map[string]interface{}{
-				"relationshipName": neo4jRelationship.Type,
-				"properties":       neo4jRelationship.GetProperties(),
+				"_relationshipName": neo4jRelationship.Type,
+				"_properties":       neo4jRelationship.GetProperties(),
 			},
 			"toObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
-				"properties": neo4jToObjectNode.GetProperties(),
-				"labels":     neo4jToObjectNode.Labels,
+				"_name":       utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jToObjectNode.GetProperties(),
+				"_labels":     neo4jToObjectNode.Labels,
 			},
 		})
 		message := "Object relationship properties removed successfully"
@@ -1084,12 +1097,14 @@ func (db *Neo4jDatabase) DeleteObjectRelationship(ctx context.Context, relations
 	}
 
 	query := fmt.Sprintf(`
-		MATCH (fromObjectNode {name: $fromName, type: $fromType, domain: $fromDomain})
+		MATCH (fromObjectNode {_name: $fromName, _type: $fromType, _domain: $fromDomain})
 		-[relationship:%s]->
-		(toObjectNode {name: $toName, type: $toType, domain: $toDomain})
+		(toObjectNode {_name: $toName, _type: $toType, _domain: $toDomain})
 		DELETE relationship
 		RETURN count(relationship) as deletedCount
 	`, relationshipName)
+
+	fmt.Println(query)
 
 	parameters := map[string]any{
 		"fromName":   fromObjectNode.Name,
@@ -1146,9 +1161,9 @@ func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, relation
 	}
 
 	query := fmt.Sprintf(`
-		MATCH (fromObjectNode {name: $fromName, type: $fromType, domain: $fromDomain})
+		MATCH (fromObjectNode {_name: $fromName, _type: $fromType, _domain: $fromDomain})
 		-[relationship:%s]->
-		(toObjectNode {name: $toName, type: $toType, domain: $toDomain})
+		(toObjectNode {_name: $toName, _type: $toType, _domain: $toDomain})
 		RETURN fromObjectNode, relationship, toObjectNode
 	`, relationshipName)
 
@@ -1197,22 +1212,22 @@ func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, relation
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
 			"fromObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
-				"properties": neo4jFromObjectNode.GetProperties(),
-				"labels":     neo4jFromObjectNode.Labels,
+				"_name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jFromObjectNode.GetProperties(),
+				"_labels":     neo4jFromObjectNode.Labels,
 			},
 			"relationship": map[string]interface{}{
-				"relationshipName": neo4jRelationship.Type,
-				"properties":       neo4jRelationship.GetProperties(),
+				"_relationshipName": neo4jRelationship.Type,
+				"_properties":       neo4jRelationship.GetProperties(),
 			},
 			"toObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
-				"properties": neo4jToObjectNode.GetProperties(),
-				"labels":     neo4jToObjectNode.Labels,
+				"_name":       utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jToObjectNode.GetProperties(),
+				"_labels":     neo4jToObjectNode.Labels,
 			},
 		})
 		message := "Object relationship retrieved successfully"
@@ -1233,7 +1248,7 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 	}
 
 	query := `
-		MATCH (fromObjectNode {name: $fromName, type: $fromType, domain: $fromDomain})
+		MATCH (fromObjectNode {_name: $fromName, _type: $fromType, _domain: $fromDomain})
 		-[relationship]->(toObjectNode)
 		RETURN fromObjectNode, relationship, toObjectNode`
 
@@ -1279,22 +1294,22 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 		}
 		data = append(data, map[string]interface{}{
 			"fromObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
-				"properties": neo4jFromObjectNode.GetProperties(),
-				"labels":     neo4jFromObjectNode.Labels,
+				"_name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jFromObjectNode.GetProperties(),
+				"_labels":     neo4jFromObjectNode.Labels,
 			},
 			"relationship": map[string]interface{}{
-				"relationshipName": neo4jRelationship.Type,
-				"properties":       neo4jRelationship.GetProperties(),
+				"_relationshipName": neo4jRelationship.Type,
+				"_properties":       neo4jRelationship.GetProperties(),
 			},
 			"toObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
-				"properties": neo4jToObjectNode.GetProperties(),
-				"labels":     neo4jToObjectNode.Labels,
+				"_name":       utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jToObjectNode.GetProperties(),
+				"_labels":     neo4jToObjectNode.Labels,
 			},
 		})
 	}
@@ -1317,7 +1332,7 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 	}
 
 	query := `
-		MATCH (toObjectNode {name: $fromName, type: $fromType, domain: $fromDomain})
+		MATCH (toObjectNode {_name: $fromName, _type: $fromType, _domain: $fromDomain})
 		<-[relationship]-(fromObjectNode)
 		RETURN fromObjectNode, relationship, toObjectNode`
 
@@ -1363,22 +1378,22 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 		}
 		data = append(data, map[string]interface{}{
 			"toObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jToObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jToObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "domain"),
-				"properties": neo4jToObjectNode.GetProperties(),
-				"labels":     neo4jToObjectNode.Labels,
+				"_name":       utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jToObjectNode.GetProperties(),
+				"_labels":     neo4jToObjectNode.Labels,
 			},
 			"relationship": map[string]interface{}{
-				"relationshipName": neo4jRelationship.Type,
-				"properties":       neo4jRelationship.GetProperties(),
+				"_relationshipName": neo4jRelationship.Type,
+				"_properties":       neo4jRelationship.GetProperties(),
 			},
 			"fromObjectNode": map[string]interface{}{
-				"name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "name"),
-				"type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "type"),
-				"domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "domain"),
-				"properties": neo4jFromObjectNode.GetProperties(),
-				"labels":     neo4jFromObjectNode.Labels,
+				"_name":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
+				"_type":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
+				"_domain":     utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
+				"_properties": neo4jFromObjectNode.GetProperties(),
+				"_labels":     neo4jFromObjectNode.Labels,
 			},
 		})
 	}
@@ -1416,11 +1431,11 @@ func (db *Neo4jDatabase) GetAllDomainSchemaNodes(ctx context.Context) (*model.Re
 			return nil, fmt.Errorf("unexpected type for schemaDomainNode: %T", schemaDomainNode)
 		}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "name"),
-			"type":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "type"),
-			"domain":     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "domain"),
-			"properties": neo4jSchemaDomainNode.GetProperties(),
-			"labels":     neo4jSchemaDomainNode.Labels,
+			"_name":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
+			"_type":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
+			"_domain":     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
+			"_properties": neo4jSchemaDomainNode.GetProperties(),
+			"_labels":     neo4jSchemaDomainNode.Labels,
 		})
 	}
 	if len(data) == 0 {
@@ -1436,11 +1451,11 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	defer session.Close(ctx)
 
 	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
-	
+
 	query := `
 		CREATE CONSTRAINT IF NOT EXISTS
 		FOR (n:DOMAIN_SCHEMA)
-		REQUIRE (n.name, n.type, n.domain) IS NODE KEY
+		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
 		`
 
 	_, err := session.Run(ctx, query, nil)
@@ -1449,7 +1464,7 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	}
 
 	query = `
-		CREATE (schemaDomainNode:DOMAIN_SCHEMA {domain: $domain, type: "DOMAIN SCHEMA", name: $domain})
+		CREATE (schemaDomainNode:DOMAIN_SCHEMA {_domain: $domain, _type: "DOMAIN SCHEMA", _name: $domain})
 		RETURN schemaDomainNode
 	`
 
@@ -1474,11 +1489,11 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 		}
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"name":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "name"),
-			"type":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "type"),
-			"domain":     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "domain"),
-			"properties": neo4jSchemaDomainNode.GetProperties(),
-			"labels":     neo4jSchemaDomainNode.Labels,
+			"_name":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
+			"_type":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
+			"_domain":     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
+			"_properties": neo4jSchemaDomainNode.GetProperties(),
+			"_labels":     neo4jSchemaDomainNode.Labels,
 		})
 		message := "Schema domain node created successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
