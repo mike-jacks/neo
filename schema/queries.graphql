@@ -8,6 +8,7 @@ type Query {
   getObjectNodeIncomingRelationships(toObjectNode: ObjectNodeInput!): Response!
 
   getAllDomainSchemaNodes: Response!
+  getAllTypeSchemaNodes(domain: String!): Response!
 
   cypherQuery(cypher_statement: String!): [Response!]!
 }

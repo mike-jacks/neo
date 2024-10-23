@@ -1468,6 +1468,8 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 		RETURN schemaDomainNode
 	`
 
+	fmt.Println(query)
+
 	parameters := map[string]any{
 		"domain": domain,
 	}
@@ -1500,4 +1502,115 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	}
 	message := "Schema domain node creation failed"
 	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+}
+
+func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	typeArg := strings.TrimSpace(strings.ToUpper(domain))
+	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
+	name = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(name)), " ", "_")
+
+	query := `
+		CREATE CONSTRAINT IF NOT EXISTS
+		FOR (n:TYPE_SCHEMA)
+		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
+		`
+
+	_, err := session.Run(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	query = `
+		CREATE (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _type: $typeArg, _name: $name})
+		RETURN schemaTypeNode
+	`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"domain":  domain,
+		"typeArg": typeArg,
+		"name":    name,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		schemaTypeNode, ok := record.Get("schemaTypeNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+		}
+		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+		}
+		data := []map[string]interface{}{}
+		data = append(data, map[string]interface{}{
+			"_name":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+			"_type":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+			"_domain":     utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+			"_properties": neo4jSchemaTypeNode.GetProperties(),
+			"_labels":     neo4jSchemaTypeNode.Labels,
+		})
+		message := "Schema type node created successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+	message := "Schema type node creation failed"
+	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+}
+
+func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
+
+	query := `
+		MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain})
+		RETURN schemaTypeNode
+	`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"domain": domain,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []map[string]interface{}{}
+	for result.Next(ctx) {
+		record := result.Record()
+		schemaTypeNode, ok := record.Get("schemaTypeNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+		}
+		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+		}
+		data = append(data, map[string]interface{}{
+			"_name":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+			"_type":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+			"_domain":     utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+			"_properties": neo4jSchemaTypeNode.GetProperties(),
+			"_labels":     neo4jSchemaTypeNode.Labels,
+		})
+	}
+	if len(data) == 0 {
+		message := "No schema type nodes found"
+		return &model.Response{Success: false, Message: &message, Data: data}, nil
+	}
+	message := "Schema type nodes retrieved successfully"
+	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }

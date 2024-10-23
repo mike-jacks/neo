@@ -119,6 +119,15 @@ func (r *mutationResolver) CreateDomainSchemaNode(ctx context.Context, domain st
 	return result, nil
 }
 
+// CreateTypeSchemaNode is the resolver for the createTypeSchemaNode field.
+func (r *mutationResolver) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
+	result, err := r.Database.CreateTypeSchemaNode(ctx, domain, name)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // CypherMutation is the resolver for the cypherMutation field.
 func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
 	result, err := r.Database.CypherMutation(ctx, cypherStatement)
@@ -176,6 +185,15 @@ func (r *queryResolver) GetObjectNodeIncomingRelationships(ctx context.Context, 
 // GetAllDomainSchemaNodes is the resolver for the getAllDomainSchemaNodes field.
 func (r *queryResolver) GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error) {
 	result, err := r.Database.GetAllDomainSchemaNodes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetAllTypeSchemaNodes is the resolver for the getAllTypeSchemaNodes field.
+func (r *queryResolver) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {
+	result, err := r.Database.GetAllTypeSchemaNodes(ctx, domain)
 	if err != nil {
 		return nil, err
 	}

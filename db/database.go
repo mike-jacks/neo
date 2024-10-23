@@ -36,4 +36,7 @@ type Database interface {
 
 	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error)
 	GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error)
+
+	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
+	GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error)
 }

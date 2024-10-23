@@ -52,6 +52,7 @@ type ComplexityRoot struct {
 		CreateDomainSchemaNode                 func(childComplexity int, domain string) int
 		CreateObjectNode                       func(childComplexity int, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) int
 		CreateObjectRelationship               func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		CreateTypeSchemaNode                   func(childComplexity int, domain string, name string) int
 		CypherMutation                         func(childComplexity int, cypherStatement string) int
 		DeleteObjectNode                       func(childComplexity int, domain string, name string, typeArg string) int
 		DeleteObjectRelationship               func(childComplexity int, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
@@ -86,6 +87,7 @@ type ComplexityRoot struct {
 	Query struct {
 		CypherQuery                        func(childComplexity int, cypherStatement string) int
 		GetAllDomainSchemaNodes            func(childComplexity int) int
+		GetAllTypeSchemaNodes              func(childComplexity int, domain string) int
 		GetObjectNode                      func(childComplexity int, domain string, name string, typeArg string) int
 		GetObjectNodeIncomingRelationships func(childComplexity int, toObjectNode model.ObjectNodeInput) int
 		GetObjectNodeOutgoingRelationships func(childComplexity int, fromObjectNode model.ObjectNodeInput) int
@@ -113,6 +115,7 @@ type MutationResolver interface {
 	RemovePropertiesFromObjectRelationship(ctx context.Context, relationshipName string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	DeleteObjectRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error)
+	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
 	CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error)
 }
 type QueryResolver interface {
@@ -122,6 +125,7 @@ type QueryResolver interface {
 	GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error)
 	GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error)
+	GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error)
 	CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error)
 }
 
@@ -203,6 +207,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateObjectRelationship(childComplexity, args["relationshipName"].(string), args["properties"].([]*model.PropertyInput), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
+
+	case "Mutation.createTypeSchemaNode":
+		if e.complexity.Mutation.CreateTypeSchemaNode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createTypeSchemaNode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateTypeSchemaNode(childComplexity, args["domain"].(string), args["name"].(string)), true
 
 	case "Mutation.cypherMutation":
 		if e.complexity.Mutation.CypherMutation == nil {
@@ -402,6 +418,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetAllDomainSchemaNodes(childComplexity), true
+
+	case "Query.getAllTypeSchemaNodes":
+		if e.complexity.Query.GetAllTypeSchemaNodes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getAllTypeSchemaNodes_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetAllTypeSchemaNodes(childComplexity, args["domain"].(string)), true
 
 	case "Query.getObjectNode":
 		if e.complexity.Query.GetObjectNode == nil {
@@ -622,6 +650,7 @@ var sources = []*ast.Source{
   deleteObjectRelationship(relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
 
   createDomainSchemaNode(domain: String!): Response!
+  createTypeSchemaNode(domain: String!, name: String!): Response!
 
   cypherMutation(cypher_statement: String!): [Response!]!
 }
@@ -702,6 +731,7 @@ input PropertyInput {
   getObjectNodeIncomingRelationships(toObjectNode: ObjectNodeInput!): Response!
 
   getAllDomainSchemaNodes: Response!
+  getAllTypeSchemaNodes(domain: String!): Response!
 
   cypherQuery(cypher_statement: String!): [Response!]!
 }
@@ -1071,6 +1101,47 @@ func (ec *executionContext) field_Mutation_createObjectRelationship_argsToObject
 	}
 
 	var zeroVal model.ObjectNodeInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createTypeSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_createTypeSchemaNode_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	arg1, err := ec.field_Mutation_createTypeSchemaNode_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createTypeSchemaNode_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createTypeSchemaNode_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -1639,6 +1710,29 @@ func (ec *executionContext) field_Query_cypherQuery_argsCypherStatement(
 ) (string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cypher_statement"))
 	if tmp, ok := rawArgs["cypher_statement"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getAllTypeSchemaNodes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_getAllTypeSchemaNodes_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_getAllTypeSchemaNodes_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -2697,6 +2791,69 @@ func (ec *executionContext) fieldContext_Mutation_createDomainSchemaNode(ctx con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createTypeSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createTypeSchemaNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateTypeSchemaNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createTypeSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createTypeSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_cypherMutation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_cypherMutation(ctx, field)
 	if err != nil {
@@ -3682,6 +3839,69 @@ func (ec *executionContext) fieldContext_Query_getAllDomainSchemaNodes(_ context
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getAllTypeSchemaNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getAllTypeSchemaNodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAllTypeSchemaNodes(rctx, fc.Args["domain"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Response)
+	fc.Result = res
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getAllTypeSchemaNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_Response_success(ctx, field)
+			case "message":
+				return ec.fieldContext_Response_message(ctx, field)
+			case "data":
+				return ec.fieldContext_Response_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getAllTypeSchemaNodes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -6114,6 +6334,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createTypeSchemaNode":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createTypeSchemaNode(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "cypherMutation":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_cypherMutation(ctx, field)
@@ -6436,6 +6663,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getAllDomainSchemaNodes(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getAllTypeSchemaNodes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getAllTypeSchemaNodes(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
