@@ -1517,7 +1517,7 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 		node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END
 		WITH node
 		WHERE NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA
-		RETURN count(objectNode) as count
+		RETURN count(node) as count
 	`
 
 	fmt.Println(query)
