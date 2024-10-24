@@ -1701,11 +1701,12 @@ func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain strin
 			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
 		}
 		data = append(data, map[string]interface{}{
-			"_name":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
-			"_type":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
-			"_domain":     utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
-			"_properties": neo4jSchemaTypeNode.GetProperties(),
-			"_labels":     neo4jSchemaTypeNode.Labels,
+			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+			"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
+			"_properties":   neo4jSchemaTypeNode.GetProperties(),
+			"_labels":       neo4jSchemaTypeNode.Labels,
 		})
 	}
 	if len(data) == 0 {
