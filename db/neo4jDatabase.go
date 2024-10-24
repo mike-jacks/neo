@@ -1543,9 +1543,9 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
+	newOriginalName := strings.Trim(newName, " ")
 	domain = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_"), "-", "_")
 	newName = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(newName)), " ", "_"), "-", "_")
-	newOriginalName := strings.Trim(newName, " ")
 
 	query := `
 		MATCH (node {_domain: $domain})
@@ -1570,24 +1570,12 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 		return nil, err
 	}
 
-	countInt := int64(0)
 	if result.Next(ctx) {
-		record := result.Record()
-		count, ok := record.Get("count")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the count")
-		}
-		countInt, ok = count.(int64)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for count: %T", count)
-		}
-		if countInt == 0 {
-			message := "Domain schema node rename failed"
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
-		}
+		message := fmt.Sprintf("Domain schema node %s renamed successfully to %s", domain, newName)
+		return &model.Response{Success: true, Message: &message, Data: nil}, nil
 	}
-	message := fmt.Sprintf("%v nodes have their domain renamed successfully to %s", countInt, newName)
-	return &model.Response{Success: true, Message: &message, Data: nil}, nil
+	message := fmt.Sprintf("Domain schema node %s rename failed", domain)
+	return &model.Response{Success: false, Message: &message, Data: nil}, nil
 }
 
 func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error) {
