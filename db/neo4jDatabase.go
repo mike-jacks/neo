@@ -53,9 +53,11 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		labels[i] = strings.ReplaceAll(strings.Trim(strings.ToUpper(label), " "), " ", "_")
 	}
 
-	if err := utils.CleanUpPropertyObjects(properties); err != nil {
-		message := err.Error()
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	if properties != nil {
+		if err := utils.CleanUpPropertyObjects(properties); err != nil {
+			message := err.Error()
+			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		}
 	}
 
 	query := fmt.Sprintf(`
