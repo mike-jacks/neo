@@ -1552,6 +1552,32 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 	return &model.Response{Success: true, Message: &message, Data: nil}, nil
 }
 
+func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
+
+	query := `
+		MATCH (node {_domain: $domain})
+		DETACH DELETE node;
+	`
+
+	parameters := map[string]any{
+		"domain": domain,
+	}
+
+	fmt.Println(query)
+
+	_, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		message := fmt.Sprintf("Domain schema node %s deletion failed", domain)
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
+	message := fmt.Sprintf("Domain schema node %s deleted successfully", domain)
+	return &model.Response{Success: true, Message: &message, Data: nil}, nil
+}
+
 func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
