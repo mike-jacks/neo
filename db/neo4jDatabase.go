@@ -1504,6 +1504,54 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	return &model.Response{Success: false, Message: &message, Data: nil}, nil
 }
 
+func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
+	newName = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(newName)), " ", "_")
+
+	query := `
+		MATCH (node {_domain: $domain})
+		SET node._name = $newName,
+		node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE name._name END
+		WITH node
+		WHERE NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA
+		RETURN count(objectNode) as count
+	`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"domain":  domain,
+		"newName": newName,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	countInt := int64(0)
+	if result.Next(ctx) {
+		record := result.Record()
+		count, ok := record.Get("count")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the count")
+		}
+		countInt, ok = count.(int64)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for count: %T", count)
+		}
+		if countInt == 0 {
+			message := "Domain schema node rename failed"
+			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		}
+	}
+	message := fmt.Sprintf("%v nodes have their domain renamed successfully to %s", countInt, newName)
+	return &model.Response{Success: true, Message: &message, Data: nil}, nil
+}
+
 func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)

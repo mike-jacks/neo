@@ -35,6 +35,7 @@ type Database interface {
 	GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 
 	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error)
+	RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.Response, error)
 	GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error)
 
 	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
