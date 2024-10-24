@@ -1584,6 +1584,7 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
+	originalName := name
 	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
 	name = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(name)), " ", "_")
 
@@ -1599,15 +1600,16 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 	}
 
 	query = `
-		CREATE (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _type: "TYPE SCHEMA", _name: $name})
+		CREATE (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _type: "TYPE SCHEMA", _name: $name, _originalName: $originalName})
 		RETURN schemaTypeNode
 	`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"domain": domain,
-		"name":   name,
+		"domain":       domain,
+		"name":         name,
+		"originalName": originalName,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -1627,17 +1629,42 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 		}
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"_name":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
-			"_type":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
-			"_domain":     utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
-			"_properties": neo4jSchemaTypeNode.GetProperties(),
-			"_labels":     neo4jSchemaTypeNode.Labels,
+			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+			"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
+			"_properties":   neo4jSchemaTypeNode.GetProperties(),
+			"_labels":       neo4jSchemaTypeNode.Labels,
 		})
 		message := "Schema type node created successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
 	}
 	message := "Schema type node creation failed"
 	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+}
+
+func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
+	existingName = strings.TrimSpace(strings.ToUpper(existingName))
+	newName = strings.TrimSpace(strings.ToUpper(newName))
+	existingLabel := strings.ReplaceAll(existingName, " ", "_")
+	newLabel := strings.ReplaceAll(newName, " ", "_")
+
+	query := `
+		MATCH (schemaNode {_domain: $domain, _name: $existingName})
+		SET node._name = $newName
+		RETURN count(node) as count
+	`
+
+	_ = existingLabel
+	_ = newLabel
+
+	fmt.Println(query)
+
+	return nil, nil
 }
 
 func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {

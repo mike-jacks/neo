@@ -149,7 +149,11 @@ func (r *mutationResolver) CreateTypeSchemaNode(ctx context.Context, domain stri
 
 // RenameTypeSchemaNode is the resolver for the renameTypeSchemaNode field.
 func (r *mutationResolver) RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: RenameTypeSchemaNode - renameTypeSchemaNode"))
+	result, err := r.Database.RenameTypeSchemaNode(ctx, domain, existingName, newName)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // UpdatePropertiesOnTypeSchemaNode is the resolver for the updatePropertiesOnTypeSchemaNode field.
