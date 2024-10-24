@@ -47,6 +47,9 @@ func PopString(m map[string]interface{}, key string) string {
 
 func CreatePropertiesQuery(query string, properties []*model.PropertyInput, prefix ...string) string {
 	for _, property := range properties {
+		if property.Key == "_originalRelationshipName" || property.Key == "_relationshipName" {
+			continue
+		}
 		if len(prefix) > 0 {
 			query += fmt.Sprintf("%v.", prefix[0])
 			if property.Type.String() == "STRING" {
@@ -115,10 +118,16 @@ func CreatePropertiesQuery(query string, properties []*model.PropertyInput, pref
 func RemovePropertiesQuery(query string, properties []string, prefix ...string) string {
 	if len(prefix) > 0 {
 		for _, property := range properties {
+			if property == "_originalRelationshipName" || property == "_relationshipName" {
+				continue
+			}
 			query += fmt.Sprintf("%v.%v = null, ", prefix[0], property)
 		}
 	} else {
 		for _, property := range properties {
+			if property == "_originalRelationshipName" || property == "_relationshipName" {
+				continue
+			}
 			query += fmt.Sprintf("%v = null, ", property)
 		}
 	}
