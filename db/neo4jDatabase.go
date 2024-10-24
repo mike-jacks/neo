@@ -1513,7 +1513,7 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 
 	query := `
 		MATCH (node {_domain: $domain})
-		SET node._name = $newName,
+		SET node._domain = $newName,
 		node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END
 		WITH node
 		WHERE NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA
