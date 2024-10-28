@@ -1467,11 +1467,11 @@ func (db *Neo4jDatabase) GetAllDomainSchemaNodes(ctx context.Context) (*model.Re
 			return nil, fmt.Errorf("unexpected type for schemaDomainNode: %T", schemaDomainNode)
 		}
 		data = append(data, map[string]interface{}{
-			"_name":         utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
-			"_type":         utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
-			"_domain":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
-			"_properties":   neo4jSchemaDomainNode.GetProperties(),
-			"_labels":       neo4jSchemaDomainNode.Labels,
+			"_name":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
+			"_type":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
+			"_domain":     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
+			"_properties": neo4jSchemaDomainNode.GetProperties(),
+			"_labels":     neo4jSchemaDomainNode.Labels,
 		})
 	}
 	if len(data) == 0 {
@@ -1781,7 +1781,7 @@ func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain strin
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	domain = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_")
+	domain = strings.Trim(domain, " ")
 
 	query := `
 		MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain})
