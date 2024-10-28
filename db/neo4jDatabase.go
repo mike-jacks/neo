@@ -1782,7 +1782,7 @@ func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, domain string
 
 	query := `
 		MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"})
-		MATCH (objectNodes {_domain: $domain, _type: $name})
+		OPTIONAL MATCH (objectNodes {_domain: $domain, _type: $name})
 		DETACH DELETE schemaTypeNode, objectNodes
 		WITH count(objectNodes) as count
 		RETURN count
@@ -1804,10 +1804,10 @@ func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, domain string
 		record := result.Record()
 		count, _ := record.Get("count")
 		if count.(int64) > 0 {
-			message := fmt.Sprintf("%v object nodes of type %s deleted successfully", count, name)
+			message := fmt.Sprintf("Type schema node of type %s deleted,%v object nodes deleted successfully", count, name)
 			return &model.Response{Success: true, Message: &message, Data: nil}, nil
 		}
-		message := fmt.Sprintf("Type schema node of type %s deleted, 0 object nodes deleted", name)
+		message := fmt.Sprintf("Type schema node of type %s deleted, 0 object nodes deleted successfully", name)
 		return &model.Response{Success: true, Message: &message, Data: nil}, nil
 	}
 	message := fmt.Sprintf("Unable to delete schema type node of type %s", name)
