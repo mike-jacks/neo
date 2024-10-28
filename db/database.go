@@ -42,6 +42,8 @@ type Database interface {
 	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
 	RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error)
 	UpdatePropertiesOnTypeSchemaNode(ctx context.Context, domain string, name string, properties []*model.PropertyInput) (*model.Response, error)
+	RenamePropertyOnTypeSchemaNode(ctx context.Context, domain string, name string, oldPropertyName string, newPropertyName string) (*model.Response, error)
+	RemovePropertiesFromTypeSchemaNode(ctx context.Context, domain string, name string, properties []string) (*model.Response, error)
 	DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
 	GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error)
 }

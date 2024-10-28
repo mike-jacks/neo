@@ -32,6 +32,7 @@ type Mutation {
   createTypeSchemaNode(domain: String!, name: String!): Response!
   renameTypeSchemaNode(domain: String!, existingName: String!, newName: String!): Response!
   updatePropertiesOnTypeSchemaNode(domain: String!, name: String!, properties: [PropertyInput!]!): Response!
+  renamePropertyOnTypeSchemaNode(domain: String!, name: String!, oldPropertyName: String!, newPropertyName: String!): Response!
   removePropertiesFromTypeSchemaNode(domain: String!, name: String!, properties: [String!]!): Response!
   deleteTypeSchemaNode(domain: String!, name: String!): Response!
 
