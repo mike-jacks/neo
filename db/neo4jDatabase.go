@@ -1553,7 +1553,7 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 		node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END,
 		node._originalName = CASE WHEN node:DOMAIN_SCHEMA THEN $newOriginalName ELSE node._originalName END
 		WITH node
-		WHERE NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA
+		WHERE NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA
 		RETURN count(node) as count
 	`
 
@@ -1671,24 +1671,52 @@ func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, domain string
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
+	originalNewName := strings.Trim(newName, " ")
 	domain = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_"), "-", "_")
 	existingName = strings.TrimSpace(strings.ToUpper(existingName))
 	newName = strings.TrimSpace(strings.ToUpper(newName))
 	existingLabel := strings.ReplaceAll(existingName, " ", "_")
 	newLabel := strings.ReplaceAll(newName, " ", "_")
 
+	// Single query to check existence, update schema node and object nodes
 	query := `
-		MATCH (schemaNode {_domain: $domain, _name: $existingName})
-		SET node._name = $newName
-		RETURN count(node) as count
-	`
+        MATCH (existing:TYPE_SCHEMA {_domain: $domain, _name: $existingName, _type: "TYPE SCHEMA"})
+        OPTIONAL MATCH (duplicate:TYPE_SCHEMA {_domain: $domain, _name: $newName, _type: "TYPE SCHEMA"})
+        WITH existing, duplicate, count(duplicate) as duplicateCount
+        WHERE duplicateCount = 0
+        MATCH (objectNodes {_domain: $domain, _type: $existingName})
+        SET existing._name = $newName,
+            existing._originalName = $originalNewName,
+            objectNodes._type = $newName
+        REMOVE objectNodes:` + existingLabel + `
+        SET objectNodes:` + newLabel + `
+        RETURN count(objectNodes) as updatedCount
+    `
 
-	_ = existingLabel
-	_ = newLabel
+	parameters := map[string]any{
+		"domain":          domain,
+		"existingName":    existingName,
+		"newName":         newName,
+		"originalNewName": originalNewName,
+	}
 
-	fmt.Println(query)
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	if result.Next(ctx) {
+		record := result.Record()
+		updatedCount, _ := record.Get("updatedCount")
+		if updatedCount.(int64) > 0 {
+			message := fmt.Sprintf("Schema type node and related objects renamed from %s to %s", existingName, newName)
+			return &model.Response{Success: true, Message: &message, Data: nil}, nil
+		}
+	}
+
+	// If we get here, either the duplicate exists or the original wasn't found
+	message := fmt.Sprintf("Failed to rename schema type - either %s already exists or %s was not found", newName, existingName)
+	return &model.Response{Success: false, Message: &message, Data: nil}, nil
 }
 
 func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {
