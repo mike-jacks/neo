@@ -1774,7 +1774,42 @@ func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, d
 }
 
 func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: DeleteTypeSchemaNode - deleteTypeSchemaNode"))
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(domain, " ")
+	name = strings.TrimSpace(strings.ToUpper(name))
+
+	query := `
+		MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"})
+		MATCH (objectNodes {_domain: $domain, _type: $name})
+		DETACH DELETE schemaTypeNode, objectNodes
+		WITH count(objectNodes) as count
+		RETURN count
+	`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"domain": domain,
+		"name":   name,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		count, _ := record.Get("count")
+		if count.(int64) > 0 {
+			message := fmt.Sprintf("%v object nodes of type %s deleted successfully", count, name)
+			return &model.Response{Success: true, Message: &message, Data: nil}, nil
+		}
+	}
+	message := fmt.Sprintf("Unable to delete schema type node of type %s", name)
+	return &model.Response{Success: false, Message: &message, Data: nil}, nil
 }
 
 func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {
