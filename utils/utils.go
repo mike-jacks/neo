@@ -47,7 +47,7 @@ func PopString(m map[string]interface{}, key string) string {
 
 func CreatePropertiesQuery(query string, properties []*model.PropertyInput, prefix ...string) string {
 	for _, property := range properties {
-		if property.Key == "_originalRelationshipName" || property.Key == "_relationshipName" {
+		if property.Key == "_originalRelationshipName" || property.Key == "_relationshipName" || property.Key == "_domain" || property.Key == "_name" || property.Key == "_type" {
 			continue
 		}
 		if len(prefix) > 0 {

@@ -1724,8 +1724,54 @@ func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, d
 
 	domain = strings.Trim(domain, " ")
 	name = strings.TrimSpace(strings.ToUpper(name))
-	return nil, nil
 
+	err := utils.CleanUpPropertyObjects(properties)
+	if err != nil {
+		message := "Failed to clean up property objects"
+		return &model.Response{Success: false, Message: &message, Data: nil}, err
+	}
+
+	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) SET `
+	query = utils.CreatePropertiesQuery(query, properties, "schemaTypeNode")
+	query = strings.TrimSuffix(query, ", ")
+	query += ` RETURN schemaTypeNode`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"domain": domain,
+		"name":   name,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []map[string]interface{}{}
+	if result.Next(ctx) {
+		record := result.Record()
+		schemaTypeNode, ok := record.Get("schemaTypeNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+		}
+		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+		}
+		data = append(data, map[string]interface{}{
+			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+			"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
+			"_properties":   neo4jSchemaTypeNode.GetProperties(),
+			"_labels":       neo4jSchemaTypeNode.Labels,
+		})
+		message := "Schema type node properties updated successfully"
+		return &model.Response{Success: true, Message: &message, Data: data}, nil
+	}
+	message := "Schema type node properties update failed"
+	return &model.Response{Success: false, Message: &message, Data: nil}, nil
 }
 
 func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
