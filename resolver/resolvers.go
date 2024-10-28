@@ -158,7 +158,11 @@ func (r *mutationResolver) RenameTypeSchemaNode(ctx context.Context, domain stri
 
 // UpdatePropertiesOnTypeSchemaNode is the resolver for the updatePropertiesOnTypeSchemaNode field.
 func (r *mutationResolver) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, domain string, name string, properties []*model.PropertyInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: UpdatePropertiesOnTypeSchemaNode - updatePropertiesOnTypeSchemaNode"))
+	result, err := r.Database.UpdatePropertiesOnTypeSchemaNode(ctx, domain, name, properties)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // RemovePropertiesFromTypeSchemaNode is the resolver for the removePropertiesFromTypeSchemaNode field.

@@ -142,7 +142,7 @@ func CleanUpObjectNode(objectNode *model.ObjectNodeInput) error {
 	if objectNode == nil {
 		return fmt.Errorf("objectNode is required")
 	}
-	objectNode.Domain = strings.Trim(strings.ToUpper(objectNode.Domain), " ")
+	objectNode.Domain = strings.Trim(objectNode.Domain, " ")
 	objectNode.Name = strings.Trim(strings.ToUpper(objectNode.Name), " ")
 	objectNode.Type = strings.Trim(strings.ToUpper(objectNode.Type), " ")
 	return nil

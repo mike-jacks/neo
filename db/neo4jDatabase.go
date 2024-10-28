@@ -45,8 +45,8 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
+	domain = strings.Trim(domain, " ")
 	originalName := strings.Trim(name, " ")
-	domain = strings.Trim(strings.ToUpper(domain), " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
 	labelFromTypeArg := strings.ReplaceAll(typeArg, " ", "_")
@@ -142,10 +142,10 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(strings.ToUpper(domain), " ")
+	domain = strings.Trim(domain, " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
-	labelFromTypeArg := strings.ReplaceAll(typeArg, " ", "_")
+	labelFromTypeArg := strings.ReplaceAll(strings.ReplaceAll(typeArg, " ", "_"), "-", "_")
 
 	if updateObjectNodeInput.Properties != nil {
 		if err := utils.CleanUpPropertyObjects(updateObjectNodeInput.Properties); err != nil {
@@ -258,11 +258,12 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, na
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(strings.ToUpper(domain), " ")
+	domain = strings.Trim(domain, " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	labelFromTypeArg := strings.ReplaceAll(strings.ReplaceAll(typeArg, " ", "_"), "-", "_")
 
-	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) DETACH DELETE o RETURN count(o) as deletedCount", typeArg)
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) DETACH DELETE o RETURN count(o) as deletedCount", labelFromTypeArg)
 	parameters := map[string]any{
 		"name":    name,
 		"typeArg": typeArg,
@@ -300,9 +301,11 @@ func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain strin
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(strings.ToUpper(domain), " ")
+	domain = strings.Trim(domain, " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	labelFromTypeArg := strings.ReplaceAll(strings.ReplaceAll(typeArg, " ", "_"), "-", "_")
+
 	for i, label := range labels {
 		labels[i] = strings.ReplaceAll(strings.Trim(strings.ToUpper(label), " "), " ", "_")
 	}
@@ -312,7 +315,7 @@ func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain strin
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) SET o", typeArg)
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) SET o", labelFromTypeArg)
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
@@ -364,13 +367,13 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(strings.ToUpper(domain), " ")
+	domain = strings.Trim(domain, " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
-	typeArgAsLabel := strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
+	labelFromTypeArg := strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
 	for i := 0; i < len(labels); i++ {
 		label := strings.ReplaceAll(strings.Trim(strings.ToUpper(labels[i]), " "), " ", "_")
-		if label == typeArgAsLabel {
+		if label == labelFromTypeArg {
 			labels = append(labels[:i], labels[i+1:]...)
 			i--
 			continue
@@ -383,7 +386,7 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) REMOVE o", typeArgAsLabel)
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) REMOVE o", labelFromTypeArg)
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", label)
 	}
@@ -432,22 +435,20 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 }
 
 func (db *Neo4jDatabase) AddPropertiesToObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
-	for _, property := range properties {
-		property.Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
-	}
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(strings.ToUpper(domain), " ")
+	domain = strings.Trim(domain, " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	labelFromTypeArg := strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
 
 	if err := utils.CleanUpPropertyObjects(properties); err != nil {
 		message := err.Error()
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	query := "MATCH (o{_name: $name, _type: $typeArg, _domain: $domain}) SET o"
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) SET o", labelFromTypeArg)
 
 	for _, property := range properties {
 		if property.Type == model.PropertyTypeString {
@@ -502,17 +503,20 @@ func (db *Neo4jDatabase) AddPropertiesToObjectNode(ctx context.Context, domain s
 }
 
 func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error) {
-	for i, property := range properties {
-		properties[i] = strings.ReplaceAll(strings.Trim(strings.ToLower(property), " "), " ", "_")
-	}
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(strings.ToUpper(domain), " ")
+	domain = strings.Trim(domain, " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	labelFromTypeArg := strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
 
-	query := "MATCH (o{_name: $name, _type: $typeArg, _domain: $domain}) REMOVE "
+	if err := utils.CleanUpPropertyKeys(properties); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
+
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) REMOVE ", labelFromTypeArg)
 
 	for _, property := range properties {
 		query += fmt.Sprintf("o.%v, ", property)
@@ -566,11 +570,12 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(strings.ToUpper(domain), " ")
+	domain = strings.Trim(domain, " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
+	labelFromTypeArg := strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
 
-	query := "MATCH (o{_name: $name, _type: $typeArg, _domain: $domain}) RETURN o"
+	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) RETURN o", labelFromTypeArg)
 
 	parameters := map[string]any{
 		"name":    name,
@@ -618,7 +623,7 @@ func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, nam
 	defer session.Close(ctx)
 
 	if domain != nil {
-		*domain = strings.Trim(strings.ToUpper(*domain), " ")
+		*domain = strings.Trim(*domain, " ")
 	}
 	if name != nil {
 		*name = strings.Trim(strings.ToUpper(*name), " ")
@@ -1482,8 +1487,7 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	originalName := strings.Trim(domain, " ")
-	domain = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_"), "-", "_")
+	domain = strings.Trim(domain, " ")
 
 	query := `
 		CREATE CONSTRAINT IF NOT EXISTS
@@ -1497,15 +1501,14 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	}
 
 	query = `
-		CREATE (schemaDomainNode:DOMAIN_SCHEMA {_domain: $domain, _type: "DOMAIN SCHEMA", _name: $domain, _originalName: $originalName})
+		CREATE (schemaDomainNode:DOMAIN_SCHEMA {_domain: $domain, _type: "DOMAIN SCHEMA", _name: $domain})
 		RETURN schemaDomainNode
 	`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"domain":       domain,
-		"originalName": originalName,
+		"domain": domain,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -1525,12 +1528,11 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 		}
 		data := []map[string]interface{}{}
 		data = append(data, map[string]interface{}{
-			"_name":         utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
-			"_type":         utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
-			"_domain":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
-			"_originalName": utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_originalName"),
-			"_properties":   neo4jSchemaDomainNode.GetProperties(),
-			"_labels":       neo4jSchemaDomainNode.Labels,
+			"_name":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
+			"_type":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
+			"_domain":     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
+			"_properties": neo4jSchemaDomainNode.GetProperties(),
+			"_labels":     neo4jSchemaDomainNode.Labels,
 		})
 		message := "Schema domain node created successfully"
 		return &model.Response{Success: true, Message: &message, Data: data}, nil
@@ -1543,15 +1545,13 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	newOriginalName := strings.Trim(newName, " ")
-	domain = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_"), "-", "_")
-	newName = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(newName)), " ", "_"), "-", "_")
+	domain = strings.TrimSpace(domain)
+	newName = strings.TrimSpace(newName)
 
 	query := `
 		MATCH (node {_domain: $domain})
 		SET node._domain = $newName,
-		node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END,
-		node._originalName = CASE WHEN node:DOMAIN_SCHEMA THEN $newOriginalName ELSE node._originalName END
+		node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END
 		WITH node
 		WHERE NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA
 		RETURN count(node) as count
@@ -1560,9 +1560,8 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"domain":          domain,
-		"newName":         newName,
-		"newOriginalName": newOriginalName,
+		"domain":  domain,
+		"newName": newName,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -1582,7 +1581,7 @@ func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, domain stri
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_"), "-", "_")
+	domain = strings.Trim(domain, " ")
 
 	query := `
 		MATCH (node {_domain: $domain})
@@ -1609,7 +1608,7 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 	defer session.Close(ctx)
 
 	originalName := strings.Trim(name, " ")
-	domain = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_"), "-", "_")
+	domain = strings.Trim(domain, " ")
 	name = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(name)), " ", "_")
 
 	query := `
@@ -1672,7 +1671,7 @@ func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, domain string
 	defer session.Close(ctx)
 
 	originalNewName := strings.Trim(newName, " ")
-	domain = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(domain)), " ", "_"), "-", "_")
+	domain = strings.Trim(domain, " ")
 	existingName = strings.TrimSpace(strings.ToUpper(existingName))
 	newName = strings.TrimSpace(strings.ToUpper(newName))
 	existingLabel := strings.ReplaceAll(existingName, " ", "_")
@@ -1717,6 +1716,20 @@ func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, domain string
 	// If we get here, either the duplicate exists or the original wasn't found
 	message := fmt.Sprintf("Failed to rename schema type - either %s already exists or %s was not found", newName, existingName)
 	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+}
+
+func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, domain string, name string, properties []*model.PropertyInput) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(domain, " ")
+	name = strings.TrimSpace(strings.ToUpper(name))
+	return nil, nil
+
+}
+
+func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: DeleteTypeSchemaNode - deleteTypeSchemaNode"))
 }
 
 func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {
