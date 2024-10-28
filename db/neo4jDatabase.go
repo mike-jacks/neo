@@ -1470,7 +1470,6 @@ func (db *Neo4jDatabase) GetAllDomainSchemaNodes(ctx context.Context) (*model.Re
 			"_name":         utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
 			"_type":         utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
 			"_domain":       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
-			"_originalName": utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_originalName"),
 			"_properties":   neo4jSchemaDomainNode.GetProperties(),
 			"_labels":       neo4jSchemaDomainNode.Labels,
 		})
