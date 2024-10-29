@@ -1866,6 +1866,7 @@ func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context,
 
 	domain = strings.TrimSpace(domain)
 	name = strings.TrimSpace(strings.ToUpper(name))
+	labelFromName := strings.ReplaceAll(name, " ", "_")
 	if err := utils.CleanUpPropertyKeys(properties); err != nil {
 		return nil, err
 	}
@@ -1888,7 +1889,16 @@ func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context,
 		return nil, err
 	}
 
+	query = fmt.Sprintf(`MATCH (objectNodes:%s {_domain: $domain, _type: $name}) SET `, labelFromName)
+	query = utils.RemovePropertiesQuery(query, properties, "objectNodes")
+	query = strings.TrimSuffix(query, "SET ")
+	query = strings.TrimSuffix(query, ", ")
+	query += ` RETURN count(objectNodes) as count`
+
+	fmt.Println(query)
+
 	data := []map[string]interface{}{}
+	countInt := int64(0)
 	if result.Next(ctx) {
 		record := result.Record()
 		schemaTypeNode, ok := record.Get("schemaTypeNode")
@@ -1899,6 +1909,15 @@ func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context,
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
 		}
+		count, ok := record.Get("count")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the count")
+		}
+		countInt, ok = count.(int64)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for count: %T", count)
+		}
+
 		data = append(data, map[string]interface{}{
 			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
 			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
@@ -1912,7 +1931,7 @@ func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context,
 		message := "No schema type nodes found"
 		return &model.Response{Success: false, Message: &message, Data: data}, nil
 	}
-	message := "Schema type nodes retrieved successfully"
+	message := fmt.Sprintf("%v properties removed from schema type node of type %s. %v object nodes updated successfully", len(properties), name, countInt)
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
 
