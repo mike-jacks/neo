@@ -1953,7 +1953,6 @@ func (db *Neo4jDatabase) RenamePropertyOnTypeSchemaNode(ctx context.Context, dom
 	query += `SET `
 	query = utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "schemaTypeNode")
 	query = utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "objectNodes")
-	query = strings.TrimSuffix(query, "SET ")
 	query = strings.TrimSuffix(query, ", ")
 	query += ` WITH schemaTypeNode, count(objectNodes) as count`
 	query += ` RETURN schemaTypeNode, count`
