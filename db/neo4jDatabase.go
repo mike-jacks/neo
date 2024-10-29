@@ -1861,7 +1861,58 @@ func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain strin
 }
 
 func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context, domain string, name string, properties []string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: RemovePropertiesFromTypeSchemaNode - removePropertiesFromTypeSchemaNode"))
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.TrimSpace(domain)
+	name = strings.TrimSpace(strings.ToUpper(name))
+	if err := utils.CleanUpPropertyKeys(properties); err != nil {
+		return nil, err
+	}
+
+	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) SET `
+	query = utils.RemovePropertiesQuery(query, properties, "schemaTypeNode")
+	query = strings.TrimSuffix(query, ", ")
+	query += ` RETURN schemaTypeNode`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"domain": domain,
+		"name":   name,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []map[string]interface{}{}
+	if result.Next(ctx) {
+		record := result.Record()
+		schemaTypeNode, ok := record.Get("schemaTypeNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+		}
+		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+		}
+		data = append(data, map[string]interface{}{
+			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+			"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
+			"_properties":   neo4jSchemaTypeNode.GetProperties(),
+			"_labels":       neo4jSchemaTypeNode.Labels,
+		})
+	}
+	if len(data) == 0 {
+		message := "No schema type nodes found"
+		return &model.Response{Success: false, Message: &message, Data: data}, nil
+	}
+	message := "Schema type nodes retrieved successfully"
+	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
 
 func (db *Neo4jDatabase) RenamePropertyOnTypeSchemaNode(ctx context.Context, domain string, name string, oldPropertyName string, newPropertyName string) (*model.Response, error) {
