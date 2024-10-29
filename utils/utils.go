@@ -47,7 +47,7 @@ func PopString(m map[string]interface{}, key string) string {
 
 func CreatePropertiesQuery(query string, properties []*model.PropertyInput, prefix ...string) string {
 	for _, property := range properties {
-		if property.Key == "_originalRelationshipName" || property.Key == "_relationshipName" || property.Key == "_domain" || property.Key == "_name" || property.Key == "_type" {
+		if property.Key == "_originalRelationshipName" || property.Key == "_relationshipName" || property.Key == "_domain" || property.Key == "_name" || property.Key == "_type" || property.Key == "_originalName" {
 			continue
 		}
 		if len(prefix) > 0 {
@@ -118,14 +118,14 @@ func CreatePropertiesQuery(query string, properties []*model.PropertyInput, pref
 func RemovePropertiesQuery(query string, properties []string, prefix ...string) string {
 	if len(prefix) > 0 {
 		for _, property := range properties {
-			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" {
+			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" || property == "_originalName" {
 				continue
 			}
 			query += fmt.Sprintf("%v.%v = null, ", prefix[0], property)
 		}
 	} else {
 		for _, property := range properties {
-			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" {
+			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" || property == "_originalName" {
 				continue
 			}
 			query += fmt.Sprintf("%v: null, ", property)
@@ -166,4 +166,15 @@ func CleanUpPropertyKeys(properties []string) error {
 		properties[i] = strings.ReplaceAll(strings.Trim(strings.ToLower(property), " "), " ", "_")
 	}
 	return nil
+}
+
+func RenamePropertyQuery(query string, oldPropertyName string, newPropertyName string, prefix ...string) string {
+	if len(prefix) > 0 {
+		query += fmt.Sprintf("%v.%v = %v.%v, ", prefix[0], newPropertyName, prefix[0], oldPropertyName)
+		query += fmt.Sprintf("%v.%v = null, ", prefix[0], oldPropertyName)
+	} else {
+		query += fmt.Sprintf("%v: $newPropertyName, ", newPropertyName)
+		query += fmt.Sprintf("%v: null, ", oldPropertyName)
+	}
+	return query
 }
