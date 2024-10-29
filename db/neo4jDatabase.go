@@ -434,7 +434,7 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 	return nil, fmt.Errorf("failed to remove labels from object node")
 }
 
-func (db *Neo4jDatabase) AddPropertiesToObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
+func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -1858,4 +1858,12 @@ func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain strin
 	}
 	message := "Schema type nodes retrieved successfully"
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
+}
+
+func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context, domain string, name string, properties []string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: RemovePropertiesFromTypeSchemaNode - removePropertiesFromTypeSchemaNode"))
+}
+
+func (db *Neo4jDatabase) RenamePropertyOnTypeSchemaNode(ctx context.Context, domain string, name string, oldPropertyName string, newPropertyName string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: RenamePropertyOnTypeSchemaNode - renamePropertyOnTypeSchemaNode"))
 }

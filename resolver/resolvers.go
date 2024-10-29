@@ -58,8 +58,8 @@ func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, domai
 }
 
 // AddPropertiesToObjectNode is the resolver for the addPropertiesToObjectNode field.
-func (r *mutationResolver) AddPropertiesToObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
-	result, err := r.Database.AddPropertiesToObjectNode(ctx, domain, name, typeArg, properties)
+func (r *mutationResolver) UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
+	result, err := r.Database.UpdatePropertiesOnObjectNode(ctx, domain, name, typeArg, properties)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,11 @@ func (r *mutationResolver) RenamePropertyOnTypeSchemaNode(ctx context.Context, d
 
 // RemovePropertiesFromTypeSchemaNode is the resolver for the removePropertiesFromTypeSchemaNode field.
 func (r *mutationResolver) RemovePropertiesFromTypeSchemaNode(ctx context.Context, domain string, name string, properties []string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: RemovePropertiesFromTypeSchemaNode - removePropertiesFromTypeSchemaNode"))
+	result, err := r.Database.RemovePropertiesFromTypeSchemaNode(ctx, domain, name, properties)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // DeleteTypeSchemaNode is the resolver for the deleteTypeSchemaNode field.

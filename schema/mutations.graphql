@@ -7,7 +7,7 @@ type Mutation {
   addLabelsToObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
   removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
 
-  addPropertiesToObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
+  updatePropertiesOnObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
   removePropertiesFromObjectNode(_domain: String!, name: String!, type: String!, properties: [String!]!): Response!
 
   createObjectRelationship(relationshipName: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
