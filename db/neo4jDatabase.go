@@ -1872,6 +1872,7 @@ func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context,
 
 	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) SET `
 	query = utils.RemovePropertiesQuery(query, properties, "schemaTypeNode")
+	query = strings.TrimPrefix(query, "SET ")
 	query = strings.TrimSuffix(query, ", ")
 	query += ` RETURN schemaTypeNode`
 
