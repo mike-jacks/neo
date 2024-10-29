@@ -1951,8 +1951,8 @@ func (db *Neo4jDatabase) RenamePropertyOnTypeSchemaNode(ctx context.Context, dom
 	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) `
 	query += `OPTIONAL MATCH (objectNodes {_domain: $domain, _type: $name}) `
 	query += `SET `
-	query += utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "schemaTypeNode")
-	query += utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "objectNodes")
+	query = utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "schemaTypeNode")
+	query = utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "objectNodes")
 	query = strings.TrimSuffix(query, "SET ")
 	query = strings.TrimSuffix(query, ", ")
 	query += ` WITH schemaTypeNode, count(objectNodes) as count`
