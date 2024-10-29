@@ -1871,11 +1871,15 @@ func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context,
 		return nil, err
 	}
 
-	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) SET `
+	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) `
+	query += fmt.Sprintf(`OPTIONAL MATCH (objectNodes:%s {_domain: $domain, _type: $name}) `, labelFromName)
+	query += `SET `
 	query = utils.RemovePropertiesQuery(query, properties, "schemaTypeNode")
+	query = utils.RemovePropertiesQuery(query, properties, "objectNodes")
 	query = strings.TrimSuffix(query, "SET ")
 	query = strings.TrimSuffix(query, ", ")
-	query += ` RETURN schemaTypeNode`
+	query += ` WITH schemaTypeNode, count(objectNodes) as count`
+	query += ` RETURN schemaTypeNode, count`
 
 	fmt.Println(query)
 
@@ -1888,15 +1892,6 @@ func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-
-	query = fmt.Sprintf(`MATCH (objectNodes:%s {_domain: $domain, _type: $name}) SET `, labelFromName)
-	query = utils.RemovePropertiesQuery(query, properties, "objectNodes")
-	query = strings.TrimSuffix(query, "SET ")
-	query = strings.TrimSuffix(query, ", ")
-	query += ` WITH count(objectNodes) as count`
-	query += ` RETURN count`
-
-	fmt.Println(query)
 
 	data := []map[string]interface{}{}
 	countInt := int64(0)
