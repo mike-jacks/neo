@@ -1893,7 +1893,8 @@ func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context,
 	query = utils.RemovePropertiesQuery(query, properties, "objectNodes")
 	query = strings.TrimSuffix(query, "SET ")
 	query = strings.TrimSuffix(query, ", ")
-	query += ` RETURN count(objectNodes) as count`
+	query += ` WITH count(objectNodes) as count`
+	query += ` RETURN count`
 
 	fmt.Println(query)
 
