@@ -297,7 +297,7 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, na
 	return nil, fmt.Errorf("failed to delete object node")
 }
 
-func (db *Neo4jDatabase) AddLabelsToObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 

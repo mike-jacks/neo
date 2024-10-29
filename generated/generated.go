@@ -47,7 +47,6 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		AddLabelsToObjectNode                  func(childComplexity int, domain string, name string, typeArg string, labels []string) int
 		CreateDomainSchemaNode                 func(childComplexity int, domain string) int
 		CreateObjectNode                       func(childComplexity int, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) int
 		CreateObjectRelationship               func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
@@ -67,6 +66,7 @@ type ComplexityRoot struct {
 		RenameDomainSchemaNode                 func(childComplexity int, domain string, newName string) int
 		RenamePropertyOnTypeSchemaNode         func(childComplexity int, domain string, name string, oldPropertyName string, newPropertyName string) int
 		RenameTypeSchemaNode                   func(childComplexity int, domain string, existingName string, newName string) int
+		UpdateLabelsOnObjectNode               func(childComplexity int, domain string, name string, typeArg string, labels []string) int
 		UpdateObjectNode                       func(childComplexity int, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) int
 		UpdatePropertiesOnObjectNode           func(childComplexity int, domain string, name string, typeArg string, properties []*model.PropertyInput) int
 		UpdatePropertiesOnObjectRelationship   func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
@@ -118,7 +118,7 @@ type MutationResolver interface {
 	CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.Response, error)
 	UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error)
 	DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
-	AddLabelsToObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
+	UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
 	RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
 	UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error)
 	RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error)
@@ -171,18 +171,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "Mutation.addLabelsToObjectNode":
-		if e.complexity.Mutation.AddLabelsToObjectNode == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_addLabelsToObjectNode_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AddLabelsToObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["labels"].([]string)), true
 
 	case "Mutation.createDomainSchemaNode":
 		if e.complexity.Mutation.CreateDomainSchemaNode == nil {
@@ -411,6 +399,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RenameTypeSchemaNode(childComplexity, args["domain"].(string), args["existingName"].(string), args["newName"].(string)), true
+
+	case "Mutation.updateLabelsOnObjectNode":
+		if e.complexity.Mutation.UpdateLabelsOnObjectNode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateLabelsOnObjectNode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateLabelsOnObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["labels"].([]string)), true
 
 	case "Mutation.updateObjectNode":
 		if e.complexity.Mutation.UpdateObjectNode == nil {
@@ -796,7 +796,7 @@ var sources = []*ast.Source{
   updateObjectNode(domain: String!, name: String!, type: String!, updateObjectNodeInput: UpdateObjectNodeInput!): Response!
   deleteObjectNode(domain: String!, name: String!, type: String!): Response!
 
-  addLabelsToObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
+  updateLabelsOnObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
   removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
 
   updatePropertiesOnObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
@@ -936,83 +936,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
-
-func (ec *executionContext) field_Mutation_addLabelsToObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_addLabelsToObjectNode_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_addLabelsToObjectNode_argsName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["name"] = arg1
-	arg2, err := ec.field_Mutation_addLabelsToObjectNode_argsType(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["type"] = arg2
-	arg3, err := ec.field_Mutation_addLabelsToObjectNode_argsLabels(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["labels"] = arg3
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_addLabelsToObjectNode_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_addLabelsToObjectNode_argsName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_addLabelsToObjectNode_argsType(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_addLabelsToObjectNode_argsLabels(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) ([]string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
-	if tmp, ok := rawArgs["labels"]; ok {
-		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
-	}
-
-	var zeroVal []string
-	return zeroVal, nil
-}
 
 func (ec *executionContext) field_Mutation_createDomainSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -2171,6 +2094,83 @@ func (ec *executionContext) field_Mutation_renameTypeSchemaNode_argsNewName(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_updateLabelsOnObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_updateLabelsOnObjectNode_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	arg1, err := ec.field_Mutation_updateLabelsOnObjectNode_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg1
+	arg2, err := ec.field_Mutation_updateLabelsOnObjectNode_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg2
+	arg3, err := ec.field_Mutation_updateLabelsOnObjectNode_argsLabels(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["labels"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateLabelsOnObjectNode_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateLabelsOnObjectNode_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateLabelsOnObjectNode_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateLabelsOnObjectNode_argsLabels(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+	if tmp, ok := rawArgs["labels"]; ok {
+		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_updateObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3150,8 +3150,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteObjectNode(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_addLabelsToObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_addLabelsToObjectNode(ctx, field)
+func (ec *executionContext) _Mutation_updateLabelsOnObjectNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateLabelsOnObjectNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3164,7 +3164,7 @@ func (ec *executionContext) _Mutation_addLabelsToObjectNode(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddLabelsToObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["labels"].([]string))
+		return ec.resolvers.Mutation().UpdateLabelsOnObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["labels"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3181,7 +3181,7 @@ func (ec *executionContext) _Mutation_addLabelsToObjectNode(ctx context.Context,
 	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_addLabelsToObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateLabelsOnObjectNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -3206,7 +3206,7 @@ func (ec *executionContext) fieldContext_Mutation_addLabelsToObjectNode(ctx cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addLabelsToObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateLabelsOnObjectNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7953,9 +7953,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "addLabelsToObjectNode":
+		case "updateLabelsOnObjectNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addLabelsToObjectNode(ctx, field)
+				return ec._Mutation_updateLabelsOnObjectNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

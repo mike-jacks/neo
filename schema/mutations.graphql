@@ -4,7 +4,7 @@ type Mutation {
   updateObjectNode(domain: String!, name: String!, type: String!, updateObjectNodeInput: UpdateObjectNodeInput!): Response!
   deleteObjectNode(domain: String!, name: String!, type: String!): Response!
 
-  addLabelsToObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
+  updateLabelsOnObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
   removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
 
   updatePropertiesOnObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
