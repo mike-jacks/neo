@@ -48,7 +48,7 @@ func PopString(m map[string]interface{}, key string) string {
 
 func CreatePropertiesQuery(query string, properties []*model.PropertyInput, prefix ...string) string {
 	for _, property := range properties {
-		if property.Key == "_originalRelationshipName" || property.Key == "_relationshipName" || property.Key == "_domain" || property.Key == "_name" || property.Key == "_type" || property.Key == "_originalName" {
+		if property.Key == "_originalRelationshipName" || property.Key == "_relationshipName" || property.Key == "_domain" || property.Key == "_name" || property.Key == "_type" || property.Key == "_originalName" || property.Key == "_fromTypeSchemaNodeName" || property.Key == "_toTypeSchemaNodeName" {
 			continue
 		}
 		if len(prefix) > 0 {
@@ -119,14 +119,14 @@ func CreatePropertiesQuery(query string, properties []*model.PropertyInput, pref
 func RemovePropertiesQuery(query string, properties []string, prefix ...string) string {
 	if len(prefix) > 0 {
 		for _, property := range properties {
-			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" || property == "_originalName" {
+			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" || property == "_originalName" || property == "_fromTypeSchemaNodeName" || property == "_toTypeSchemaNodeName" {
 				continue
 			}
 			query += fmt.Sprintf("%v.%v = null, ", prefix[0], property)
 		}
 	} else {
 		for _, property := range properties {
-			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" || property == "_originalName" {
+			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" || property == "_originalName" || property == "_fromTypeSchemaNodeName" || property == "_toTypeSchemaNodeName" {
 				continue
 			}
 			query += fmt.Sprintf("%v: null, ", property)

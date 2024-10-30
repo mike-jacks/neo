@@ -2141,3 +2141,61 @@ func (db *Neo4jDatabase) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Co
 	message := "Relationship schema properties updated successfully"
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
+
+func (db *Neo4jDatabase) RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.TrimSpace(domain)
+	relationshipName = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(relationshipName)), " ", "_"), "-", "_")
+	fromTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(fromTypeSchemaNodeName))
+	toTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(toTypeSchemaNodeName))
+
+	query := `MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_domain: $domain, _name: $relationshipName, _type: "RELATIONSHIP SCHEMA", _fromTypeSchemaNodeName: $fromTypeSchemaNodeName, _toTypeSchemaNodeName: $toTypeSchemaNodeName}) SET `
+	query = utils.RemovePropertiesQuery(query, properties, "relationshipSchemaNode")
+	query = strings.TrimSuffix(query, "SET ")
+	query = strings.TrimSuffix(query, ", ")
+	query += ` RETURN relationshipSchemaNode`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"domain":                 domain,
+		"relationshipName":       relationshipName,
+		"fromTypeSchemaNodeName": fromTypeSchemaNodeName,
+		"toTypeSchemaNodeName":   toTypeSchemaNodeName,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []map[string]interface{}{}
+	if result.Next(ctx) {
+		record := result.Record()
+		relationshipSchemaNode, ok := record.Get("relationshipSchemaNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNode")
+		}
+		neo4jRelationshipSchemaNode, ok := relationshipSchemaNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNode)
+		}
+		data = append(data, map[string]interface{}{
+			"_name":                   utils.PopString(neo4jRelationshipSchemaNode.GetProperties(), "_name"),
+			"_type":                   utils.PopString(neo4jRelationshipSchemaNode.GetProperties(), "_type"),
+			"_domain":                 utils.PopString(neo4jRelationshipSchemaNode.GetProperties(), "_domain"),
+			"_fromTypeSchemaNodeName": utils.PopString(neo4jRelationshipSchemaNode.GetProperties(), "_fromTypeSchemaNodeName"),
+			"_toTypeSchemaNodeName":   utils.PopString(neo4jRelationshipSchemaNode.GetProperties(), "_toTypeSchemaNodeName"),
+			"_properties":             neo4jRelationshipSchemaNode.GetProperties(),
+			"_labels":                 neo4jRelationshipSchemaNode.Labels,
+		})
+	}
+	if len(data) == 0 {
+		message := "Unable to remove properties from relationship schema"
+		return &model.Response{Success: false, Message: &message, Data: data}, nil
+	}
+	message := "Relationship schema properties removed successfully"
+	return &model.Response{Success: true, Message: &message, Data: data}, nil
+}

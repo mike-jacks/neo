@@ -212,7 +212,11 @@ func (r *mutationResolver) UpdatePropertiesOnRelationshipSchemaNode(ctx context.
 
 // RemovePropertiesFromRelationshipSchemaNode is the resolver for the removePropertiesFromRelationshipSchemaNode field.
 func (r *mutationResolver) RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: RemovePropertiesFromRelationshipSchemaNode - removePropertiesFromRelationshipSchemaNode"))
+	result, err := r.Database.RemovePropertiesFromRelationshipSchemaNode(ctx, relationshipName, domain, fromTypeSchemaNodeName, toTypeSchemaNodeName, properties)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // DeleteRelationshipSchemaNode is the resolver for the deleteRelationshipSchemaNode field.
