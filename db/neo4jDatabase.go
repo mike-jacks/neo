@@ -2017,17 +2017,18 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, relat
 	fromTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(fromTypeSchemaNodeName))
 	toTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(toTypeSchemaNodeName))
 
-	query := `
-		CREATE CONSTRAINT IF NOT EXISTS
+	query := fmt.Sprintf(`
+		CREATE CONSTRAINT relationship_schema_%s_%s_%s_%s IF NOT EXISTS
 		FOR (n:RELATIONSHIP_SCHEMA)
 		REQUIRE (n._name, n._type, n._domain, n._fromTypeSchemaNodeName, n._toTypeSchemaNodeName) IS NODE KEY
-		`
+		`, domain, relationshipName, fromTypeSchemaNodeName, toTypeSchemaNodeName)
 
 	fmt.Println(query)
 
 	_, err := session.Run(ctx, query, nil)
 	if err != nil {
-		return nil, err
+		message := fmt.Sprintf("Unable to create relationship schema constraint. Error: %s", err.Error())
+		return &model.Response{Success: false, Message: &message, Data: nil}, err
 	}
 
 	query = `
