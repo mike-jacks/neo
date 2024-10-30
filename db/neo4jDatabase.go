@@ -2007,3 +2007,90 @@ func (db *Neo4jDatabase) RenamePropertyOnTypeSchemaNode(ctx context.Context, dom
 	message := fmt.Sprintf("%s property renamed to %s on schema type node of type %s. %v object nodes updated successfully", oldPropertyName, newPropertyName, name, countInt)
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
+
+func (db *Neo4jDatabase) CreateRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.TrimSpace(domain)
+	relationshipName = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(relationshipName)), " ", "_"), "-", "_")
+	fromTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(fromTypeSchemaNodeName))
+	toTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(toTypeSchemaNodeName))
+
+	query := fmt.Sprintf(`
+		MATCH (fromTypeSchemaNode:TYPE_SCHEMA {_domain: $domain, _name: $fromTypeSchemaNodeName, _type: "TYPE SCHEMA"})
+		MATCH (toTypeSchemaNode:TYPE_SCHEMA {_domain: $domain, _name: $toTypeSchemaNodeName, _type: "TYPE SCHEMA"})
+		CREATE (fromTypeSchemaNode)-[relationshipSchemaNode:%s]->(toTypeSchemaNode)
+		RETURN fromTypeSchemaNode, relationshipSchemaNode, toTypeSchemaNode
+	`, relationshipName)
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"domain":                 domain,
+		"fromTypeSchemaNodeName": fromTypeSchemaNodeName,
+		"toTypeSchemaNodeName":   toTypeSchemaNodeName,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []map[string]interface{}{}
+	if result.Next(ctx) {
+		record := result.Record()
+		fromTypeSchemaNode, ok := record.Get("fromTypeSchemaNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the fromTypeSchemaNode")
+		}
+		neo4jFromTypeSchemaNode, ok := fromTypeSchemaNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for fromTypeSchemaNode: %T", fromTypeSchemaNode)
+		}
+		relationshipSchemaNode, ok := record.Get("relationshipSchemaNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNode")
+		}
+		neo4jRelationshipSchemaNode, ok := relationshipSchemaNode.(dbtype.Relationship)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNode)
+		}
+		toTypeSchemaNode, ok := record.Get("toTypeSchemaNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the toTypeSchemaNode")
+		}
+		neo4jToTypeSchemaNode, ok := toTypeSchemaNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for toTypeSchemaNode: %T", toTypeSchemaNode)
+		}
+		data = append(data, map[string]interface{}{
+			"fromObjectNode": map[string]interface{}{
+				"_name":         utils.PopString(neo4jFromTypeSchemaNode.GetProperties(), "_name"),
+				"_type":         utils.PopString(neo4jFromTypeSchemaNode.GetProperties(), "_type"),
+				"_domain":       utils.PopString(neo4jFromTypeSchemaNode.GetProperties(), "_domain"),
+				"_originalName": utils.PopString(neo4jFromTypeSchemaNode.GetProperties(), "_originalName"),
+				"_properties":   neo4jFromTypeSchemaNode.GetProperties(),
+				"_labels":       neo4jFromTypeSchemaNode.Labels,
+			},
+			"relationship": map[string]interface{}{
+				"_relationshipName": neo4jRelationshipSchemaNode.Type,
+				"_properties":       neo4jRelationshipSchemaNode.GetProperties(),
+			},
+			"toObjectNode": map[string]interface{}{
+				"_name":         utils.PopString(neo4jToTypeSchemaNode.GetProperties(), "_name"),
+				"_type":         utils.PopString(neo4jToTypeSchemaNode.GetProperties(), "_type"),
+				"_domain":       utils.PopString(neo4jToTypeSchemaNode.GetProperties(), "_domain"),
+				"_originalName": utils.PopString(neo4jToTypeSchemaNode.GetProperties(), "_originalName"),
+				"_properties":   neo4jToTypeSchemaNode.GetProperties(),
+				"_labels":       neo4jToTypeSchemaNode.Labels,
+			},
+		})
+	}
+	if len(data) == 0 {
+		message := "Unable to create relationship schema"
+		return &model.Response{Success: false, Message: &message, Data: data}, nil
+	}
+	message := "Relationship schema created successfully"
+	return &model.Response{Success: true, Message: &message, Data: data}, nil
+}

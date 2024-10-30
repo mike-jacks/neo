@@ -194,7 +194,11 @@ func (r *mutationResolver) DeleteTypeSchemaNode(ctx context.Context, domain stri
 
 // CreateRelationshipSchema is the resolver for the createRelationshipSchema field.
 func (r *mutationResolver) CreateRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: CreateRelationshipSchema - createRelationshipSchema"))
+	result, err := r.Database.CreateRelationshipSchema(ctx, relationshipName, domain, fromTypeSchemaNodeName, toTypeSchemaNodeName)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // UpdatePropertiesOnRelationshipSchema is the resolver for the updatePropertiesOnRelationshipSchema field.
