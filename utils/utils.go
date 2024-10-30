@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/mike-jacks/neo/model"
@@ -177,4 +178,9 @@ func RenamePropertyQuery(query string, oldPropertyName string, newPropertyName s
 		query += fmt.Sprintf("%v: null, ", oldPropertyName)
 	}
 	return query
+}
+
+func SanitizeStringToLower(s string) string {
+	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+	return reg.ReplaceAllString(strings.ToLower(s), "_")
 }

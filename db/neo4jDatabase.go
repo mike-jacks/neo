@@ -51,7 +51,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
 	labelFromTypeArg := strings.ReplaceAll(typeArg, " ", "_")
 	for i, label := range labels {
-		labels[i] = strings.ReplaceAll(strings.Trim(strings.ToUpper(label), " "), " ", "_")
+		labels[i] = strings.ReplaceAll(strings.ReplaceAll(strings.Trim(strings.ToUpper(label), " "), " ", "_"), "-", "_")
 	}
 
 	if properties != nil {
@@ -62,10 +62,10 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	}
 
 	query := fmt.Sprintf(`
-		CREATE CONSTRAINT IF NOT EXISTS
+		CREATE CONSTRAINT object_node_%s IF NOT EXISTS
 		FOR (n:%v)
 		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
-		`, labelFromTypeArg)
+		`, utils.SanitizeStringToLower(labelFromTypeArg), labelFromTypeArg)
 
 	_, err := session.Run(ctx, query, nil)
 	if err != nil {
@@ -74,10 +74,11 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 
 	for _, label := range labels {
 		query = fmt.Sprintf(`
-		CREATE CONSTRAINT IF NOT EXISTS
+		CREATE CONSTRAINT object_node_%s IF NOT EXISTS
 		FOR (n:%v)
 		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
-		`, label)
+		`, utils.SanitizeStringToLower(label), label)
+
 		_, err = session.Run(ctx, query, nil)
 		if err != nil {
 			return nil, err
@@ -1489,7 +1490,7 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	domain = strings.Trim(domain, " ")
 
 	query := `
-		CREATE CONSTRAINT IF NOT EXISTS
+		CREATE CONSTRAINT domain_schema_node IF NOT EXISTS
 		FOR (n:DOMAIN_SCHEMA)
 		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
 		`
@@ -1611,7 +1612,7 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 	name = strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(name)), " ", "_")
 
 	query := `
-		CREATE CONSTRAINT IF NOT EXISTS
+		CREATE CONSTRAINT type_schema_node IF NOT EXISTS
 		FOR (n:TYPE_SCHEMA)
 		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
 		`
@@ -2017,11 +2018,11 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, relat
 	fromTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(fromTypeSchemaNodeName))
 	toTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(toTypeSchemaNodeName))
 
-	query := fmt.Sprintf(`
-		CREATE CONSTRAINT relationship_schema_%s_%s_%s_%s IF NOT EXISTS
+	query := `
+		CREATE CONSTRAINT relationship_schema_node IF NOT EXISTS
 		FOR (n:RELATIONSHIP_SCHEMA)
 		REQUIRE (n._name, n._type, n._domain, n._fromTypeSchemaNodeName, n._toTypeSchemaNodeName) IS NODE KEY
-		`, domain, relationshipName, fromTypeSchemaNodeName, toTypeSchemaNodeName)
+		`
 
 	fmt.Println(query)
 
