@@ -47,31 +47,31 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateDomainSchemaNode                 func(childComplexity int, domain string) int
-		CreateObjectNode                       func(childComplexity int, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) int
-		CreateObjectRelationship               func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
-		CreateRelationshipSchema               func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
-		CreateTypeSchemaNode                   func(childComplexity int, domain string, name string) int
-		CypherMutation                         func(childComplexity int, cypherStatement string) int
-		DeleteDomainSchemaNode                 func(childComplexity int, domain string) int
-		DeleteObjectNode                       func(childComplexity int, domain string, name string, typeArg string) int
-		DeleteObjectRelationship               func(childComplexity int, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
-		DeleteRelationshipSchema               func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
-		DeleteTypeSchemaNode                   func(childComplexity int, domain string, name string) int
-		RemoveLabelsFromObjectNode             func(childComplexity int, domain string, name string, typeArg string, labels []string) int
-		RemovePropertiesFromObjectNode         func(childComplexity int, domain string, name string, typeArg string, properties []string) int
-		RemovePropertiesFromObjectRelationship func(childComplexity int, relationshipName string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
-		RemovePropertiesFromRelationshipSchema func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) int
-		RemovePropertiesFromTypeSchemaNode     func(childComplexity int, domain string, name string, properties []string) int
-		RenameDomainSchemaNode                 func(childComplexity int, domain string, newName string) int
-		RenamePropertyOnTypeSchemaNode         func(childComplexity int, domain string, name string, oldPropertyName string, newPropertyName string) int
-		RenameTypeSchemaNode                   func(childComplexity int, domain string, existingName string, newName string) int
-		UpdateLabelsOnObjectNode               func(childComplexity int, domain string, name string, typeArg string, labels []string) int
-		UpdateObjectNode                       func(childComplexity int, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) int
-		UpdatePropertiesOnObjectNode           func(childComplexity int, domain string, name string, typeArg string, properties []*model.PropertyInput) int
-		UpdatePropertiesOnObjectRelationship   func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
-		UpdatePropertiesOnRelationshipSchema   func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) int
-		UpdatePropertiesOnTypeSchemaNode       func(childComplexity int, domain string, name string, properties []*model.PropertyInput) int
+		CreateDomainSchemaNode                     func(childComplexity int, domain string) int
+		CreateObjectNode                           func(childComplexity int, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) int
+		CreateObjectRelationship                   func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		CreateRelationshipSchemaNode               func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
+		CreateTypeSchemaNode                       func(childComplexity int, domain string, name string) int
+		CypherMutation                             func(childComplexity int, cypherStatement string) int
+		DeleteDomainSchemaNode                     func(childComplexity int, domain string) int
+		DeleteObjectNode                           func(childComplexity int, domain string, name string, typeArg string) int
+		DeleteObjectRelationship                   func(childComplexity int, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		DeleteRelationshipSchemaNode               func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
+		DeleteTypeSchemaNode                       func(childComplexity int, domain string, name string) int
+		RemoveLabelsFromObjectNode                 func(childComplexity int, domain string, name string, typeArg string, labels []string) int
+		RemovePropertiesFromObjectNode             func(childComplexity int, domain string, name string, typeArg string, properties []string) int
+		RemovePropertiesFromObjectRelationship     func(childComplexity int, relationshipName string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		RemovePropertiesFromRelationshipSchemaNode func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) int
+		RemovePropertiesFromTypeSchemaNode         func(childComplexity int, domain string, name string, properties []string) int
+		RenameDomainSchemaNode                     func(childComplexity int, domain string, newName string) int
+		RenamePropertyOnTypeSchemaNode             func(childComplexity int, domain string, name string, oldPropertyName string, newPropertyName string) int
+		RenameTypeSchemaNode                       func(childComplexity int, domain string, existingName string, newName string) int
+		UpdateLabelsOnObjectNode                   func(childComplexity int, domain string, name string, typeArg string, labels []string) int
+		UpdateObjectNode                           func(childComplexity int, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) int
+		UpdatePropertiesOnObjectNode               func(childComplexity int, domain string, name string, typeArg string, properties []*model.PropertyInput) int
+		UpdatePropertiesOnObjectRelationship       func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
+		UpdatePropertiesOnRelationshipSchemaNode   func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) int
+		UpdatePropertiesOnTypeSchemaNode           func(childComplexity int, domain string, name string, properties []*model.PropertyInput) int
 	}
 
 	ObjectNode struct {
@@ -135,10 +135,10 @@ type MutationResolver interface {
 	RenamePropertyOnTypeSchemaNode(ctx context.Context, domain string, name string, oldPropertyName string, newPropertyName string) (*model.Response, error)
 	RemovePropertiesFromTypeSchemaNode(ctx context.Context, domain string, name string, properties []string) (*model.Response, error)
 	DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
-	CreateRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error)
-	UpdatePropertiesOnRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error)
-	RemovePropertiesFromRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) (*model.Response, error)
-	DeleteRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error)
+	CreateRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error)
+	UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error)
+	RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) (*model.Response, error)
+	DeleteRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error)
 	CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error)
 }
 type QueryResolver interface {
@@ -208,17 +208,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateObjectRelationship(childComplexity, args["relationshipName"].(string), args["properties"].([]*model.PropertyInput), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Mutation.createRelationshipSchema":
-		if e.complexity.Mutation.CreateRelationshipSchema == nil {
+	case "Mutation.createRelationshipSchemaNode":
+		if e.complexity.Mutation.CreateRelationshipSchemaNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createRelationshipSchema_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createRelationshipSchemaNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateRelationshipSchema(childComplexity, args["relationshipName"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string)), true
+		return e.complexity.Mutation.CreateRelationshipSchemaNode(childComplexity, args["relationshipName"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string)), true
 
 	case "Mutation.createTypeSchemaNode":
 		if e.complexity.Mutation.CreateTypeSchemaNode == nil {
@@ -280,17 +280,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteObjectRelationship(childComplexity, args["relationshipName"].(string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Mutation.deleteRelationshipSchema":
-		if e.complexity.Mutation.DeleteRelationshipSchema == nil {
+	case "Mutation.deleteRelationshipSchemaNode":
+		if e.complexity.Mutation.DeleteRelationshipSchemaNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteRelationshipSchema_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteRelationshipSchemaNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteRelationshipSchema(childComplexity, args["relationshipName"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string)), true
+		return e.complexity.Mutation.DeleteRelationshipSchemaNode(childComplexity, args["relationshipName"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string)), true
 
 	case "Mutation.deleteTypeSchemaNode":
 		if e.complexity.Mutation.DeleteTypeSchemaNode == nil {
@@ -340,17 +340,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RemovePropertiesFromObjectRelationship(childComplexity, args["relationshipName"].(string), args["properties"].([]string), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Mutation.removePropertiesFromRelationshipSchema":
-		if e.complexity.Mutation.RemovePropertiesFromRelationshipSchema == nil {
+	case "Mutation.removePropertiesFromRelationshipSchemaNode":
+		if e.complexity.Mutation.RemovePropertiesFromRelationshipSchemaNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_removePropertiesFromRelationshipSchema_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_removePropertiesFromRelationshipSchemaNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemovePropertiesFromRelationshipSchema(childComplexity, args["relationshipName"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string), args["properties"].([]string)), true
+		return e.complexity.Mutation.RemovePropertiesFromRelationshipSchemaNode(childComplexity, args["relationshipName"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string), args["properties"].([]string)), true
 
 	case "Mutation.removePropertiesFromTypeSchemaNode":
 		if e.complexity.Mutation.RemovePropertiesFromTypeSchemaNode == nil {
@@ -448,17 +448,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdatePropertiesOnObjectRelationship(childComplexity, args["relationshipName"].(string), args["properties"].([]*model.PropertyInput), args["fromObjectNode"].(model.ObjectNodeInput), args["toObjectNode"].(model.ObjectNodeInput)), true
 
-	case "Mutation.updatePropertiesOnRelationshipSchema":
-		if e.complexity.Mutation.UpdatePropertiesOnRelationshipSchema == nil {
+	case "Mutation.updatePropertiesOnRelationshipSchemaNode":
+		if e.complexity.Mutation.UpdatePropertiesOnRelationshipSchemaNode == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updatePropertiesOnRelationshipSchema_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updatePropertiesOnRelationshipSchemaNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdatePropertiesOnRelationshipSchema(childComplexity, args["relationshipName"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string), args["properties"].([]*model.PropertyInput)), true
+		return e.complexity.Mutation.UpdatePropertiesOnRelationshipSchemaNode(childComplexity, args["relationshipName"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string), args["properties"].([]*model.PropertyInput)), true
 
 	case "Mutation.updatePropertiesOnTypeSchemaNode":
 		if e.complexity.Mutation.UpdatePropertiesOnTypeSchemaNode == nil {
@@ -828,10 +828,10 @@ var sources = []*ast.Source{
   removePropertiesFromTypeSchemaNode(domain: String!, name: String!, properties: [String!]!): Response!
   deleteTypeSchemaNode(domain: String!, name: String!): Response!
 
-  createRelationshipSchema(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
-  updatePropertiesOnRelationshipSchema(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [PropertyInput!]!): Response!
-  removePropertiesFromRelationshipSchema(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [String!]!): Response!
-  deleteRelationshipSchema(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
+  createRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
+  updatePropertiesOnRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [PropertyInput!]!): Response!
+  removePropertiesFromRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [String!]!): Response!
+  deleteRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
 
   cypherMutation(cypher_statement: String!): [Response!]!
 }
@@ -1132,32 +1132,32 @@ func (ec *executionContext) field_Mutation_createObjectRelationship_argsToObject
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createRelationshipSchema_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_createRelationshipSchema_argsRelationshipName(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createRelationshipSchemaNode_argsRelationshipName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["relationshipName"] = arg0
-	arg1, err := ec.field_Mutation_createRelationshipSchema_argsDomain(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_createRelationshipSchemaNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg1
-	arg2, err := ec.field_Mutation_createRelationshipSchema_argsFromTypeSchemaNodeName(ctx, rawArgs)
+	arg2, err := ec.field_Mutation_createRelationshipSchemaNode_argsFromTypeSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["fromTypeSchemaNodeName"] = arg2
-	arg3, err := ec.field_Mutation_createRelationshipSchema_argsToTypeSchemaNodeName(ctx, rawArgs)
+	arg3, err := ec.field_Mutation_createRelationshipSchemaNode_argsToTypeSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["toTypeSchemaNodeName"] = arg3
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createRelationshipSchema_argsRelationshipName(
+func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsRelationshipName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1170,7 +1170,7 @@ func (ec *executionContext) field_Mutation_createRelationshipSchema_argsRelation
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createRelationshipSchema_argsDomain(
+func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1183,7 +1183,7 @@ func (ec *executionContext) field_Mutation_createRelationshipSchema_argsDomain(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createRelationshipSchema_argsFromTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsFromTypeSchemaNodeName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1196,7 +1196,7 @@ func (ec *executionContext) field_Mutation_createRelationshipSchema_argsFromType
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createRelationshipSchema_argsToTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsToTypeSchemaNodeName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1414,32 +1414,32 @@ func (ec *executionContext) field_Mutation_deleteObjectRelationship_argsToObject
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteRelationshipSchema_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_deleteRelationshipSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_deleteRelationshipSchema_argsRelationshipName(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteRelationshipSchemaNode_argsRelationshipName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["relationshipName"] = arg0
-	arg1, err := ec.field_Mutation_deleteRelationshipSchema_argsDomain(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_deleteRelationshipSchemaNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg1
-	arg2, err := ec.field_Mutation_deleteRelationshipSchema_argsFromTypeSchemaNodeName(ctx, rawArgs)
+	arg2, err := ec.field_Mutation_deleteRelationshipSchemaNode_argsFromTypeSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["fromTypeSchemaNodeName"] = arg2
-	arg3, err := ec.field_Mutation_deleteRelationshipSchema_argsToTypeSchemaNodeName(ctx, rawArgs)
+	arg3, err := ec.field_Mutation_deleteRelationshipSchemaNode_argsToTypeSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["toTypeSchemaNodeName"] = arg3
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteRelationshipSchema_argsRelationshipName(
+func (ec *executionContext) field_Mutation_deleteRelationshipSchemaNode_argsRelationshipName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1452,7 +1452,7 @@ func (ec *executionContext) field_Mutation_deleteRelationshipSchema_argsRelation
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteRelationshipSchema_argsDomain(
+func (ec *executionContext) field_Mutation_deleteRelationshipSchemaNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1465,7 +1465,7 @@ func (ec *executionContext) field_Mutation_deleteRelationshipSchema_argsDomain(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteRelationshipSchema_argsFromTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_deleteRelationshipSchemaNode_argsFromTypeSchemaNodeName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1478,7 +1478,7 @@ func (ec *executionContext) field_Mutation_deleteRelationshipSchema_argsFromType
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteRelationshipSchema_argsToTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_deleteRelationshipSchemaNode_argsToTypeSchemaNodeName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1763,37 +1763,37 @@ func (ec *executionContext) field_Mutation_removePropertiesFromObjectRelationshi
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchema_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_removePropertiesFromRelationshipSchema_argsRelationshipName(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_removePropertiesFromRelationshipSchemaNode_argsRelationshipName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["relationshipName"] = arg0
-	arg1, err := ec.field_Mutation_removePropertiesFromRelationshipSchema_argsDomain(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_removePropertiesFromRelationshipSchemaNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg1
-	arg2, err := ec.field_Mutation_removePropertiesFromRelationshipSchema_argsFromTypeSchemaNodeName(ctx, rawArgs)
+	arg2, err := ec.field_Mutation_removePropertiesFromRelationshipSchemaNode_argsFromTypeSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["fromTypeSchemaNodeName"] = arg2
-	arg3, err := ec.field_Mutation_removePropertiesFromRelationshipSchema_argsToTypeSchemaNodeName(ctx, rawArgs)
+	arg3, err := ec.field_Mutation_removePropertiesFromRelationshipSchemaNode_argsToTypeSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["toTypeSchemaNodeName"] = arg3
-	arg4, err := ec.field_Mutation_removePropertiesFromRelationshipSchema_argsProperties(ctx, rawArgs)
+	arg4, err := ec.field_Mutation_removePropertiesFromRelationshipSchemaNode_argsProperties(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["properties"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchema_argsRelationshipName(
+func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchemaNode_argsRelationshipName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1806,7 +1806,7 @@ func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchem
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchema_argsDomain(
+func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchemaNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1819,7 +1819,7 @@ func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchem
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchema_argsFromTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchemaNode_argsFromTypeSchemaNodeName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1832,7 +1832,7 @@ func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchem
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchema_argsToTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchemaNode_argsToTypeSchemaNodeName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -1845,7 +1845,7 @@ func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchem
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchema_argsProperties(
+func (ec *executionContext) field_Mutation_removePropertiesFromRelationshipSchemaNode_argsProperties(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) ([]string, error) {
@@ -2402,37 +2402,37 @@ func (ec *executionContext) field_Mutation_updatePropertiesOnObjectRelationship_
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updatePropertiesOnRelationshipSchema_argsRelationshipName(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsRelationshipName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["relationshipName"] = arg0
-	arg1, err := ec.field_Mutation_updatePropertiesOnRelationshipSchema_argsDomain(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsDomain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["domain"] = arg1
-	arg2, err := ec.field_Mutation_updatePropertiesOnRelationshipSchema_argsFromTypeSchemaNodeName(ctx, rawArgs)
+	arg2, err := ec.field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsFromTypeSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["fromTypeSchemaNodeName"] = arg2
-	arg3, err := ec.field_Mutation_updatePropertiesOnRelationshipSchema_argsToTypeSchemaNodeName(ctx, rawArgs)
+	arg3, err := ec.field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsToTypeSchemaNodeName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["toTypeSchemaNodeName"] = arg3
-	arg4, err := ec.field_Mutation_updatePropertiesOnRelationshipSchema_argsProperties(ctx, rawArgs)
+	arg4, err := ec.field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsProperties(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["properties"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_argsRelationshipName(
+func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsRelationshipName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -2445,7 +2445,7 @@ func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_argsDomain(
+func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsDomain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -2458,7 +2458,7 @@ func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_argsFromTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsFromTypeSchemaNodeName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -2471,7 +2471,7 @@ func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_argsToTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsToTypeSchemaNodeName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -2484,7 +2484,7 @@ func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchema_argsProperties(
+func (ec *executionContext) field_Mutation_updatePropertiesOnRelationshipSchemaNode_argsProperties(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) ([]*model.PropertyInput, error) {
@@ -4221,8 +4221,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteTypeSchemaNode(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createRelationshipSchema(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createRelationshipSchema(ctx, field)
+func (ec *executionContext) _Mutation_createRelationshipSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createRelationshipSchemaNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4235,7 +4235,7 @@ func (ec *executionContext) _Mutation_createRelationshipSchema(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateRelationshipSchema(rctx, fc.Args["relationshipName"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string))
+		return ec.resolvers.Mutation().CreateRelationshipSchemaNode(rctx, fc.Args["relationshipName"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4252,7 +4252,7 @@ func (ec *executionContext) _Mutation_createRelationshipSchema(ctx context.Conte
 	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createRelationshipSchema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createRelationshipSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -4277,15 +4277,15 @@ func (ec *executionContext) fieldContext_Mutation_createRelationshipSchema(ctx c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createRelationshipSchema_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createRelationshipSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updatePropertiesOnRelationshipSchema(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updatePropertiesOnRelationshipSchema(ctx, field)
+func (ec *executionContext) _Mutation_updatePropertiesOnRelationshipSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePropertiesOnRelationshipSchemaNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4298,7 +4298,7 @@ func (ec *executionContext) _Mutation_updatePropertiesOnRelationshipSchema(ctx c
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdatePropertiesOnRelationshipSchema(rctx, fc.Args["relationshipName"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string), fc.Args["properties"].([]*model.PropertyInput))
+		return ec.resolvers.Mutation().UpdatePropertiesOnRelationshipSchemaNode(rctx, fc.Args["relationshipName"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string), fc.Args["properties"].([]*model.PropertyInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4315,7 +4315,7 @@ func (ec *executionContext) _Mutation_updatePropertiesOnRelationshipSchema(ctx c
 	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updatePropertiesOnRelationshipSchema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updatePropertiesOnRelationshipSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -4340,15 +4340,15 @@ func (ec *executionContext) fieldContext_Mutation_updatePropertiesOnRelationship
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updatePropertiesOnRelationshipSchema_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updatePropertiesOnRelationshipSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_removePropertiesFromRelationshipSchema(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_removePropertiesFromRelationshipSchema(ctx, field)
+func (ec *executionContext) _Mutation_removePropertiesFromRelationshipSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_removePropertiesFromRelationshipSchemaNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4361,7 +4361,7 @@ func (ec *executionContext) _Mutation_removePropertiesFromRelationshipSchema(ctx
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemovePropertiesFromRelationshipSchema(rctx, fc.Args["relationshipName"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string), fc.Args["properties"].([]string))
+		return ec.resolvers.Mutation().RemovePropertiesFromRelationshipSchemaNode(rctx, fc.Args["relationshipName"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string), fc.Args["properties"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4378,7 +4378,7 @@ func (ec *executionContext) _Mutation_removePropertiesFromRelationshipSchema(ctx
 	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_removePropertiesFromRelationshipSchema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_removePropertiesFromRelationshipSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -4403,15 +4403,15 @@ func (ec *executionContext) fieldContext_Mutation_removePropertiesFromRelationsh
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_removePropertiesFromRelationshipSchema_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_removePropertiesFromRelationshipSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteRelationshipSchema(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteRelationshipSchema(ctx, field)
+func (ec *executionContext) _Mutation_deleteRelationshipSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteRelationshipSchemaNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4424,7 +4424,7 @@ func (ec *executionContext) _Mutation_deleteRelationshipSchema(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteRelationshipSchema(rctx, fc.Args["relationshipName"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string))
+		return ec.resolvers.Mutation().DeleteRelationshipSchemaNode(rctx, fc.Args["relationshipName"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4441,7 +4441,7 @@ func (ec *executionContext) _Mutation_deleteRelationshipSchema(ctx context.Conte
 	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteRelationshipSchema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteRelationshipSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -4466,7 +4466,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteRelationshipSchema(ctx c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteRelationshipSchema_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteRelationshipSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -8072,30 +8072,30 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createRelationshipSchema":
+		case "createRelationshipSchemaNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createRelationshipSchema(ctx, field)
+				return ec._Mutation_createRelationshipSchemaNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updatePropertiesOnRelationshipSchema":
+		case "updatePropertiesOnRelationshipSchemaNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updatePropertiesOnRelationshipSchema(ctx, field)
+				return ec._Mutation_updatePropertiesOnRelationshipSchemaNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "removePropertiesFromRelationshipSchema":
+		case "removePropertiesFromRelationshipSchemaNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_removePropertiesFromRelationshipSchema(ctx, field)
+				return ec._Mutation_removePropertiesFromRelationshipSchemaNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteRelationshipSchema":
+		case "deleteRelationshipSchemaNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteRelationshipSchema(ctx, field)
+				return ec._Mutation_deleteRelationshipSchemaNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

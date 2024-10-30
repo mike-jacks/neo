@@ -47,5 +47,5 @@ type Database interface {
 	DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
 	GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error)
 
-	CreateRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error)
+	CreateRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error)
 }

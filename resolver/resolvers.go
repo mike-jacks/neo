@@ -192,28 +192,28 @@ func (r *mutationResolver) DeleteTypeSchemaNode(ctx context.Context, domain stri
 	return result, nil
 }
 
-// CreateRelationshipSchema is the resolver for the createRelationshipSchema field.
-func (r *mutationResolver) CreateRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error) {
-	result, err := r.Database.CreateRelationshipSchema(ctx, relationshipName, domain, fromTypeSchemaNodeName, toTypeSchemaNodeName)
+// CreateRelationshipSchemaNode is the resolver for the createRelationshipSchemaNode field.
+func (r *mutationResolver) CreateRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error) {
+	result, err := r.Database.CreateRelationshipSchemaNode(ctx, relationshipName, domain, fromTypeSchemaNodeName, toTypeSchemaNodeName)
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-// UpdatePropertiesOnRelationshipSchema is the resolver for the updatePropertiesOnRelationshipSchema field.
-func (r *mutationResolver) UpdatePropertiesOnRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: UpdatePropertiesOnRelationshipSchema - updatePropertiesOnRelationshipSchema"))
+// UpdatePropertiesOnRelationshipSchemaNode is the resolver for the updatePropertiesOnRelationshipSchemaNode field.
+func (r *mutationResolver) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: UpdatePropertiesOnRelationshipSchemaNode - updatePropertiesOnRelationshipSchemaNode"))
 }
 
-// RemovePropertiesFromRelationshipSchema is the resolver for the removePropertiesFromRelationshipSchema field.
-func (r *mutationResolver) RemovePropertiesFromRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: RemovePropertiesFromRelationshipSchema - removePropertiesFromRelationshipSchema"))
+// RemovePropertiesFromRelationshipSchemaNode is the resolver for the removePropertiesFromRelationshipSchemaNode field.
+func (r *mutationResolver) RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: RemovePropertiesFromRelationshipSchemaNode - removePropertiesFromRelationshipSchemaNode"))
 }
 
-// DeleteRelationshipSchema is the resolver for the deleteRelationshipSchema field.
-func (r *mutationResolver) DeleteRelationshipSchema(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: DeleteRelationshipSchema - deleteRelationshipSchema"))
+// DeleteRelationshipSchemaNode is the resolver for the deleteRelationshipSchemaNode field.
+func (r *mutationResolver) DeleteRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: DeleteRelationshipSchemaNode - deleteRelationshipSchemaNode"))
 }
 
 // CypherMutation is the resolver for the cypherMutation field.
@@ -310,3 +310,4 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
