@@ -48,4 +48,5 @@ type Database interface {
 	GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error)
 
 	CreateRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error)
+	UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error)
 }
