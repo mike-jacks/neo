@@ -5,3 +5,64 @@ type Response {
   message: String
   data: [JSON!]
 }
+
+type DomainSchemaNodeResponse {
+  success: Boolean!
+  message: String
+  data: [DomainSchemaNode!]
+}
+
+type TypeSchemaNodeResponse {
+  success: Boolean!
+  message: String
+  data: [TypeSchemaNode!]
+}
+
+type RelationshipSchemaNodeResponse {
+  success: Boolean!
+  message: String
+  data: [RelationshipSchemaNode!]
+}
+
+type ObjectRelationshipObjectNodeResponse {
+  success: Boolean!
+  message: String
+  data: [ObjectRelationshipObjectNode!]
+}
+
+type DomainSchemaNode {
+  domain: String!
+  name: String!
+  type: String!
+  labels: [String!]
+  properties: JSON
+}
+
+type TypeSchemaNode {
+  domain: String!
+  name: String!
+  type: String!
+  originalName: String!
+  labels: [String!]
+  properties: JSON
+}
+
+type RelationshipSchemaNode {
+  relationshipName: String!
+  domain: String!
+  fromTypeSchemaNodeName: String!
+  toTypeSchemaNodeName: String!
+  properties: JSON
+}
+
+type ObjectRelationshipObjectNode {
+  fromObjectNode: ObjectNode!
+  relationshipNode: RelationshipSchemaNode!
+  toObjectNode: ObjectNode!
+}
+
+type ObjectNodeResponse {
+  success: Boolean!
+  message: String
+  data: [ObjectNode!]
+}

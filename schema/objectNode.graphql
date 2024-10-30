@@ -2,6 +2,7 @@ type ObjectNode {
   domain: String!
   name: String!
   type: String!
+  originalName: String!
   labels: [String!]
   properties: [Property!]
 }

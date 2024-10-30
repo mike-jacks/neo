@@ -310,6 +310,15 @@ func (r *queryResolver) GetAllRelationshipsFromTypeSchemaNode(ctx context.Contex
 	panic(fmt.Errorf("not implemented: GetAllRelationshipsFromTypeSchemaNode - getAllRelationshipsFromTypeSchemaNode"))
 }
 
+// NewGetAllDomainSchemaNodes is the resolver for the newGetAllDomainSchemaNodes field.
+func (r *queryResolver) NewGetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodeResponse, error) {
+	result, err := r.Database.NewGetAllDomainSchemaNodes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // CypherQuery is the resolver for the cypherQuery field.
 func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
 	result, err := r.Database.CypherQuery(ctx, cypherStatement)

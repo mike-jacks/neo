@@ -19,15 +19,30 @@ type DeleteObjectNodeInput struct {
 	Type   string `json:"type"`
 }
 
+type DomainSchemaNode struct {
+	Domain     string                 `json:"domain"`
+	Name       string                 `json:"name"`
+	Type       string                 `json:"type"`
+	Labels     []string               `json:"labels,omitempty"`
+	Properties map[string]interface{} `json:"properties,omitempty"`
+}
+
+type DomainSchemaNodeResponse struct {
+	Success bool                `json:"success"`
+	Message *string             `json:"message,omitempty"`
+	Data    []*DomainSchemaNode `json:"data,omitempty"`
+}
+
 type Mutation struct {
 }
 
 type ObjectNode struct {
-	Domain     string      `json:"domain"`
-	Name       string      `json:"name"`
-	Type       string      `json:"type"`
-	Labels     []string    `json:"labels,omitempty"`
-	Properties []*Property `json:"properties,omitempty"`
+	Domain       string      `json:"domain"`
+	Name         string      `json:"name"`
+	Type         string      `json:"type"`
+	OriginalName string      `json:"originalName"`
+	Labels       []string    `json:"labels,omitempty"`
+	Properties   []*Property `json:"properties,omitempty"`
 }
 
 type ObjectNodeInput struct {
@@ -38,11 +53,29 @@ type ObjectNodeInput struct {
 	Properties []*PropertyInput `json:"properties,omitempty"`
 }
 
+type ObjectNodeResponse struct {
+	Success bool          `json:"success"`
+	Message *string       `json:"message,omitempty"`
+	Data    []*ObjectNode `json:"data,omitempty"`
+}
+
 type ObjectRelationship struct {
 	RelationshipName string      `json:"relationshipName"`
 	FromObjectNode   *ObjectNode `json:"fromObjectNode"`
 	ToObjectNode     *ObjectNode `json:"toObjectNode"`
 	Properties       []*Property `json:"properties,omitempty"`
+}
+
+type ObjectRelationshipObjectNode struct {
+	FromObjectNode   *ObjectNode             `json:"fromObjectNode"`
+	RelationshipNode *RelationshipSchemaNode `json:"relationshipNode"`
+	ToObjectNode     *ObjectNode             `json:"toObjectNode"`
+}
+
+type ObjectRelationshipObjectNodeResponse struct {
+	Success bool                            `json:"success"`
+	Message *string                         `json:"message,omitempty"`
+	Data    []*ObjectRelationshipObjectNode `json:"data,omitempty"`
 }
 
 type Property struct {
@@ -60,10 +93,39 @@ type PropertyInput struct {
 type Query struct {
 }
 
+type RelationshipSchemaNode struct {
+	RelationshipName       string                 `json:"relationshipName"`
+	Domain                 string                 `json:"domain"`
+	FromTypeSchemaNodeName string                 `json:"fromTypeSchemaNodeName"`
+	ToTypeSchemaNodeName   string                 `json:"toTypeSchemaNodeName"`
+	Properties             map[string]interface{} `json:"properties,omitempty"`
+}
+
+type RelationshipSchemaNodeResponse struct {
+	Success bool                      `json:"success"`
+	Message *string                   `json:"message,omitempty"`
+	Data    []*RelationshipSchemaNode `json:"data,omitempty"`
+}
+
 type Response struct {
 	Success bool                     `json:"success"`
 	Message *string                  `json:"message,omitempty"`
 	Data    []map[string]interface{} `json:"data,omitempty"`
+}
+
+type TypeSchemaNode struct {
+	Domain       string                 `json:"domain"`
+	Name         string                 `json:"name"`
+	Type         string                 `json:"type"`
+	OriginalName string                 `json:"originalName"`
+	Labels       []string               `json:"labels,omitempty"`
+	Properties   map[string]interface{} `json:"properties,omitempty"`
+}
+
+type TypeSchemaNodeResponse struct {
+	Success bool              `json:"success"`
+	Message *string           `json:"message,omitempty"`
+	Data    []*TypeSchemaNode `json:"data,omitempty"`
 }
 
 type UpdateObjectNodeInput struct {
