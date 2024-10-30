@@ -928,9 +928,10 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Contex
 		return &model.Response{Success: false, Message: &message, Data: nil}, nil
 	}
 
-	toObjectNode.Domain = strings.Trim(strings.ToUpper(toObjectNode.Domain), " ")
-	toObjectNode.Name = strings.Trim(strings.ToUpper(toObjectNode.Name), " ")
-	toObjectNode.Type = strings.Trim(strings.ToUpper(toObjectNode.Type), " ")
+	if err := utils.CleanUpObjectNode(&toObjectNode); err != nil {
+		message := err.Error()
+		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	}
 
 	query := fmt.Sprintf("MATCH (fromObjectNode{_name: $fromName, _type: $fromType, _domain: $fromDomain}), (toObjectNode{_name: $toName, _type: $toType, _domain: $toDomain}) MATCH (fromObjectNode)-[relationship:%v]->(toObjectNode) SET ", relationshipName)
 	query = utils.CreatePropertiesQuery(query, properties, "relationship")
@@ -2140,6 +2141,14 @@ func (db *Neo4jDatabase) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Co
 	}
 	message := "Relationship schema properties updated successfully"
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
+}
+
+func (db *Neo4jDatabase) RenamePropertyOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, oldPropertyName string, newPropertyName string) (*model.Response, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	return nil, nil
+
 }
 
 func (db *Neo4jDatabase) RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) (*model.Response, error) {

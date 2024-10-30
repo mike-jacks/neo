@@ -38,6 +38,7 @@ type Mutation {
 
   createRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
   updatePropertiesOnRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [PropertyInput!]!): Response!
+  renamePropertyOnRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, oldPropertyName: String!, newPropertyName: String!): Response!
   removePropertiesFromRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [String!]!): Response!
   deleteRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
 
