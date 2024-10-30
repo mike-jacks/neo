@@ -65,7 +65,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		CREATE CONSTRAINT object_node_%s IF NOT EXISTS
 		FOR (n:%v)
 		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
-		`, utils.SanitizeStringToLower(labelFromTypeArg), labelFromTypeArg)
+		`, utils.SanitizeStringToLower(labelFromTypeArg), utils.SanitizeStringToUpper(labelFromTypeArg))
 
 	_, err := session.Run(ctx, query, nil)
 	if err != nil {
@@ -77,7 +77,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		CREATE CONSTRAINT object_node_%s IF NOT EXISTS
 		FOR (n:%v)
 		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
-		`, utils.SanitizeStringToLower(label), label)
+		`, utils.SanitizeStringToLower(label), utils.SanitizeStringToUpper(label))
 
 		_, err = session.Run(ctx, query, nil)
 		if err != nil {
@@ -85,9 +85,9 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		}
 	}
 
-	query = fmt.Sprintf("CREATE (o:%v", labelFromTypeArg)
+	query = fmt.Sprintf("CREATE (o:%v", utils.SanitizeStringToUpper(labelFromTypeArg))
 	for _, label := range labels {
-		query += fmt.Sprintf(":%v", label)
+		query += fmt.Sprintf(":%v", utils.SanitizeStringToUpper(label))
 	}
 	query += " {_name: $name, _type: $typeArg, _domain: $domain, _originalName: $originalName, "
 	query = utils.CreatePropertiesQuery(query, properties)

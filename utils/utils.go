@@ -184,3 +184,8 @@ func SanitizeStringToLower(s string) string {
 	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	return reg.ReplaceAllString(strings.ToLower(s), "_")
 }
+
+func SanitizeStringToUpper(s string) string {
+	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+	return reg.ReplaceAllString(strings.ToUpper(s), "_")
+}
