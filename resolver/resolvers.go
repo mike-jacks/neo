@@ -203,7 +203,11 @@ func (r *mutationResolver) CreateRelationshipSchemaNode(ctx context.Context, rel
 
 // UpdatePropertiesOnRelationshipSchemaNode is the resolver for the updatePropertiesOnRelationshipSchemaNode field.
 func (r *mutationResolver) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: UpdatePropertiesOnRelationshipSchemaNode - updatePropertiesOnRelationshipSchemaNode"))
+	result, err := r.Database.UpdatePropertiesOnRelationshipSchemaNode(ctx, relationshipName, domain, fromTypeSchemaNodeName, toTypeSchemaNodeName, properties)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // RemovePropertiesFromRelationshipSchemaNode is the resolver for the removePropertiesFromRelationshipSchemaNode field.
@@ -310,4 +314,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-

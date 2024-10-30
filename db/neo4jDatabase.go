@@ -2080,7 +2080,7 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, relat
 	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
 
-func (db *Neo4jDatabase) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, domain string, relationshipName string, properties []*model.PropertyInput, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error) {
+func (db *Neo4jDatabase) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
