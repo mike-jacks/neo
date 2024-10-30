@@ -55,9 +55,9 @@ type ComplexityRoot struct {
 	}
 
 	DomainSchemaNodeResponse struct {
-		Data    func(childComplexity int) int
-		Message func(childComplexity int) int
-		Success func(childComplexity int) int
+		DomainSchemaNodes func(childComplexity int) int
+		Message           func(childComplexity int) int
+		Success           func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -273,12 +273,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DomainSchemaNode.Type(childComplexity), true
 
-	case "DomainSchemaNodeResponse.data":
-		if e.complexity.DomainSchemaNodeResponse.Data == nil {
+	case "DomainSchemaNodeResponse.domainSchemaNodes":
+		if e.complexity.DomainSchemaNodeResponse.DomainSchemaNodes == nil {
 			break
 		}
 
-		return e.complexity.DomainSchemaNodeResponse.Data(childComplexity), true
+		return e.complexity.DomainSchemaNodeResponse.DomainSchemaNodes(childComplexity), true
 
 	case "DomainSchemaNodeResponse.message":
 		if e.complexity.DomainSchemaNodeResponse.Message == nil {
@@ -1263,7 +1263,7 @@ type Response {
 type DomainSchemaNodeResponse {
   success: Boolean!
   message: String
-  data: [DomainSchemaNode!]
+  domainSchemaNodes: [DomainSchemaNode!]
 }
 
 type TypeSchemaNodeResponse {
@@ -3769,8 +3769,8 @@ func (ec *executionContext) fieldContext_DomainSchemaNodeResponse_message(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _DomainSchemaNodeResponse_data(ctx context.Context, field graphql.CollectedField, obj *model.DomainSchemaNodeResponse) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DomainSchemaNodeResponse_data(ctx, field)
+func (ec *executionContext) _DomainSchemaNodeResponse_domainSchemaNodes(ctx context.Context, field graphql.CollectedField, obj *model.DomainSchemaNodeResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DomainSchemaNodeResponse_domainSchemaNodes(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3783,7 +3783,7 @@ func (ec *executionContext) _DomainSchemaNodeResponse_data(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Data, nil
+		return obj.DomainSchemaNodes, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3797,7 +3797,7 @@ func (ec *executionContext) _DomainSchemaNodeResponse_data(ctx context.Context, 
 	return ec.marshalODomainSchemaNode2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐDomainSchemaNodeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DomainSchemaNodeResponse_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DomainSchemaNodeResponse_domainSchemaNodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DomainSchemaNodeResponse",
 		Field:      field,
@@ -7049,8 +7049,8 @@ func (ec *executionContext) fieldContext_Query_newGetAllDomainSchemaNodes(_ cont
 				return ec.fieldContext_DomainSchemaNodeResponse_success(ctx, field)
 			case "message":
 				return ec.fieldContext_DomainSchemaNodeResponse_message(ctx, field)
-			case "data":
-				return ec.fieldContext_DomainSchemaNodeResponse_data(ctx, field)
+			case "domainSchemaNodes":
+				return ec.fieldContext_DomainSchemaNodeResponse_domainSchemaNodes(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DomainSchemaNodeResponse", field.Name)
 		},
@@ -10207,8 +10207,8 @@ func (ec *executionContext) _DomainSchemaNodeResponse(ctx context.Context, sel a
 			}
 		case "message":
 			out.Values[i] = ec._DomainSchemaNodeResponse_message(ctx, field, obj)
-		case "data":
-			out.Values[i] = ec._DomainSchemaNodeResponse_data(ctx, field, obj)
+		case "domainSchemaNodes":
+			out.Values[i] = ec._DomainSchemaNodeResponse_domainSchemaNodes(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

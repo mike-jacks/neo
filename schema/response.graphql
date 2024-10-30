@@ -9,7 +9,7 @@ type Response {
 type DomainSchemaNodeResponse {
   success: Boolean!
   message: String
-  data: [DomainSchemaNode!]
+  domainSchemaNodes: [DomainSchemaNode!]
 }
 
 type TypeSchemaNodeResponse {

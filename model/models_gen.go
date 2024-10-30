@@ -28,9 +28,9 @@ type DomainSchemaNode struct {
 }
 
 type DomainSchemaNodeResponse struct {
-	Success bool                `json:"success"`
-	Message *string             `json:"message,omitempty"`
-	Data    []*DomainSchemaNode `json:"data,omitempty"`
+	Success           bool                `json:"success"`
+	Message           *string             `json:"message,omitempty"`
+	DomainSchemaNodes []*DomainSchemaNode `json:"domainSchemaNodes,omitempty"`
 }
 
 type Mutation struct {

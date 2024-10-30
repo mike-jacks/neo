@@ -2244,8 +2244,8 @@ func (db *Neo4jDatabase) NewGetAllDomainSchemaNodes(ctx context.Context) (*model
 	}
 	if len(data) == 0 {
 		message := "No schema domain nodes found"
-		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, Data: data}, nil
+		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNodes: data}, nil
 	}
 	message := "Schema domain nodes retrieved successfully"
-	return &model.DomainSchemaNodeResponse{Success: true, Message: &message, Data: data}, nil
+	return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNodes: data}, nil
 }
