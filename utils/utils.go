@@ -182,10 +182,10 @@ func RenamePropertyQuery(query string, oldPropertyName string, newPropertyName s
 
 func SanitizeStringToLower(s string) string {
 	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
-	return reg.ReplaceAllString(strings.ToLower(s), "_")
+	return reg.ReplaceAllString(strings.ToLower(strings.TrimSpace(s)), "_")
 }
 
 func SanitizeStringToUpper(s string) string {
 	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
-	return reg.ReplaceAllString(strings.ToUpper(s), "_")
+	return reg.ReplaceAllString(strings.ToUpper(strings.TrimSpace(s)), "_")
 }
