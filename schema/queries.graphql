@@ -7,11 +7,9 @@ type Query {
   getObjectNodeOutgoingRelationships(fromObjectNode: ObjectNodeInput!): Response!
   getObjectNodeIncomingRelationships(toObjectNode: ObjectNodeInput!): Response!
 
-  getAllDomainSchemaNodes: Response!
+  getAllDomainSchemaNodes: DomainSchemaNodesResponse!
   getAllTypeSchemaNodes(domain: String!): Response!
   getAllRelationshipsFromTypeSchemaNode(domain: String!, typeSchemaNodeName: String!): Response!
-
-  newGetAllDomainSchemaNodes: DomainSchemaNodeResponse!
 
   cypherQuery(cypher_statement: String!): [Response!]!
 }

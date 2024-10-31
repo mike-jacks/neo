@@ -28,6 +28,12 @@ type DomainSchemaNode struct {
 }
 
 type DomainSchemaNodeResponse struct {
+	Success          bool              `json:"success"`
+	Message          *string           `json:"message,omitempty"`
+	DomainSchemaNode *DomainSchemaNode `json:"domainSchemaNode"`
+}
+
+type DomainSchemaNodesResponse struct {
 	Success           bool                `json:"success"`
 	Message           *string             `json:"message,omitempty"`
 	DomainSchemaNodes []*DomainSchemaNode `json:"domainSchemaNodes,omitempty"`

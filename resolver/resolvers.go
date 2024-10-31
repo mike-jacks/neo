@@ -112,7 +112,7 @@ func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, relatio
 }
 
 // CreateDomainSchemaNode is the resolver for the createDomainSchemaNode field.
-func (r *mutationResolver) CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error) {
+func (r *mutationResolver) CreateDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error) {
 	result, err := r.Database.CreateDomainSchemaNode(ctx, domain)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (r *mutationResolver) CreateDomainSchemaNode(ctx context.Context, domain st
 }
 
 // RenameDomainSchemaNode is the resolver for the renameDomainSchemaNode field.
-func (r *mutationResolver) RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.Response, error) {
+func (r *mutationResolver) RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.DomainSchemaNodeResponse, error) {
 	result, err := r.Database.RenameDomainSchemaNode(ctx, domain, newName)
 	if err != nil {
 		return nil, err
@@ -130,17 +130,8 @@ func (r *mutationResolver) RenameDomainSchemaNode(ctx context.Context, domain st
 }
 
 // DeleteDomainSchemaNode is the resolver for the deleteDomainSchemaNode field.
-func (r *mutationResolver) DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error) {
+func (r *mutationResolver) DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error) {
 	result, err := r.Database.DeleteDomainSchemaNode(ctx, domain)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-// NewDeleteDomainSchemaNode is the resolver for the newDeleteDomainSchemaNode field.
-func (r *mutationResolver) NewDeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error) {
-	result, err := r.Database.NewDeleteDomainSchemaNode(ctx, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +288,7 @@ func (r *queryResolver) GetObjectNodeIncomingRelationships(ctx context.Context, 
 }
 
 // GetAllDomainSchemaNodes is the resolver for the getAllDomainSchemaNodes field.
-func (r *queryResolver) GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error) {
+func (r *queryResolver) GetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error) {
 	result, err := r.Database.GetAllDomainSchemaNodes(ctx)
 	if err != nil {
 		return nil, err
@@ -317,15 +308,6 @@ func (r *queryResolver) GetAllTypeSchemaNodes(ctx context.Context, domain string
 // GetAllRelationshipsFromTypeSchemaNode is the resolver for the getAllRelationshipsFromTypeSchemaNode field.
 func (r *queryResolver) GetAllRelationshipsFromTypeSchemaNode(ctx context.Context, domain string, typeSchemaNodeName string) (*model.Response, error) {
 	panic(fmt.Errorf("not implemented: GetAllRelationshipsFromTypeSchemaNode - getAllRelationshipsFromTypeSchemaNode"))
-}
-
-// NewGetAllDomainSchemaNodes is the resolver for the newGetAllDomainSchemaNodes field.
-func (r *queryResolver) NewGetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodeResponse, error) {
-	result, err := r.Database.NewGetAllDomainSchemaNodes(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
 }
 
 // CypherQuery is the resolver for the cypherQuery field.

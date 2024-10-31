@@ -13,8 +13,6 @@ type Database interface {
 	UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error)
 	DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error)
 
-	NewDeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error)
-
 	UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
 	RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error)
 
@@ -36,10 +34,10 @@ type Database interface {
 	GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error)
 	GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 
-	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error)
-	RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.Response, error)
-	DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error)
-	GetAllDomainSchemaNodes(ctx context.Context) (*model.Response, error)
+	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error)
+	RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.DomainSchemaNodeResponse, error)
+	DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error)
+	GetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error)
 
 	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
 	RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error)
@@ -53,7 +51,4 @@ type Database interface {
 	UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error)
 	RenamePropertyOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, oldPropertyName string, newPropertyName string) (*model.Response, error)
 	RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) (*model.Response, error)
-
-	NewGetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodeResponse, error)
-
 }

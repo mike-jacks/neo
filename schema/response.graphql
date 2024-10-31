@@ -9,6 +9,12 @@ type Response {
 type DomainSchemaNodeResponse {
   success: Boolean!
   message: String
+  domainSchemaNode: DomainSchemaNode!
+}
+
+type DomainSchemaNodesResponse {
+  success: Boolean!
+  message: String
   domainSchemaNodes: [DomainSchemaNode!]
 }
 
