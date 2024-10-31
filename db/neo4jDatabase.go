@@ -2264,15 +2264,32 @@ func (db *Neo4jDatabase) NewDeleteDomainSchemaNode(ctx context.Context, domain s
         collect(CASE WHEN node:TYPE_SCHEMA THEN node END) as typeNodes,
         collect(CASE WHEN node:RELATIONSHIP_SCHEMA THEN node END) as relationshipNodes,
         collect(CASE WHEN NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA THEN node END) as objectNodes
-    WITH domainNodes, typeNodes, relationshipNodes, objectNodes,
-        CASE WHEN size(domainNodes) > 0 THEN head(domainNodes) END as domainSchema
-    DETACH DELETE domainNodes, typeNodes, relationshipNodes, objectNodes
-    RETURN
-        domainSchema,
+    WITH
+        // Store domain schema data before deletion
+        CASE
+            WHEN size(domainNodes) > 0
+            THEN {
+                properties: properties(head(domainNodes)),
+                labels: [label in labels(head(domainNodes)) | toString(label)]
+            }
+        END as storedDomainSchema,
+        domainNodes, typeNodes, relationshipNodes, objectNodes,
         size(domainNodes) as domainCount,
         size(typeNodes) as typeCount,
         size(relationshipNodes) as relationshipCount,
         size(objectNodes) as objectCount
+    WITH *, domainNodes + typeNodes + relationshipNodes + objectNodes AS allNodes
+    CALL {
+        WITH allNodes
+        UNWIND allNodes AS nodesToDelete
+        DETACH DELETE nodesToDelete
+    }
+    RETURN
+        storedDomainSchema,  // This will contain our stored data
+        domainCount,
+        typeCount,
+        relationshipCount,
+        objectCount
 `
 
 	parameters := map[string]any{
@@ -2287,28 +2304,74 @@ func (db *Neo4jDatabase) NewDeleteDomainSchemaNode(ctx context.Context, domain s
 		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNodes: nil}, nil
 	}
 	data := []*model.DomainSchemaNode{}
+	domainCountInt := int64(0)
+	typeCountInt := int64(0)
+	relationshipCountInt := int64(0)
+	objectCountInt := int64(0)
 	if result.Next(ctx) {
 		record := result.Record()
-		domainSchemaNode, ok := record.Get("domainSchema")
+		domainSchemaNode, ok := record.Get("storedDomainSchema")
 		if !ok {
 			return nil, fmt.Errorf("failed to retrieve the domainSchemaNode")
 		}
-		neo4jDomainSchemaNode, ok := domainSchemaNode.(dbtype.Node)
+		neo4jDomainSchemaNode, ok := domainSchemaNode.(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for domainSchemaNode: %T", domainSchemaNode)
 		}
+		domainCount, ok := record.Get("domainCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the domainCount")
+		}
+		domainCountInt, ok = domainCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the domainCount")
+		}
+		typeCount, ok := record.Get("typeCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the typeCount")
+		}
+		typeCountInt, ok = typeCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the typeCount")
+		}
+		relationshipCount, ok := record.Get("relationshipCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipCount")
+		}
+		relationshipCountInt, ok = relationshipCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipCount")
+		}
+		objectCount, ok := record.Get("objectCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the objectCount")
+		}
+		objectCountInt, ok = objectCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the objectCount")
+		}
+		labels := []string{}
+		for _, label := range neo4jDomainSchemaNode["labels"].([]interface{}) {
+			labels = append(labels, label.(string))
+		}
+		properties := make(map[string]interface{})
+		for key, value := range neo4jDomainSchemaNode["properties"].(map[string]interface{}) {
+			if key != "_domain" && key != "_name" && key != "_type" {
+				properties[key] = value
+			}
+		}
 		data = append(data, &model.DomainSchemaNode{
-			Domain:     utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_domain"),
-			Name:       utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_name"),
-			Type:       utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_type"),
-			Properties: neo4jDomainSchemaNode.GetProperties(),
-			Labels:     neo4jDomainSchemaNode.Labels,
+			Domain:     utils.PopString(neo4jDomainSchemaNode["properties"].(map[string]interface{}), "_domain"),
+			Name:       utils.PopString(neo4jDomainSchemaNode["properties"].(map[string]interface{}), "_name"),
+			Type:       utils.PopString(neo4jDomainSchemaNode["properties"].(map[string]interface{}), "_type"),
+			Properties: properties,
+			Labels:     labels,
 		})
 	}
 	if len(data) == 0 {
 		message := fmt.Sprintf("Domain schema node %s not found", domain)
 		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNodes: nil}, nil
 	}
-	message := fmt.Sprintf("Domain schema node %s deleted successfully", domain)
+	message := fmt.Sprintf("Domain schema node %s deleted successfully. %d domain nodes, %d type nodes, %d relationship nodes, %d object nodes deleted.", domain, domainCountInt, typeCountInt, relationshipCountInt, objectCountInt)
 	return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNodes: data}, nil
 }
