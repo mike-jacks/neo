@@ -2249,3 +2249,66 @@ func (db *Neo4jDatabase) NewGetAllDomainSchemaNodes(ctx context.Context) (*model
 	message := "Schema domain nodes retrieved successfully"
 	return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNodes: data}, nil
 }
+
+func (db *Neo4jDatabase) NewDeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	domain = strings.Trim(domain, " ")
+
+	query := `
+    MATCH (node {_domain: $domain})
+    WITH node
+    WITH
+        collect(CASE WHEN node:DOMAIN_SCHEMA THEN node END) as domainNodes,
+        collect(CASE WHEN node:TYPE_SCHEMA THEN node END) as typeNodes,
+        collect(CASE WHEN node:RELATIONSHIP_SCHEMA THEN node END) as relationshipNodes,
+        collect(CASE WHEN NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA THEN node END) as objectNodes
+    WITH domainNodes, typeNodes, relationshipNodes, objectNodes,
+        CASE WHEN size(domainNodes) > 0 THEN head(domainNodes) END as domainSchema
+    DETACH DELETE domainNodes, typeNodes, relationshipNodes, objectNodes
+    RETURN
+        domainSchema,
+        size(domainNodes) as domainCount,
+        size(typeNodes) as typeCount,
+        size(relationshipNodes) as relationshipCount,
+        size(objectNodes) as objectCount
+`
+
+	parameters := map[string]any{
+		"domain": domain,
+	}
+
+	fmt.Println(query)
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		message := fmt.Sprintf("Domain schema node %s deletion failed", domain)
+		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNodes: nil}, nil
+	}
+	data := []*model.DomainSchemaNode{}
+	if result.Next(ctx) {
+		record := result.Record()
+		domainSchemaNode, ok := record.Get("domainSchema")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the domainSchemaNode")
+		}
+		neo4jDomainSchemaNode, ok := domainSchemaNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for domainSchemaNode: %T", domainSchemaNode)
+		}
+		data = append(data, &model.DomainSchemaNode{
+			Domain:     utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_domain"),
+			Name:       utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_name"),
+			Type:       utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_type"),
+			Properties: neo4jDomainSchemaNode.GetProperties(),
+			Labels:     neo4jDomainSchemaNode.Labels,
+		})
+	}
+	if len(data) == 0 {
+		message := fmt.Sprintf("Domain schema node %s not found", domain)
+		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNodes: nil}, nil
+	}
+	message := fmt.Sprintf("Domain schema node %s deleted successfully", domain)
+	return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNodes: data}, nil
+}

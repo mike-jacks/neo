@@ -138,6 +138,11 @@ func (r *mutationResolver) DeleteDomainSchemaNode(ctx context.Context, domain st
 	return result, nil
 }
 
+// NewDeleteDomainSchemaNode is the resolver for the newDeleteDomainSchemaNode field.
+func (r *mutationResolver) NewDeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: NewDeleteDomainSchemaNode - newDeleteDomainSchemaNode"))
+}
+
 // CreateTypeSchemaNode is the resolver for the createTypeSchemaNode field.
 func (r *mutationResolver) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
 	result, err := r.Database.CreateTypeSchemaNode(ctx, domain, name)

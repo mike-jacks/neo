@@ -72,6 +72,7 @@ type ComplexityRoot struct {
 		DeleteObjectRelationship                   func(childComplexity int, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
 		DeleteRelationshipSchemaNode               func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
 		DeleteTypeSchemaNode                       func(childComplexity int, domain string, name string) int
+		NewDeleteDomainSchemaNode                  func(childComplexity int, domain string) int
 		RemoveLabelsFromObjectNode                 func(childComplexity int, domain string, name string, typeArg string, labels []string) int
 		RemovePropertiesFromObjectNode             func(childComplexity int, domain string, name string, typeArg string, properties []string) int
 		RemovePropertiesFromObjectRelationship     func(childComplexity int, relationshipName string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
@@ -193,6 +194,7 @@ type MutationResolver interface {
 	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error)
 	RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.Response, error)
 	DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.Response, error)
+	NewDeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error)
 	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
 	RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error)
 	UpdatePropertiesOnTypeSchemaNode(ctx context.Context, domain string, name string, properties []*model.PropertyInput) (*model.Response, error)
@@ -425,6 +427,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteTypeSchemaNode(childComplexity, args["domain"].(string), args["name"].(string)), true
+
+	case "Mutation.newDeleteDomainSchemaNode":
+		if e.complexity.Mutation.NewDeleteDomainSchemaNode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_newDeleteDomainSchemaNode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.NewDeleteDomainSchemaNode(childComplexity, args["domain"].(string)), true
 
 	case "Mutation.removeLabelsFromObjectNode":
 		if e.complexity.Mutation.RemoveLabelsFromObjectNode == nil {
@@ -1150,6 +1164,8 @@ var sources = []*ast.Source{
   createDomainSchemaNode(domain: String!): Response!
   renameDomainSchemaNode(domain: String!, newName: String!): Response!
   deleteDomainSchemaNode(domain: String!): Response!
+
+  newDeleteDomainSchemaNode(domain: String!): DomainSchemaNodeResponse!
 
   createTypeSchemaNode(domain: String!, name: String!): Response!
   renameTypeSchemaNode(domain: String!, existingName: String!, newName: String!): Response!
@@ -1921,6 +1937,29 @@ func (ec *executionContext) field_Mutation_deleteTypeSchemaNode_argsName(
 ) (string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_newDeleteDomainSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_newDeleteDomainSchemaNode_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_newDeleteDomainSchemaNode_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -4698,6 +4737,69 @@ func (ec *executionContext) fieldContext_Mutation_deleteDomainSchemaNode(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteDomainSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_newDeleteDomainSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_newDeleteDomainSchemaNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().NewDeleteDomainSchemaNode(rctx, fc.Args["domain"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DomainSchemaNodeResponse)
+	fc.Result = res
+	return ec.marshalNDomainSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐDomainSchemaNodeResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_newDeleteDomainSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_DomainSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_DomainSchemaNodeResponse_message(ctx, field)
+			case "domainSchemaNodes":
+				return ec.fieldContext_DomainSchemaNodeResponse_domainSchemaNodes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DomainSchemaNodeResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_newDeleteDomainSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10345,6 +10447,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteDomainSchemaNode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteDomainSchemaNode(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "newDeleteDomainSchemaNode":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_newDeleteDomainSchemaNode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
