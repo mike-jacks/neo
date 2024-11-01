@@ -165,9 +165,7 @@ type TypeSchemaNodesResponse struct {
 }
 
 type UpdateObjectNodeInput struct {
-	Domain     *string          `json:"domain,omitempty"`
 	Name       *string          `json:"name,omitempty"`
-	Type       *string          `json:"type,omitempty"`
 	Labels     []string         `json:"labels,omitempty"`
 	Properties []*PropertyInput `json:"properties,omitempty"`
 }

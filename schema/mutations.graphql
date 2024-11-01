@@ -1,7 +1,7 @@
 type Mutation {
   # Object Mutations
   createObjectNode(domain: String!, name: String!, type: String!, labels: [String!], properties: [PropertyInput!]): ObjectNodeResponse!
-  updateObjectNode(domain: String!, name: String!, type: String!, updateObjectNodeInput: UpdateObjectNodeInput!): ObjectNodeResponse!
+  updateObjectNode(id: String!, updateObjectNodeInput: UpdateObjectNodeInput!): ObjectNodeResponse!
   deleteObjectNode(domain: String!, name: String!, type: String!): ObjectNodeResponse!
 
   updateLabelsOnObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): ObjectNodeResponse!

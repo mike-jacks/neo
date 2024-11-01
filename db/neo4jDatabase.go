@@ -171,14 +171,9 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 }
 
-func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.ObjectNodeResponse, error) {
+func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, id string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
-
-	domain = strings.Trim(domain, " ")
-	name = strings.Trim(strings.ToUpper(name), " ")
-	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
-	labelFromTypeArg := strings.ReplaceAll(strings.ReplaceAll(typeArg, " ", "_"), "-", "_")
 
 	if updateObjectNodeInput.Properties != nil {
 		if err := utils.CleanUpPropertyObjects(updateObjectNodeInput.Properties); err != nil {
@@ -193,94 +188,68 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 		newOriginalName = strings.Trim(*updateObjectNodeInput.Name, " ")
 		newName = strings.Trim(strings.ToUpper(*updateObjectNodeInput.Name), " ")
 	}
-	var newTypeArg string
-	if updateObjectNodeInput.Type != nil {
-		newTypeArg = strings.Trim(strings.ToUpper(*updateObjectNodeInput.Type), " ")
-	}
-	var newDomain string
-	if updateObjectNodeInput.Domain != nil {
-		newDomain = strings.Trim(strings.ToUpper(*updateObjectNodeInput.Domain), " ")
-	}
-	newLabelFromTypeArg := strings.ReplaceAll(newTypeArg, " ", "_")
 
-	replaceLabelQuery := ""
-	query := "MATCH (o{_name: $name, _type: $typeArg, _domain: $domain})\n"
-	if newName != "" || newTypeArg != "" || newDomain != "" || len(updateObjectNodeInput.Labels) > 0 || len(updateObjectNodeInput.Properties) > 0 {
+	query := "MATCH (objectNode{_id: $id}) \n"
+	if newName != "" || len(updateObjectNodeInput.Labels) > 0 || len(updateObjectNodeInput.Properties) > 0 {
 		query += "SET "
 	}
 	if newName != "" {
-		query += fmt.Sprintf("o._name = \"%v\", o._originalName = \"%v\", ", newName, newOriginalName)
-	}
-	if newTypeArg != "" {
-		query += fmt.Sprintf("o._type = \"%v\", ", newTypeArg)
-		replaceLabelQuery += fmt.Sprintf("MATCH (o{_name: $name, _type: \"%v\", _domain: $domain}) REMOVE o:%v SET o:%v RETURN o", newTypeArg, labelFromTypeArg, newLabelFromTypeArg)
-	}
-	if newDomain != "" {
-		query += fmt.Sprintf("o._domain = \"%v\", ", newDomain)
+		query += fmt.Sprintf("objectNode._name = \"%v\", objectNode._originalName = \"%v\", ", newName, newOriginalName)
 	}
 	if len(updateObjectNodeInput.Labels) > 0 {
-		query += "o"
+		query += "objectNode"
 		for _, label := range updateObjectNodeInput.Labels {
-			query += fmt.Sprintf(":%v", strings.Trim(strings.ToUpper(label), " "))
+			query += fmt.Sprintf(":%v", strings.ReplaceAll(strings.ReplaceAll(strings.Trim(strings.ToUpper(label), " "), " ", "_"), "-", "_"))
 		}
 		query += ", "
 	}
 	if len(updateObjectNodeInput.Properties) > 0 {
-		query = utils.CreatePropertiesQuery(query, updateObjectNodeInput.Properties, "o")
+		query = utils.CreatePropertiesQuery(query, updateObjectNodeInput.Properties, "objectNode")
 	}
 	query = strings.TrimSuffix(query, ", ")
-	query += " RETURN o;"
+	query += " RETURN objectNode;"
 	fmt.Println(query)
-	fmt.Println(replaceLabelQuery)
 
 	parameters := map[string]any{
-		"name":    name,
-		"typeArg": typeArg,
-		"domain":  domain,
+		"id": id,
 	}
 
-	_, err := session.Run(ctx, query, parameters)
+	result, err := session.Run(ctx, query, parameters)
 	if err != nil {
 		message := "Failed to update object node"
 		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, err
 	}
 
-	result, err := session.Run(ctx, replaceLabelQuery, parameters)
-	if err != nil {
-		message := "Failed to replace label"
-		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, err
-	}
-
 	if result.Next(ctx) {
 		record := result.Record()
-		node, ok := record.Get("o")
+		objectNode, ok := record.Get("objectNode")
 		if !ok {
 			message := "Failed to retrieve the updated node"
 			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 
-		neo4jNode, ok := node.(dbtype.Node)
+		neo4jObjectNode, ok := objectNode.(dbtype.Node)
 		if !ok {
 			message := "Unexpected type for node"
 			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 
 		nodeProperties := make(map[string]interface{})
-		for key, value := range neo4jNode.Props {
+		for key, value := range neo4jObjectNode.Props {
 			nodeProperties[key] = value
 		}
 
-		data := []map[string]interface{}{}
-		data = append(data, map[string]interface{}{
-			"_name":         utils.PopString(nodeProperties, "_name"),
-			"_type":         utils.PopString(nodeProperties, "_type"),
-			"_domain":       utils.PopString(nodeProperties, "_domain"),
-			"_originalName": utils.PopString(nodeProperties, "_originalName"),
-			"_labels":       neo4jNode.Labels,
-			"_properties":   nodeProperties,
-		})
+		data := &model.ObjectNode{
+			ID:           utils.PopString(nodeProperties, "_id"),
+			Name:         utils.PopString(nodeProperties, "_name"),
+			Type:         utils.PopString(nodeProperties, "_type"),
+			Domain:       utils.PopString(nodeProperties, "_domain"),
+			OriginalName: utils.PopString(nodeProperties, "_originalName"),
+			Labels:       neo4jObjectNode.Labels,
+			Properties:   utils.ExtractPropertiesFromNode(nodeProperties),
+		}
 		message := "Object node updated successfully"
-		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: data}, nil
 	}
 	message := "Failed to update object node"
 

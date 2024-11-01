@@ -17,9 +17,7 @@ input ObjectNodeInput {
 }
 
 input UpdateObjectNodeInput {
-  domain: String
   name: String
-  type: String
   labels: [String!]
   properties: [PropertyInput!]
 }
