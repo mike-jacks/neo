@@ -21,11 +21,12 @@ func (r *mutationResolver) CreateObjectNode(ctx context.Context, domain string, 
 	return result, nil
 }
 
-// UpdateObjectNode is the resolver for the updateObjectNode field.
-func (r *mutationResolver) UpdateObjectNode(ctx context.Context, id string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.ObjectNodeResponse, error) {
-	result, err := r.Database.UpdateObjectNode(ctx, id, updateObjectNodeInput)
+// RenameObjectNode is the resolver for the renameObjectNode field.
+func (r *mutationResolver) RenameObjectNode(ctx context.Context, id string, newName string) (*model.ObjectNodeResponse, error) {
+	result, err := r.Database.RenameObjectNode(ctx, id, newName)
 	if err != nil {
 		return nil, err
+
 	}
 	return result, nil
 }
@@ -40,8 +41,8 @@ func (r *mutationResolver) DeleteObjectNode(ctx context.Context, id string) (*mo
 }
 
 // AddLabelsToObjectNode is the resolver for the addLabelsToObjectNode field.
-func (r *mutationResolver) UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error) {
-	result, err := r.Database.UpdateLabelsOnObjectNode(ctx, domain, name, typeArg, labels)
+func (r *mutationResolver) UpdateLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error) {
+	result, err := r.Database.UpdateLabelsOnObjectNode(ctx, id, labels)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +50,8 @@ func (r *mutationResolver) UpdateLabelsOnObjectNode(ctx context.Context, domain 
 }
 
 // RemoveLabelsFromObjectNode is the resolver for the removeLabelsFromObjectNode field.
-func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error) {
-	result, err := r.Database.RemoveLabelsFromObjectNode(ctx, domain, name, typeArg, labels)
+func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error) {
+	result, err := r.Database.RemoveLabelsFromObjectNode(ctx, id, labels)
 	if err != nil {
 		return nil, err
 	}

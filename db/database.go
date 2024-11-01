@@ -10,11 +10,11 @@ import (
 type Database interface {
 	GetDriver() neo4j.DriverWithContext
 	CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)
-	UpdateObjectNode(ctx context.Context, id string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.ObjectNodeResponse, error)
+	RenameObjectNode(ctx context.Context, id string, newName string) (*model.ObjectNodeResponse, error)
 	DeleteObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
 
-	UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error)
-	RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error)
+	UpdateLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error)
+	RemoveLabelsFromObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error)
 
 	UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)
 	RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.ObjectNodeResponse, error)
