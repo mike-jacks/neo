@@ -316,6 +316,7 @@ func (db *Neo4jDatabase) AddLabelsOnObjectNode(ctx context.Context, id string, l
 		}
 
 		data := &model.ObjectNode{
+			ID:         utils.PopString(neo4jObjectNode.Props, "_id"),
 			Name:       utils.PopString(neo4jObjectNode.Props, "_name"),
 			Type:       utils.PopString(neo4jObjectNode.Props, "_type"),
 			Domain:     utils.PopString(neo4jObjectNode.Props, "_domain"),
