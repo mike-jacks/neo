@@ -340,6 +340,7 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, id stri
 
 	query := "MATCH (objectNode{_id: $id}) REMOVE "
 	for _, label := range labels {
+		label = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(label)), " ", "_"), "-", "_")
 		query += fmt.Sprintf("objectNode:%v, ", label)
 	}
 	query = strings.TrimSuffix(query, ", ")
