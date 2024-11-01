@@ -3,11 +3,15 @@ package utils
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"regexp"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/mike-jacks/neo/model"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+	"github.com/nrednav/cuid2"
 )
 
 func DereferenceOrNilString(s *string) interface{} {
@@ -188,4 +192,66 @@ func SanitizeStringToLower(s string) string {
 func SanitizeStringToUpper(s string) string {
 	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	return reg.ReplaceAllString(strings.ToUpper(strings.TrimSpace(s)), "_")
+}
+
+// Generate unique cuid2 ids
+
+var generator func() string
+
+func init() {
+	var err error
+	startValue := time.Now().UnixNano()
+	counter := NewCounter(startValue)
+
+	generator, err = cuid2.Init(
+		cuid2.WithRandomFunc(rand.Float64),
+		cuid2.WithLength(32),
+		cuid2.WithFingerprint("All Your Base Are Belong To Us"),
+		cuid2.WithSessionCounter(counter),
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+type Counter struct {
+	value int64
+}
+
+func NewCounter(initialCount int64) *Counter {
+	return &Counter{value: initialCount}
+}
+
+func (c *Counter) Increment() int64 {
+	return atomic.AddInt64(&c.value, 1)
+}
+
+func GenerateId() string {
+	return generator()
+}
+
+
+func ExtractPropertiesFromNode(properties map[string]interface{}) []*model.Property {
+	extractedProperties := []*model.Property{}
+	for key, value := range properties {
+		switch value.(type) {
+		case string:
+			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeString})
+		case int:
+			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeNumber})
+		case bool:
+			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeBoolean})
+		case float64:
+			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeNumber})
+		case []string:
+			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayString})
+		case []int:
+			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayNumber})
+		case []bool:
+			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayBoolean})
+		case []float64:
+			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayNumber})
+		}
+	}
+	return extractedProperties
 }

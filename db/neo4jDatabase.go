@@ -41,10 +41,11 @@ func (db *Neo4jDatabase) GetDriver() neo4j.DriverWithContext {
 	return db.Driver
 }
 
-func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.Response, error) {
+func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
+	id := utils.GenerateId()
 	domain = strings.Trim(domain, " ")
 	originalName := strings.Trim(name, " ")
 	name = strings.Trim(strings.ToUpper(name), " ")
@@ -57,27 +58,54 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 	if properties != nil {
 		if err := utils.CleanUpPropertyObjects(properties); err != nil {
 			message := err.Error()
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 	}
-
 	query := fmt.Sprintf(`
-		CREATE CONSTRAINT object_node_%s IF NOT EXISTS
-		FOR (n:%v)
-		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
-		`, utils.SanitizeStringToLower(labelFromTypeArg), utils.SanitizeStringToUpper(labelFromTypeArg))
+	CREATE CONSTRAINT object_node_%s_key IF NOT EXISTS
+	FOR (n:%v) REQUIRE (n._id) IS NODE KEY
+	`, utils.SanitizeStringToLower(labelFromTypeArg), utils.SanitizeStringToUpper(labelFromTypeArg))
+
+	fmt.Println(query)
 
 	_, err := session.Run(ctx, query, nil)
 	if err != nil {
 		return nil, err
 	}
 
+	query = fmt.Sprintf(`
+		CREATE CONSTRAINT object_node_%s_unique IF NOT EXISTS
+		FOR (n:%v)
+		REQUIRE (n._name, n._type, n._domain) IS UNIQUE
+		`, utils.SanitizeStringToLower(labelFromTypeArg), utils.SanitizeStringToUpper(labelFromTypeArg))
+
+	fmt.Println(query)
+
+	_, err = session.Run(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, label := range labels {
 		query = fmt.Sprintf(`
-		CREATE CONSTRAINT object_node_%s IF NOT EXISTS
-		FOR (n:%v)
-		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
+		CREATE CONSTRAINT object_node_%s_key IF NOT EXISTS
+		FOR (n:%v) REQUIRE (n._id) IS NODE KEY
 		`, utils.SanitizeStringToLower(label), utils.SanitizeStringToUpper(label))
+
+		fmt.Println(query)
+
+		_, err = session.Run(ctx, query, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		query = fmt.Sprintf(`
+		CREATE CONSTRAINT object_node_%s_unique IF NOT EXISTS
+		FOR (n:%v)
+		REQUIRE (n._name, n._type, n._domain) IS UNIQUE
+		`, utils.SanitizeStringToLower(label), utils.SanitizeStringToUpper(label))
+
+		fmt.Println(query)
 
 		_, err = session.Run(ctx, query, nil)
 		if err != nil {
@@ -85,16 +113,19 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 		}
 	}
 
-	query = fmt.Sprintf("CREATE (o:%v", utils.SanitizeStringToUpper(labelFromTypeArg))
+	query = fmt.Sprintf("CREATE (objectNode:%v", utils.SanitizeStringToUpper(labelFromTypeArg))
 	for _, label := range labels {
 		query += fmt.Sprintf(":%v", utils.SanitizeStringToUpper(label))
 	}
-	query += " {_name: $name, _type: $typeArg, _domain: $domain, _originalName: $originalName, "
+	query += " {_id: $id, _name: $name, _type: $typeArg, _domain: $domain, _originalName: $originalName, "
 	query = utils.CreatePropertiesQuery(query, properties)
 	query = strings.TrimSuffix(query, ", ")
-	query += "}) RETURN o"
+	query += "}) RETURN objectNode"
+
+	fmt.Println(query)
 
 	parameters := map[string]any{
+		"id":           id,
 		"name":         name,
 		"typeArg":      typeArg,
 		"domain":       domain,
@@ -108,38 +139,39 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 
 	if result.Next(ctx) {
 		record := result.Record()
-		node, ok := record.Get("o")
+		objectNode, ok := record.Get("objectNode")
 		if !ok {
 			return nil, fmt.Errorf("failed to retrieve the created node")
 		}
 
-		neo4jNode, ok := node.(dbtype.Node)
+		neo4jObjectNode, ok := objectNode.(dbtype.Node)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type for node: %T", node)
+			return nil, fmt.Errorf("unexpected type for node: %T", objectNode)
 		}
 
 		nodeProperties := make(map[string]interface{})
-		for key, value := range neo4jNode.Props {
+		for key, value := range neo4jObjectNode.Props {
 			nodeProperties[key] = value
 		}
 
-		data := []map[string]interface{}{}
-		data = append(data, map[string]interface{}{
-			"_name":         utils.PopString(nodeProperties, "_name"),
-			"_type":         utils.PopString(nodeProperties, "_type"),
-			"_domain":       utils.PopString(nodeProperties, "_domain"),
-			"_originalName": utils.PopString(nodeProperties, "_originalName"),
-			"_labels":       neo4jNode.Labels,
-			"_properties":   nodeProperties,
-		})
+		data := &model.ObjectNode{
+			ID:           utils.PopString(nodeProperties, "_id"),
+			Name:         utils.PopString(nodeProperties, "_name"),
+			Type:         utils.PopString(nodeProperties, "_type"),
+			Domain:       utils.PopString(nodeProperties, "_domain"),
+			OriginalName: utils.PopString(nodeProperties, "_originalName"),
+			Labels:       neo4jObjectNode.Labels,
+			Properties:   utils.ExtractPropertiesFromNode(nodeProperties),
+		}
 		message := "Object node created successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: data}, nil
 	}
 
-	return nil, err
+	message := "Failed to create object node"
+	return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 }
 
-func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error) {
+func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -151,7 +183,7 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	if updateObjectNodeInput.Properties != nil {
 		if err := utils.CleanUpPropertyObjects(updateObjectNodeInput.Properties); err != nil {
 			message := err.Error()
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 	}
 
@@ -210,13 +242,13 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 	_, err := session.Run(ctx, query, parameters)
 	if err != nil {
 		message := "Failed to update object node"
-		return &model.Response{Success: false, Message: &message, Data: nil}, err
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, err
 	}
 
 	result, err := session.Run(ctx, replaceLabelQuery, parameters)
 	if err != nil {
 		message := "Failed to replace label"
-		return &model.Response{Success: false, Message: &message, Data: nil}, err
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, err
 	}
 
 	if result.Next(ctx) {
@@ -224,13 +256,13 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 		node, ok := record.Get("o")
 		if !ok {
 			message := "Failed to retrieve the updated node"
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 
 		neo4jNode, ok := node.(dbtype.Node)
 		if !ok {
 			message := "Unexpected type for node"
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 
 		nodeProperties := make(map[string]interface{})
@@ -248,14 +280,14 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, domain string, na
 			"_properties":   nodeProperties,
 		})
 		message := "Object node updated successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
 	}
 	message := "Failed to update object node"
 
-	return &model.Response{Success: false, Message: &message, Data: nil}, fmt.Errorf("failed to update object node")
+	return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, fmt.Errorf("failed to update object node")
 }
 
-func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
+func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -276,7 +308,7 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, na
 	result, err := session.Run(ctx, query, parameters)
 	if err != nil {
 		message := "Failed to delete object node"
-		return &model.Response{Success: false, Message: &message, Data: nil}, err
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, err
 	}
 
 	if result.Next(ctx) {
@@ -284,21 +316,21 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, na
 		deletedCount, ok := record.Get("deletedCount")
 		if !ok {
 			message := "Failed to retrieve the deleted count"
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 		deletedCountInt := deletedCount.(int64)
 		if deletedCountInt > 0 {
 			message := fmt.Sprintf("Successfully deleted object node: %v", name)
-			return &model.Response{Success: true, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
 		} else {
 			message := fmt.Sprintf("Object node: %v does not exist", name)
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 	}
 	return nil, fmt.Errorf("failed to delete object node")
 }
 
-func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -313,7 +345,7 @@ func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, domain st
 
 	if len(labels) == 0 {
 		message := "No labels provided"
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
 	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) SET o", labelFromTypeArg)
@@ -332,14 +364,14 @@ func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, domain st
 	result, err := session.Run(ctx, query, parameters)
 	if err != nil {
 		message := "Failed to add labels to object node"
-		return &model.Response{Success: false, Message: &message, Data: nil}, err
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, err
 	}
 	if result.Next(ctx) {
 		record := result.Record()
 		node, ok := record.Get("o")
 		if !ok {
 			message := "Failed to retrieve the updated node"
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 		neo4jNode, ok := node.(dbtype.Node)
 		if !ok {
@@ -359,12 +391,12 @@ func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, domain st
 			"_properties": nodeProperties,
 		})
 		message := "Labels added to object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
 	}
 	return nil, fmt.Errorf("failed to add labels to object node")
 }
 
-func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -384,7 +416,7 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 
 	if len(labels) == 0 {
 		message := "No labels provided"
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
 	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) REMOVE o", labelFromTypeArg)
@@ -403,14 +435,14 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 	result, err := session.Run(ctx, query, parameters)
 	if err != nil {
 		message := "Failed to add labels to object node"
-		return &model.Response{Success: false, Message: &message, Data: nil}, err
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, err
 	}
 	if result.Next(ctx) {
 		record := result.Record()
 		node, ok := record.Get("o")
 		if !ok {
 			message := "Failed to retrieve the updated node"
-			return &model.Response{Success: false, Message: &message, Data: nil}, nil
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 		neo4jNode, ok := node.(dbtype.Node)
 		if !ok {
@@ -430,12 +462,12 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, domain 
 			"_properties": nodeProperties,
 		})
 		message := "Labels removed from object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
 	}
 	return nil, fmt.Errorf("failed to remove labels from object node")
 }
 
-func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
+func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -446,7 +478,7 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, domai
 
 	if err := utils.CleanUpPropertyObjects(properties); err != nil {
 		message := err.Error()
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
 	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) SET o", labelFromTypeArg)
@@ -498,12 +530,12 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, domai
 			"_properties": nodeProperties,
 		})
 		message := "Properties added to object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
 	}
 	return nil, fmt.Errorf("failed to add properties to object node")
 }
 
-func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error) {
+func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -514,7 +546,7 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, dom
 
 	if err := utils.CleanUpPropertyKeys(properties); err != nil {
 		message := err.Error()
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
 	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) REMOVE ", labelFromTypeArg)
@@ -562,12 +594,12 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, dom
 			"_properties": nodeProperties,
 		})
 		message := "Properties removed from object node successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
 	}
 	return nil, fmt.Errorf("failed to remove properties from object node")
 }
 
-func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
+func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
@@ -614,12 +646,12 @@ func (db *Neo4jDatabase) GetObjectNode(ctx context.Context, domain string, name 
 			"_properties":   nodeProperties,
 		})
 		message := "Object node retrieved successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
 	}
 	return nil, fmt.Errorf("failed to get object node")
 }
 
-func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.Response, error) {
+func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.ObjectNodesResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
@@ -701,7 +733,7 @@ func (db *Neo4jDatabase) GetObjectNodes(ctx context.Context, domain *string, nam
 		})
 	}
 	message := "Object nodes retrieved successfully"
-	return &model.Response{Success: true, Message: &message, Data: data}, nil
+	return &model.ObjectNodesResponse{Success: true, Message: &message, ObjectNodes: nil}, nil
 }
 
 func (db *Neo4jDatabase) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error) {

@@ -1,14 +1,14 @@
 type Mutation {
   # Object Mutations
-  createObjectNode(domain: String!, name: String!, type: String!, labels: [String!], properties: [PropertyInput!]): Response!
-  updateObjectNode(domain: String!, name: String!, type: String!, updateObjectNodeInput: UpdateObjectNodeInput!): Response!
-  deleteObjectNode(domain: String!, name: String!, type: String!): Response!
+  createObjectNode(domain: String!, name: String!, type: String!, labels: [String!], properties: [PropertyInput!]): ObjectNodeResponse!
+  updateObjectNode(domain: String!, name: String!, type: String!, updateObjectNodeInput: UpdateObjectNodeInput!): ObjectNodeResponse!
+  deleteObjectNode(domain: String!, name: String!, type: String!): ObjectNodeResponse!
 
-  updateLabelsOnObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
-  removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): Response!
+  updateLabelsOnObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): ObjectNodeResponse!
+  removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): ObjectNodeResponse!
 
-  updatePropertiesOnObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): Response!
-  removePropertiesFromObjectNode(_domain: String!, name: String!, type: String!, properties: [String!]!): Response!
+  updatePropertiesOnObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): ObjectNodeResponse!
+  removePropertiesFromObjectNode(_domain: String!, name: String!, type: String!, properties: [String!]!): ObjectNodeResponse!
 
   createObjectRelationship(relationshipName: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   updatePropertiesOnObjectRelationship(

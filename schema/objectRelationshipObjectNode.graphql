@@ -1,0 +1,7 @@
+type ObjectRelationshipObjectNode {
+  id: String!
+  fromObjectNode: ObjectNode!
+  relationshipNode: RelationshipSchemaNode!
+  toObjectNode: ObjectNode!
+}
+

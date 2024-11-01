@@ -13,7 +13,7 @@ import (
 )
 
 // CreateObjectNode is the resolver for the createObjectNode field.
-func (r *mutationResolver) CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.Response, error) {
+func (r *mutationResolver) CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.CreateObjectNode(ctx, domain, name, typeArg, labels, properties)
 	if err != nil {
 		return nil, err
@@ -22,7 +22,7 @@ func (r *mutationResolver) CreateObjectNode(ctx context.Context, domain string, 
 }
 
 // UpdateObjectNode is the resolver for the updateObjectNode field.
-func (r *mutationResolver) UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.Response, error) {
+func (r *mutationResolver) UpdateObjectNode(ctx context.Context, domain string, name string, typeArg string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.UpdateObjectNode(ctx, domain, name, typeArg, updateObjectNodeInput)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (r *mutationResolver) UpdateObjectNode(ctx context.Context, domain string, 
 }
 
 // DeleteObjectNode is the resolver for the deleteObjectNode field.
-func (r *mutationResolver) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
+func (r *mutationResolver) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.DeleteObjectNode(ctx, domain, name, typeArg)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (r *mutationResolver) DeleteObjectNode(ctx context.Context, domain string, 
 }
 
 // AddLabelsToObjectNode is the resolver for the addLabelsToObjectNode field.
-func (r *mutationResolver) UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+func (r *mutationResolver) UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.UpdateLabelsOnObjectNode(ctx, domain, name, typeArg, labels)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (r *mutationResolver) UpdateLabelsOnObjectNode(ctx context.Context, domain 
 }
 
 // RemoveLabelsFromObjectNode is the resolver for the removeLabelsFromObjectNode field.
-func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.Response, error) {
+func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.RemoveLabelsFromObjectNode(ctx, domain, name, typeArg, labels)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, domai
 }
 
 // AddPropertiesToObjectNode is the resolver for the addPropertiesToObjectNode field.
-func (r *mutationResolver) UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.Response, error) {
+func (r *mutationResolver) UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.UpdatePropertiesOnObjectNode(ctx, domain, name, typeArg, properties)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (r *mutationResolver) UpdatePropertiesOnObjectNode(ctx context.Context, dom
 }
 
 // RemovePropertiesFromObjectNode is the resolver for the removePropertiesFromObjectNode field.
-func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.Response, error) {
+func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.RemovePropertiesFromObjectNode(ctx, domain, name, typeArg, properties)
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement s
 }
 
 // GetObjectNode is the resolver for the getObjectNode field.
-func (r *queryResolver) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.Response, error) {
+func (r *queryResolver) GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.GetObjectNode(ctx, domain, name, typeArg)
 	if err != nil {
 		return nil, err
@@ -252,7 +252,7 @@ func (r *queryResolver) GetObjectNode(ctx context.Context, domain string, name s
 }
 
 // GetObjectNodes is the resolver for the getObjectNodes field.
-func (r *queryResolver) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.Response, error) {
+func (r *queryResolver) GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.ObjectNodesResponse, error) {
 	result, err := r.Database.GetObjectNodes(ctx, domain, name, typeArg, labels)
 	if err != nil {
 		return nil, err

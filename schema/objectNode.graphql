@@ -1,4 +1,5 @@
 type ObjectNode {
+  id: String!
   domain: String!
   name: String!
   type: String!

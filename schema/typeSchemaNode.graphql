@@ -1,0 +1,9 @@
+type TypeSchemaNode {
+  id: String!
+  domain: String!
+  name: String!
+  type: String!
+  originalName: String!
+  labels: [String!]
+  properties: JSON
+}

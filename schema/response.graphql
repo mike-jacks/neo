@@ -6,6 +6,18 @@ type Response {
   data: [JSON!]
 }
 
+type ObjectNodeResponse {
+  success: Boolean!
+  message: String
+  objectNode: ObjectNode!
+}
+
+type ObjectNodesResponse {
+  success: Boolean!
+  message: String
+  objectNodes: [ObjectNode!]
+}
+
 type DomainSchemaNodeResponse {
   success: Boolean!
   message: String
@@ -21,54 +33,35 @@ type DomainSchemaNodesResponse {
 type TypeSchemaNodeResponse {
   success: Boolean!
   message: String
-  data: [TypeSchemaNode!]
+  typeSchemaNode: TypeSchemaNode!
+}
+
+type TypeSchemaNodesResponse {
+  success: Boolean!
+  message: String
+  typeSchemaNodes: [TypeSchemaNode!]
 }
 
 type RelationshipSchemaNodeResponse {
   success: Boolean!
   message: String
-  data: [RelationshipSchemaNode!]
+  relationshipSchemaNode: RelationshipSchemaNode!
+}
+
+type RelationshipSchemaNodesResponse {
+  success: Boolean!
+  message: String
+  relationshipSchemaNodes: [RelationshipSchemaNode!]
 }
 
 type ObjectRelationshipObjectNodeResponse {
   success: Boolean!
   message: String
-  data: [ObjectRelationshipObjectNode!]
+  objectRelationshipObjectNodes: ObjectRelationshipObjectNode!
 }
 
-type DomainSchemaNode {
-  domain: String!
-  name: String!
-  type: String!
-  labels: [String!]
-  properties: JSON
-}
-
-type TypeSchemaNode {
-  domain: String!
-  name: String!
-  type: String!
-  originalName: String!
-  labels: [String!]
-  properties: JSON
-}
-
-type RelationshipSchemaNode {
-  relationshipName: String!
-  domain: String!
-  fromTypeSchemaNodeName: String!
-  toTypeSchemaNodeName: String!
-  properties: JSON
-}
-
-type ObjectRelationshipObjectNode {
-  fromObjectNode: ObjectNode!
-  relationshipNode: RelationshipSchemaNode!
-  toObjectNode: ObjectNode!
-}
-
-type ObjectNodeResponse {
+type ObjectRelationshipObjectNodesResponse {
   success: Boolean!
   message: String
-  data: [ObjectNode!]
+  objectRelationshipObjectNodes: [ObjectRelationshipObjectNode!]
 }

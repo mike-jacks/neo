@@ -1,7 +1,7 @@
 type Query {
   # Object Queries
-  getObjectNode(domain: String!, name: String!, type: String!): Response!
-  getObjectNodes(domain: String, name: String, type: String, labels: [String!]): Response!
+  getObjectNode(domain: String!, name: String!, type: String!): ObjectNodeResponse!
+  getObjectNodes(domain: String, name: String, type: String, labels: [String!]): ObjectNodesResponse!
 
   getObjectNodeRelationship(_relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   getObjectNodeOutgoingRelationships(fromObjectNode: ObjectNodeInput!): Response!

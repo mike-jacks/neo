@@ -20,6 +20,7 @@ type DeleteObjectNodeInput struct {
 }
 
 type DomainSchemaNode struct {
+	ID         string                 `json:"id"`
 	Domain     string                 `json:"domain"`
 	Name       string                 `json:"name"`
 	Type       string                 `json:"type"`
@@ -43,6 +44,7 @@ type Mutation struct {
 }
 
 type ObjectNode struct {
+	ID           string      `json:"id"`
 	Domain       string      `json:"domain"`
 	Name         string      `json:"name"`
 	Type         string      `json:"type"`
@@ -60,12 +62,19 @@ type ObjectNodeInput struct {
 }
 
 type ObjectNodeResponse struct {
-	Success bool          `json:"success"`
-	Message *string       `json:"message,omitempty"`
-	Data    []*ObjectNode `json:"data,omitempty"`
+	Success    bool        `json:"success"`
+	Message    *string     `json:"message,omitempty"`
+	ObjectNode *ObjectNode `json:"objectNode"`
+}
+
+type ObjectNodesResponse struct {
+	Success     bool          `json:"success"`
+	Message     *string       `json:"message,omitempty"`
+	ObjectNodes []*ObjectNode `json:"objectNodes,omitempty"`
 }
 
 type ObjectRelationship struct {
+	ID               string      `json:"id"`
 	RelationshipName string      `json:"relationshipName"`
 	FromObjectNode   *ObjectNode `json:"fromObjectNode"`
 	ToObjectNode     *ObjectNode `json:"toObjectNode"`
@@ -73,18 +82,26 @@ type ObjectRelationship struct {
 }
 
 type ObjectRelationshipObjectNode struct {
+	ID               string                  `json:"id"`
 	FromObjectNode   *ObjectNode             `json:"fromObjectNode"`
 	RelationshipNode *RelationshipSchemaNode `json:"relationshipNode"`
 	ToObjectNode     *ObjectNode             `json:"toObjectNode"`
 }
 
 type ObjectRelationshipObjectNodeResponse struct {
-	Success bool                            `json:"success"`
-	Message *string                         `json:"message,omitempty"`
-	Data    []*ObjectRelationshipObjectNode `json:"data,omitempty"`
+	Success                       bool                          `json:"success"`
+	Message                       *string                       `json:"message,omitempty"`
+	ObjectRelationshipObjectNodes *ObjectRelationshipObjectNode `json:"objectRelationshipObjectNodes"`
+}
+
+type ObjectRelationshipObjectNodesResponse struct {
+	Success                       bool                            `json:"success"`
+	Message                       *string                         `json:"message,omitempty"`
+	ObjectRelationshipObjectNodes []*ObjectRelationshipObjectNode `json:"objectRelationshipObjectNodes,omitempty"`
 }
 
 type Property struct {
+	ID    string       `json:"id"`
 	Key   string       `json:"key"`
 	Value any          `json:"value"`
 	Type  PropertyType `json:"type"`
@@ -100,6 +117,7 @@ type Query struct {
 }
 
 type RelationshipSchemaNode struct {
+	ID                     string                 `json:"id"`
 	RelationshipName       string                 `json:"relationshipName"`
 	Domain                 string                 `json:"domain"`
 	FromTypeSchemaNodeName string                 `json:"fromTypeSchemaNodeName"`
@@ -108,9 +126,15 @@ type RelationshipSchemaNode struct {
 }
 
 type RelationshipSchemaNodeResponse struct {
-	Success bool                      `json:"success"`
-	Message *string                   `json:"message,omitempty"`
-	Data    []*RelationshipSchemaNode `json:"data,omitempty"`
+	Success                bool                    `json:"success"`
+	Message                *string                 `json:"message,omitempty"`
+	RelationshipSchemaNode *RelationshipSchemaNode `json:"relationshipSchemaNode"`
+}
+
+type RelationshipSchemaNodesResponse struct {
+	Success                 bool                      `json:"success"`
+	Message                 *string                   `json:"message,omitempty"`
+	RelationshipSchemaNodes []*RelationshipSchemaNode `json:"relationshipSchemaNodes,omitempty"`
 }
 
 type Response struct {
@@ -120,6 +144,7 @@ type Response struct {
 }
 
 type TypeSchemaNode struct {
+	ID           string                 `json:"id"`
 	Domain       string                 `json:"domain"`
 	Name         string                 `json:"name"`
 	Type         string                 `json:"type"`
@@ -129,9 +154,15 @@ type TypeSchemaNode struct {
 }
 
 type TypeSchemaNodeResponse struct {
-	Success bool              `json:"success"`
-	Message *string           `json:"message,omitempty"`
-	Data    []*TypeSchemaNode `json:"data,omitempty"`
+	Success        bool            `json:"success"`
+	Message        *string         `json:"message,omitempty"`
+	TypeSchemaNode *TypeSchemaNode `json:"typeSchemaNode"`
+}
+
+type TypeSchemaNodesResponse struct {
+	Success         bool              `json:"success"`
+	Message         *string           `json:"message,omitempty"`
+	TypeSchemaNodes []*TypeSchemaNode `json:"typeSchemaNodes,omitempty"`
 }
 
 type UpdateObjectNodeInput struct {
