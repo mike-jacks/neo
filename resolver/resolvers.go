@@ -41,8 +41,8 @@ func (r *mutationResolver) DeleteObjectNode(ctx context.Context, id string) (*mo
 }
 
 // AddLabelsToObjectNode is the resolver for the addLabelsToObjectNode field.
-func (r *mutationResolver) UpdateLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error) {
-	result, err := r.Database.UpdateLabelsOnObjectNode(ctx, id, labels)
+func (r *mutationResolver) AddLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error) {
+	result, err := r.Database.AddLabelsOnObjectNode(ctx, id, labels)
 	if err != nil {
 		return nil, err
 	}

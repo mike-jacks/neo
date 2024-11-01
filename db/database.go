@@ -13,7 +13,7 @@ type Database interface {
 	RenameObjectNode(ctx context.Context, id string, newName string) (*model.ObjectNodeResponse, error)
 	DeleteObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
 
-	UpdateLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error)
+	AddLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error)
 	RemoveLabelsFromObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error)
 
 	UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)

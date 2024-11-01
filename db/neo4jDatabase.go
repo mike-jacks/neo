@@ -272,7 +272,7 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, id string) (*mode
 	return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, fmt.Errorf("failed to delete object node")
 }
 
-func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error) {
+func (db *Neo4jDatabase) AddLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -285,9 +285,9 @@ func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, id string
 		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
-	query := "MATCH (oobjectNode{_id: $id}) SET "
+	query := "MATCH (objectNode{_id: $id}) SET "
 	for _, label := range labels {
-		query += fmt.Sprintf("objectNode:%v, ", label)
+		query += fmt.Sprintf("objectNode:%s, ", label)
 	}
 	query = strings.TrimSuffix(query, ", ")
 	query += " RETURN objectNode"
