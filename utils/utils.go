@@ -230,27 +230,29 @@ func GenerateId() string {
 	return generator()
 }
 
-
-func ExtractPropertiesFromNode(properties map[string]interface{}) []*model.Property {
+func ExtractPropertiesFromNeo4jNode(properties map[string]interface{}) []*model.Property {
 	extractedProperties := []*model.Property{}
 	for key, value := range properties {
 		switch value.(type) {
 		case string:
 			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeString})
-		case int:
+		case int64:
 			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeNumber})
 		case bool:
 			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeBoolean})
 		case float64:
 			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeNumber})
-		case []string:
-			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayString})
-		case []int:
-			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayNumber})
-		case []bool:
-			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayBoolean})
-		case []float64:
-			extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayNumber})
+		case []interface{}:
+			switch value.([]interface{})[0].(type) {
+			case string:
+				extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayString})
+			case int64:
+				extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayNumber})
+			case bool:
+				extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayBoolean})
+			case float64:
+				extractedProperties = append(extractedProperties, &model.Property{Key: key, Value: value, Type: model.PropertyTypeArrayNumber})
+			}
 		}
 	}
 	return extractedProperties

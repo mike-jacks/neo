@@ -161,7 +161,7 @@ func (db *Neo4jDatabase) CreateObjectNode(ctx context.Context, domain string, na
 			Domain:       utils.PopString(nodeProperties, "_domain"),
 			OriginalName: utils.PopString(nodeProperties, "_originalName"),
 			Labels:       neo4jObjectNode.Labels,
-			Properties:   utils.ExtractPropertiesFromNode(nodeProperties),
+			Properties:   utils.ExtractPropertiesFromNeo4jNode(nodeProperties),
 		}
 		message := "Object node created successfully"
 		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: data}, nil
@@ -246,7 +246,7 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, id string, update
 			Domain:       utils.PopString(nodeProperties, "_domain"),
 			OriginalName: utils.PopString(nodeProperties, "_originalName"),
 			Labels:       neo4jObjectNode.Labels,
-			Properties:   utils.ExtractPropertiesFromNode(nodeProperties),
+			Properties:   utils.ExtractPropertiesFromNeo4jNode(nodeProperties),
 		}
 		message := "Object node updated successfully"
 		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: data}, nil
