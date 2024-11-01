@@ -59,8 +59,8 @@ func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, id st
 }
 
 // AddPropertiesToObjectNode is the resolver for the addPropertiesToObjectNode field.
-func (r *mutationResolver) UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error) {
-	result, err := r.Database.UpdatePropertiesOnObjectNode(ctx, domain, name, typeArg, properties)
+func (r *mutationResolver) UpdatePropertiesOnObjectNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error) {
+	result, err := r.Database.UpdatePropertiesOnObjectNode(ctx, id, properties)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +68,8 @@ func (r *mutationResolver) UpdatePropertiesOnObjectNode(ctx context.Context, dom
 }
 
 // RemovePropertiesFromObjectNode is the resolver for the removePropertiesFromObjectNode field.
-func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.ObjectNodeResponse, error) {
-	result, err := r.Database.RemovePropertiesFromObjectNode(ctx, domain, name, typeArg, properties)
+func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, id string, properties []string) (*model.ObjectNodeResponse, error) {
+	result, err := r.Database.RemovePropertiesFromObjectNode(ctx, id, properties)
 	if err != nil {
 		return nil, err
 	}

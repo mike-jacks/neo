@@ -81,7 +81,7 @@ type ComplexityRoot struct {
 		DeleteRelationshipSchemaNode               func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
 		DeleteTypeSchemaNode                       func(childComplexity int, domain string, name string) int
 		RemoveLabelsFromObjectNode                 func(childComplexity int, id string, labels []string) int
-		RemovePropertiesFromObjectNode             func(childComplexity int, domain string, name string, typeArg string, properties []string) int
+		RemovePropertiesFromObjectNode             func(childComplexity int, id string, properties []string) int
 		RemovePropertiesFromObjectRelationship     func(childComplexity int, relationshipName string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
 		RemovePropertiesFromRelationshipSchemaNode func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []string) int
 		RemovePropertiesFromTypeSchemaNode         func(childComplexity int, domain string, name string, properties []string) int
@@ -90,7 +90,7 @@ type ComplexityRoot struct {
 		RenamePropertyOnRelationshipSchemaNode     func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, oldPropertyName string, newPropertyName string) int
 		RenamePropertyOnTypeSchemaNode             func(childComplexity int, domain string, name string, oldPropertyName string, newPropertyName string) int
 		RenameTypeSchemaNode                       func(childComplexity int, domain string, existingName string, newName string) int
-		UpdatePropertiesOnObjectNode               func(childComplexity int, domain string, name string, typeArg string, properties []*model.PropertyInput) int
+		UpdatePropertiesOnObjectNode               func(childComplexity int, id string, properties []*model.PropertyInput) int
 		UpdatePropertiesOnObjectRelationship       func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
 		UpdatePropertiesOnRelationshipSchemaNode   func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) int
 		UpdatePropertiesOnTypeSchemaNode           func(childComplexity int, domain string, name string, properties []*model.PropertyInput) int
@@ -219,8 +219,8 @@ type MutationResolver interface {
 	DeleteObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
 	AddLabelsOnObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error)
 	RemoveLabelsFromObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error)
-	UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)
-	RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.ObjectNodeResponse, error)
+	UpdatePropertiesOnObjectNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)
+	RemovePropertiesFromObjectNode(ctx context.Context, id string, properties []string) (*model.ObjectNodeResponse, error)
 	CreateObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	UpdatePropertiesOnObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	RemovePropertiesFromObjectRelationship(ctx context.Context, relationshipName string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
@@ -522,7 +522,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemovePropertiesFromObjectNode(childComplexity, args["_domain"].(string), args["name"].(string), args["type"].(string), args["properties"].([]string)), true
+		return e.complexity.Mutation.RemovePropertiesFromObjectNode(childComplexity, args["id"].(string), args["properties"].([]string)), true
 
 	case "Mutation.removePropertiesFromObjectRelationship":
 		if e.complexity.Mutation.RemovePropertiesFromObjectRelationship == nil {
@@ -630,7 +630,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdatePropertiesOnObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string), args["properties"].([]*model.PropertyInput)), true
+		return e.complexity.Mutation.UpdatePropertiesOnObjectNode(childComplexity, args["id"].(string), args["properties"].([]*model.PropertyInput)), true
 
 	case "Mutation.updatePropertiesOnObjectRelationship":
 		if e.complexity.Mutation.UpdatePropertiesOnObjectRelationship == nil {
@@ -1311,8 +1311,8 @@ var sources = []*ast.Source{
   addLabelsOnObjectNode(id: String!, labels: [String!]!): ObjectNodeResponse!
   removeLabelsFromObjectNode(id: String!, labels: [String!]!): ObjectNodeResponse!
 
-  updatePropertiesOnObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): ObjectNodeResponse!
-  removePropertiesFromObjectNode(_domain: String!, name: String!, type: String!, properties: [String!]!): ObjectNodeResponse!
+  updatePropertiesOnObjectNode(id: String!, properties: [PropertyInput!]!): ObjectNodeResponse!
+  removePropertiesFromObjectNode(id: String!, properties: [String!]!): ObjectNodeResponse!
 
   createObjectRelationship(
     relationshipName: String!
@@ -2205,60 +2205,24 @@ func (ec *executionContext) field_Mutation_removeLabelsFromObjectNode_argsLabels
 func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_removePropertiesFromObjectNode_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_removePropertiesFromObjectNode_argsID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["_domain"] = arg0
-	arg1, err := ec.field_Mutation_removePropertiesFromObjectNode_argsName(ctx, rawArgs)
+	args["id"] = arg0
+	arg1, err := ec.field_Mutation_removePropertiesFromObjectNode_argsProperties(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["name"] = arg1
-	arg2, err := ec.field_Mutation_removePropertiesFromObjectNode_argsType(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["type"] = arg2
-	arg3, err := ec.field_Mutation_removePropertiesFromObjectNode_argsProperties(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["properties"] = arg3
+	args["properties"] = arg1
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsDomain(
+func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("_domain"))
-	if tmp, ok := rawArgs["_domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_removePropertiesFromObjectNode_argsType(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-	if tmp, ok := rawArgs["type"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -2844,60 +2808,24 @@ func (ec *executionContext) field_Mutation_renameTypeSchemaNode_argsNewName(
 func (ec *executionContext) field_Mutation_updatePropertiesOnObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updatePropertiesOnObjectNode_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_updatePropertiesOnObjectNode_argsID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_updatePropertiesOnObjectNode_argsName(ctx, rawArgs)
+	args["id"] = arg0
+	arg1, err := ec.field_Mutation_updatePropertiesOnObjectNode_argsProperties(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["name"] = arg1
-	arg2, err := ec.field_Mutation_updatePropertiesOnObjectNode_argsType(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["type"] = arg2
-	arg3, err := ec.field_Mutation_updatePropertiesOnObjectNode_argsProperties(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["properties"] = arg3
+	args["properties"] = arg1
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_updatePropertiesOnObjectNode_argsDomain(
+func (ec *executionContext) field_Mutation_updatePropertiesOnObjectNode_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updatePropertiesOnObjectNode_argsName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updatePropertiesOnObjectNode_argsType(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-	if tmp, ok := rawArgs["type"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -4424,7 +4352,7 @@ func (ec *executionContext) _Mutation_updatePropertiesOnObjectNode(ctx context.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdatePropertiesOnObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["properties"].([]*model.PropertyInput))
+		return ec.resolvers.Mutation().UpdatePropertiesOnObjectNode(rctx, fc.Args["id"].(string), fc.Args["properties"].([]*model.PropertyInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4487,7 +4415,7 @@ func (ec *executionContext) _Mutation_removePropertiesFromObjectNode(ctx context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemovePropertiesFromObjectNode(rctx, fc.Args["_domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string), fc.Args["properties"].([]string))
+		return ec.resolvers.Mutation().RemovePropertiesFromObjectNode(rctx, fc.Args["id"].(string), fc.Args["properties"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

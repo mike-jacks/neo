@@ -382,39 +382,33 @@ func (db *Neo4jDatabase) RemoveLabelsFromObjectNode(ctx context.Context, id stri
 	return nil, fmt.Errorf("failed to remove labels from object node")
 }
 
-func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error) {
+func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
-
-	domain = strings.Trim(domain, " ")
-	name = strings.Trim(strings.ToUpper(name), " ")
-	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
-	labelFromTypeArg := strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
 
 	if err := utils.CleanUpPropertyObjects(properties); err != nil {
 		message := err.Error()
 		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
-	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) SET o", labelFromTypeArg)
+	query := "MATCH (objectNode:{_id: $id}) SET "
 
 	for _, property := range properties {
 		if property.Type == model.PropertyTypeString {
-			query += fmt.Sprintf(".%v = \"%v\", ", property.Key, property.Value)
+			query += fmt.Sprintf("objectNode.%v = \"%v\", ", property.Key, property.Value)
 		} else {
-			query += fmt.Sprintf(".%v = %v, ", property.Key, property.Value)
+			query += fmt.Sprintf("objectNode.%v = %v, ", property.Key, property.Value)
 		}
 	}
 	query = strings.TrimSuffix(query, ", ")
-	query += " RETURN o"
+	query += " RETURN objectNode"
 
 	parameters := map[string]any{
-		"name":    name,
-		"typeArg": typeArg,
-		"domain":  domain,
+		"id": id,
 	}
 
 	fmt.Println(query)
+
 	result, err := session.Run(ctx, query, parameters)
 	if err != nil {
 		return nil, err
@@ -431,51 +425,39 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, domai
 			return nil, fmt.Errorf("unexpected type for node: %T", node)
 		}
 
-		nodeProperties := make(map[string]interface{})
-		for key, value := range neo4jNode.Props {
-			nodeProperties[key] = value
+		data := &model.ObjectNode{
+			ID:         utils.PopString(neo4jNode.Props, "_id"),
+			Name:       utils.PopString(neo4jNode.Props, "_name"),
+			Type:       utils.PopString(neo4jNode.Props, "_type"),
+			Domain:     utils.PopString(neo4jNode.Props, "_domain"),
+			Labels:     neo4jNode.Labels,
+			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jNode.Props),
 		}
-
-		data := []map[string]interface{}{}
-		data = append(data, map[string]interface{}{
-			"_name":       utils.PopString(nodeProperties, "_name"),
-			"_type":       utils.PopString(nodeProperties, "_type"),
-			"_domain":     utils.PopString(nodeProperties, "_domain"),
-			"_labels":     neo4jNode.Labels,
-			"_properties": nodeProperties,
-		})
 		message := "Properties added to object node successfully"
-		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: data}, nil
 	}
 	return nil, fmt.Errorf("failed to add properties to object node")
 }
 
-func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []string) (*model.ObjectNodeResponse, error) {
+func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, id string, properties []string) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
-
-	domain = strings.Trim(domain, " ")
-	name = strings.Trim(strings.ToUpper(name), " ")
-	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
-	labelFromTypeArg := strings.ReplaceAll(strings.Trim(strings.ToUpper(typeArg), " "), " ", "_")
 
 	if err := utils.CleanUpPropertyKeys(properties); err != nil {
 		message := err.Error()
 		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
-	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) REMOVE ", labelFromTypeArg)
+	query := "MATCH (objectNode:{_id: $id}) REMOVE "
 
 	for _, property := range properties {
-		query += fmt.Sprintf("o.%v, ", property)
+		query += fmt.Sprintf("objectNode.%v, ", property)
 	}
 	query = strings.TrimSuffix(query, ", ")
-	query += " RETURN o"
+	query += " RETURN objectNode"
 
 	parameters := map[string]any{
-		"name":    name,
-		"typeArg": typeArg,
-		"domain":  domain,
+		"id": id,
 	}
 
 	fmt.Println(query)
@@ -486,7 +468,7 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, dom
 
 	if result.Next(ctx) {
 		record := result.Record()
-		node, ok := record.Get("o")
+		node, ok := record.Get("objectNode")
 		if !ok {
 			return nil, fmt.Errorf("failed to retrieve the updated node")
 		}
@@ -495,21 +477,16 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, dom
 			return nil, fmt.Errorf("unexpected type for node: %T", node)
 		}
 
-		nodeProperties := make(map[string]interface{})
-		for key, value := range neo4jNode.Props {
-			nodeProperties[key] = value
+		data := &model.ObjectNode{
+			ID:         utils.PopString(neo4jNode.Props, "_id"),
+			Name:       utils.PopString(neo4jNode.Props, "_name"),
+			Type:       utils.PopString(neo4jNode.Props, "_type"),
+			Domain:     utils.PopString(neo4jNode.Props, "_domain"),
+			Labels:     neo4jNode.Labels,
+			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jNode.Props),
 		}
-
-		data := []map[string]interface{}{}
-		data = append(data, map[string]interface{}{
-			"_name":       utils.PopString(nodeProperties, "_name"),
-			"_type":       utils.PopString(nodeProperties, "_type"),
-			"_domain":     utils.PopString(nodeProperties, "_domain"),
-			"_labels":     neo4jNode.Labels,
-			"_properties": nodeProperties,
-		})
 		message := "Properties removed from object node successfully"
-		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
+		return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: data}, nil
 	}
 	return nil, fmt.Errorf("failed to remove properties from object node")
 }
