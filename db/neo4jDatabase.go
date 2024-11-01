@@ -391,7 +391,7 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, id st
 		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
-	query := "MATCH (objectNode:{_id: $id}) SET "
+	query := "MATCH (objectNode{_id: $id}) SET "
 
 	for _, property := range properties {
 		if property.Type == model.PropertyTypeString {
@@ -448,7 +448,7 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectNode(ctx context.Context, id 
 		return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 	}
 
-	query := "MATCH (objectNode:{_id: $id}) REMOVE "
+	query := "MATCH (objectNode{_id: $id}) REMOVE "
 
 	for _, property := range properties {
 		query += fmt.Sprintf("objectNode.%v, ", property)
