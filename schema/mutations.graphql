@@ -2,7 +2,7 @@ type Mutation {
   # Object Mutations
   createObjectNode(domain: String!, name: String!, type: String!, labels: [String!], properties: [PropertyInput!]): ObjectNodeResponse!
   updateObjectNode(id: String!, updateObjectNodeInput: UpdateObjectNodeInput!): ObjectNodeResponse!
-  deleteObjectNode(domain: String!, name: String!, type: String!): ObjectNodeResponse!
+  deleteObjectNode(id: String!): ObjectNodeResponse!
 
   updateLabelsOnObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): ObjectNodeResponse!
   removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): ObjectNodeResponse!
@@ -10,7 +10,12 @@ type Mutation {
   updatePropertiesOnObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): ObjectNodeResponse!
   removePropertiesFromObjectNode(_domain: String!, name: String!, type: String!, properties: [String!]!): ObjectNodeResponse!
 
-  createObjectRelationship(relationshipName: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  createObjectRelationship(
+    relationshipName: String!
+    properties: [PropertyInput!]
+    fromObjectNode: ObjectNodeInput!
+    toObjectNode: ObjectNodeInput!
+  ): Response!
   updatePropertiesOnObjectRelationship(
     relationshipName: String!
     properties: [PropertyInput!]!
@@ -37,9 +42,28 @@ type Mutation {
   deleteTypeSchemaNode(domain: String!, name: String!): Response!
 
   createRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
-  updatePropertiesOnRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [PropertyInput!]!): Response!
-  renamePropertyOnRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, oldPropertyName: String!, newPropertyName: String!): Response!
-  removePropertiesFromRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [String!]!): Response!
+  updatePropertiesOnRelationshipSchemaNode(
+    relationshipName: String!
+    domain: String!
+    fromTypeSchemaNodeName: String!
+    toTypeSchemaNodeName: String!
+    properties: [PropertyInput!]!
+  ): Response!
+  renamePropertyOnRelationshipSchemaNode(
+    relationshipName: String!
+    domain: String!
+    fromTypeSchemaNodeName: String!
+    toTypeSchemaNodeName: String!
+    oldPropertyName: String!
+    newPropertyName: String!
+  ): Response!
+  removePropertiesFromRelationshipSchemaNode(
+    relationshipName: String!
+    domain: String!
+    fromTypeSchemaNodeName: String!
+    toTypeSchemaNodeName: String!
+    properties: [String!]!
+  ): Response!
   deleteRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
 
   cypherMutation(cypher_statement: String!): [Response!]!

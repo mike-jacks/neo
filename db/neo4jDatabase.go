@@ -256,20 +256,13 @@ func (db *Neo4jDatabase) UpdateObjectNode(ctx context.Context, id string, update
 	return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, fmt.Errorf("failed to update object node")
 }
 
-func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error) {
+func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(domain, " ")
-	name = strings.Trim(strings.ToUpper(name), " ")
-	typeArg = strings.Trim(strings.ToUpper(typeArg), " ")
-	labelFromTypeArg := strings.ReplaceAll(strings.ReplaceAll(typeArg, " ", "_"), "-", "_")
-
-	query := fmt.Sprintf("MATCH (o:%v {_name: $name, _type: $typeArg, _domain: $domain}) DETACH DELETE o RETURN count(o) as deletedCount", labelFromTypeArg)
+	query := "MATCH (objectNode{_id: $id}) WITH count(objectNode) as deletedCount, objectNode._id as id DETACH DELETE objectNode RETURN id, deletedCount"
 	parameters := map[string]any{
-		"name":    name,
-		"typeArg": typeArg,
-		"domain":  domain,
+		"id": id,
 	}
 
 	fmt.Println(query)
@@ -287,16 +280,30 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, domain string, na
 			message := "Failed to retrieve the deleted count"
 			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
+		id, ok := record.Get("id")
+		if !ok {
+			message := "Failed to retrieve the deleted id"
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
+		}
+		idString, ok := id.(string)
+		if !ok {
+			message := "Failed to retrieve the deleted id"
+			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
+		}
 		deletedCountInt := deletedCount.(int64)
+		data := &model.ObjectNode{
+			ID: idString,
+		}
 		if deletedCountInt > 0 {
-			message := fmt.Sprintf("Successfully deleted object node: %v", name)
-			return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: nil}, nil
+			message := "Successfully deleted object node."
+			return &model.ObjectNodeResponse{Success: true, Message: &message, ObjectNode: data}, nil
 		} else {
-			message := fmt.Sprintf("Object node: %v does not exist", name)
+			message := fmt.Sprintf("Object node with id %v does not exist", idString)
 			return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, nil
 		}
 	}
-	return nil, fmt.Errorf("failed to delete object node")
+	message := "Failed to delete object node"
+	return &model.ObjectNodeResponse{Success: false, Message: &message, ObjectNode: nil}, fmt.Errorf("failed to delete object node")
 }
 
 func (db *Neo4jDatabase) UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error) {

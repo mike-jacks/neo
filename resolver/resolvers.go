@@ -31,8 +31,8 @@ func (r *mutationResolver) UpdateObjectNode(ctx context.Context, id string, upda
 }
 
 // DeleteObjectNode is the resolver for the deleteObjectNode field.
-func (r *mutationResolver) DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error) {
-	result, err := r.Database.DeleteObjectNode(ctx, domain, name, typeArg)
+func (r *mutationResolver) DeleteObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error) {
+	result, err := r.Database.DeleteObjectNode(ctx, id)
 	if err != nil {
 		return nil, err
 	}

@@ -75,7 +75,7 @@ type ComplexityRoot struct {
 		CreateTypeSchemaNode                       func(childComplexity int, domain string, name string) int
 		CypherMutation                             func(childComplexity int, cypherStatement string) int
 		DeleteDomainSchemaNode                     func(childComplexity int, domain string) int
-		DeleteObjectNode                           func(childComplexity int, domain string, name string, typeArg string) int
+		DeleteObjectNode                           func(childComplexity int, id string) int
 		DeleteObjectRelationship                   func(childComplexity int, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
 		DeleteRelationshipSchemaNode               func(childComplexity int, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
 		DeleteTypeSchemaNode                       func(childComplexity int, domain string, name string) int
@@ -216,7 +216,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)
 	UpdateObjectNode(ctx context.Context, id string, updateObjectNodeInput model.UpdateObjectNodeInput) (*model.ObjectNodeResponse, error)
-	DeleteObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error)
+	DeleteObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
 	UpdateLabelsOnObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error)
 	RemoveLabelsFromObjectNode(ctx context.Context, domain string, name string, typeArg string, labels []string) (*model.ObjectNodeResponse, error)
 	UpdatePropertiesOnObjectNode(ctx context.Context, domain string, name string, typeArg string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)
@@ -450,7 +450,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string)), true
+		return e.complexity.Mutation.DeleteObjectNode(childComplexity, args["id"].(string)), true
 
 	case "Mutation.deleteObjectRelationship":
 		if e.complexity.Mutation.DeleteObjectRelationship == nil {
@@ -1306,7 +1306,7 @@ var sources = []*ast.Source{
   # Object Mutations
   createObjectNode(domain: String!, name: String!, type: String!, labels: [String!], properties: [PropertyInput!]): ObjectNodeResponse!
   updateObjectNode(id: String!, updateObjectNodeInput: UpdateObjectNodeInput!): ObjectNodeResponse!
-  deleteObjectNode(domain: String!, name: String!, type: String!): ObjectNodeResponse!
+  deleteObjectNode(id: String!): ObjectNodeResponse!
 
   updateLabelsOnObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): ObjectNodeResponse!
   removeLabelsFromObjectNode(domain: String!, name: String!, type: String!, labels: [String!]!): ObjectNodeResponse!
@@ -1314,7 +1314,12 @@ var sources = []*ast.Source{
   updatePropertiesOnObjectNode(domain: String!, name: String!, type: String!, properties: [PropertyInput!]!): ObjectNodeResponse!
   removePropertiesFromObjectNode(_domain: String!, name: String!, type: String!, properties: [String!]!): ObjectNodeResponse!
 
-  createObjectRelationship(relationshipName: String!, properties: [PropertyInput!], fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+  createObjectRelationship(
+    relationshipName: String!
+    properties: [PropertyInput!]
+    fromObjectNode: ObjectNodeInput!
+    toObjectNode: ObjectNodeInput!
+  ): Response!
   updatePropertiesOnObjectRelationship(
     relationshipName: String!
     properties: [PropertyInput!]!
@@ -1341,9 +1346,28 @@ var sources = []*ast.Source{
   deleteTypeSchemaNode(domain: String!, name: String!): Response!
 
   createRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
-  updatePropertiesOnRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [PropertyInput!]!): Response!
-  renamePropertyOnRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, oldPropertyName: String!, newPropertyName: String!): Response!
-  removePropertiesFromRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!, properties: [String!]!): Response!
+  updatePropertiesOnRelationshipSchemaNode(
+    relationshipName: String!
+    domain: String!
+    fromTypeSchemaNodeName: String!
+    toTypeSchemaNodeName: String!
+    properties: [PropertyInput!]!
+  ): Response!
+  renamePropertyOnRelationshipSchemaNode(
+    relationshipName: String!
+    domain: String!
+    fromTypeSchemaNodeName: String!
+    toTypeSchemaNodeName: String!
+    oldPropertyName: String!
+    newPropertyName: String!
+  ): Response!
+  removePropertiesFromRelationshipSchemaNode(
+    relationshipName: String!
+    domain: String!
+    fromTypeSchemaNodeName: String!
+    toTypeSchemaNodeName: String!
+    properties: [String!]!
+  ): Response!
   deleteRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
 
   cypherMutation(cypher_statement: String!): [Response!]!
@@ -1899,55 +1923,19 @@ func (ec *executionContext) field_Mutation_deleteDomainSchemaNode_argsDomain(
 func (ec *executionContext) field_Mutation_deleteObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_deleteObjectNode_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteObjectNode_argsID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Mutation_deleteObjectNode_argsName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["name"] = arg1
-	arg2, err := ec.field_Mutation_deleteObjectNode_argsType(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["type"] = arg2
+	args["id"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteObjectNode_argsDomain(
+func (ec *executionContext) field_Mutation_deleteObjectNode_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteObjectNode_argsName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteObjectNode_argsType(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-	if tmp, ok := rawArgs["type"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -4319,7 +4307,7 @@ func (ec *executionContext) _Mutation_deleteObjectNode(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string))
+		return ec.resolvers.Mutation().DeleteObjectNode(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
