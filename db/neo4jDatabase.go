@@ -260,7 +260,7 @@ func (db *Neo4jDatabase) DeleteObjectNode(ctx context.Context, id string) (*mode
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	query := "MATCH (objectNode{_id: $id}) WITH count(objectNode) as deletedCount, objectNode._id as id DETACH DELETE objectNode RETURN id, deletedCount"
+	query := "MATCH (objectNode{_id: $id}) WITH objectNode, count(objectNode) as deletedCount, objectNode._id as id DETACH DELETE objectNode RETURN id, deletedCount"
 	parameters := map[string]any{
 		"id": id,
 	}
