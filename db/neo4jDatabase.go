@@ -178,7 +178,7 @@ func (db *Neo4jDatabase) RenameObjectNode(ctx context.Context, id string, newNam
 	newOriginalName := strings.Trim(newName, " ")
 	newName = strings.Trim(strings.ToUpper(newName), " ")
 
-	query := fmt.Sprintf("MATCH (objectNode{_id: $id}) SET objectNode._name = %s, objectNode._originalName = %s RETURN objectNode;", newName, newOriginalName)
+	query := fmt.Sprintf("MATCH (objectNode{_id: $id}) SET objectNode._name = \"%s\", objectNode._originalName = \"%s\" RETURN objectNode;", newName, newOriginalName)
 	fmt.Println(query)
 
 	parameters := map[string]any{
