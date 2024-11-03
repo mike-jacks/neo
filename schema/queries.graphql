@@ -3,9 +3,9 @@ type Query {
   getObjectNode(id: String!): ObjectNodeResponse!
   getObjectNodes(domain: String, type: String): ObjectNodesResponse!
 
-  getObjectNodeRelationship(_relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
-  getObjectNodeOutgoingRelationships(fromObjectNode: ObjectNodeInput!): Response!
-  getObjectNodeIncomingRelationships(toObjectNode: ObjectNodeInput!): Response!
+  getObjectNodeRelationship(id: String!): ObjectRelationshipResponse!
+  getObjectNodeOutgoingRelationships(fromObjectNodeId: String!): ObjectRelationshipsResponse!
+  getObjectNodeIncomingRelationships(toObjectNodeId: String!): ObjectRelationshipsResponse!
 
   getAllDomainSchemaNodes: DomainSchemaNodesResponse!
   getAllTypeSchemaNodes(domain: String!): Response!

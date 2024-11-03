@@ -958,38 +958,16 @@ func (db *Neo4jDatabase) DeleteObjectRelationship(ctx context.Context, id string
 	return &model.ObjectRelationshipResponse{Success: false, Message: &message, ObjectRelationship: nil}, nil
 }
 
-func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, id string) (*model.ObjectRelationshipResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	relationshipName = utils.CleanUpRelationshipName(relationshipName)
-
-	if err := utils.CleanUpObjectNode(&fromObjectNode); err != nil {
-		message := err.Error()
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
-	}
-
-	if err := utils.CleanUpObjectNode(&toObjectNode); err != nil {
-		message := err.Error()
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
-	}
-
-	query := fmt.Sprintf(`
-		MATCH (fromObjectNode {_name: $fromName, _type: $fromType, _domain: $fromDomain})
-		-[relationship:%s]->
-		(toObjectNode {_name: $toName, _type: $toType, _domain: $toDomain})
-		RETURN fromObjectNode, relationship, toObjectNode
-	`, relationshipName)
+	query := `MATCH () - [relationship {_id: $id}]-> () RETURN relationship`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"fromName":   fromObjectNode.Name,
-		"fromType":   fromObjectNode.Type,
-		"fromDomain": fromObjectNode.Domain,
-		"toName":     toObjectNode.Name,
-		"toType":     toObjectNode.Type,
-		"toDomain":   toObjectNode.Domain,
+		"id": id,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -999,82 +977,40 @@ func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, relation
 
 	if result.Next(ctx) {
 		record := result.Record()
-		fromObjectNode, ok := record.Get("fromObjectNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the fromObjectNode")
-		}
 		relationship, ok := record.Get("relationship")
 		if !ok {
 			return nil, fmt.Errorf("failed to retrieve the relationship")
-		}
-		toObjectNode, ok := record.Get("toObjectNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the toObjectNode")
-		}
-		neo4jFromObjectNode, ok := fromObjectNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for fromObjectNode: %T", fromObjectNode)
 		}
 		neo4jRelationship, ok := relationship.(dbtype.Relationship)
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
-		neo4jToObjectNode, ok := toObjectNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
+		data := &model.ObjectRelationship{
+			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
+			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
+			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
 		}
-		data := []map[string]interface{}{}
-		data = append(data, map[string]interface{}{
-			"fromObjectNode": map[string]interface{}{
-				"_name":         utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
-				"_type":         utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
-				"_domain":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
-				"_originalName": utils.PopString(neo4jFromObjectNode.GetProperties(), "_originalName"),
-				"_properties":   neo4jFromObjectNode.GetProperties(),
-				"_labels":       neo4jFromObjectNode.Labels,
-			},
-			"relationship": map[string]interface{}{
-				"_relationshipName":         neo4jRelationship.Type,
-				"_originalRelationshipName": utils.PopString(neo4jRelationship.GetProperties(), "_originalRelationshipName"),
-				"_properties":               neo4jRelationship.GetProperties(),
-			},
-			"toObjectNode": map[string]interface{}{
-				"_name":         utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
-				"_type":         utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
-				"_domain":       utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
-				"_originalName": utils.PopString(neo4jToObjectNode.GetProperties(), "_originalName"),
-				"_properties":   neo4jToObjectNode.GetProperties(),
-				"_labels":       neo4jToObjectNode.Labels,
-			},
-		})
 		message := "Object relationship retrieved successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.ObjectRelationshipResponse{Success: true, Message: &message, ObjectRelationship: data}, nil
 	} else {
 		message := "Object relationship retrieval failed"
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
+		return &model.ObjectRelationshipResponse{Success: false, Message: &message, ObjectRelationship: nil}, nil
 	}
 }
 
-func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error) {
+func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNodeId string) (*model.ObjectRelationshipsResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	if err := utils.CleanUpObjectNode(&fromObjectNode); err != nil {
-		message := err.Error()
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
-	}
-
-	query := `
-		MATCH (fromObjectNode {_name: $fromName, _type: $fromType, _domain: $fromDomain})
-		-[relationship]->(toObjectNode)
-		RETURN fromObjectNode, relationship, toObjectNode`
+	query := ` MATCH (fromObjectNode {_id:$fromObjectNodeId}) - [relationship] -> () RETURN relationship`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"fromName":   fromObjectNode.Name,
-		"fromType":   fromObjectNode.Type,
-		"fromDomain": fromObjectNode.Domain,
+		"fromObjectNodeId": fromObjectNodeId,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -1082,86 +1018,45 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 		return nil, err
 	}
 
-	data := []map[string]interface{}{}
+	data := []*model.ObjectRelationship{}
 	for result.Next(ctx) {
 		record := result.Record()
-		fromObjectNode, ok := record.Get("fromObjectNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the fromObjectNode")
-		}
 		relationship, ok := record.Get("relationship")
 		if !ok {
 			return nil, fmt.Errorf("failed to retrieve the relationship")
-		}
-		toObjectNode, ok := record.Get("toObjectNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the toObjectNode")
-		}
-		neo4jFromObjectNode, ok := fromObjectNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for fromObjectNode: %T", fromObjectNode)
 		}
 		neo4jRelationship, ok := relationship.(dbtype.Relationship)
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
-		neo4jToObjectNode, ok := toObjectNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
-		}
-		data = append(data, map[string]interface{}{
-			"fromObjectNode": map[string]interface{}{
-				"_name":         utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
-				"_type":         utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
-				"_domain":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
-				"_originalName": utils.PopString(neo4jFromObjectNode.GetProperties(), "_originalName"),
-				"_properties":   neo4jFromObjectNode.GetProperties(),
-				"_labels":       neo4jFromObjectNode.Labels,
-			},
-			"relationship": map[string]interface{}{
-				"_relationshipName":         neo4jRelationship.Type,
-				"_originalRelationshipName": utils.PopString(neo4jRelationship.GetProperties(), "_originalRelationshipName"),
-				"_properties":               neo4jRelationship.GetProperties(),
-			},
-			"toObjectNode": map[string]interface{}{
-				"_name":         utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
-				"_type":         utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
-				"_domain":       utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
-				"_originalName": utils.PopString(neo4jToObjectNode.GetProperties(), "_originalName"),
-				"_properties":   neo4jToObjectNode.GetProperties(),
-				"_labels":       neo4jToObjectNode.Labels,
-			},
+		data = append(data, &model.ObjectRelationship{
+			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
+			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
+			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
 		})
 	}
 	if len(data) == 0 {
 		message := "No outgoing relationships found"
-		return &model.Response{Success: false, Message: &message, Data: data}, nil
+		return &model.ObjectRelationshipsResponse{Success: false, Message: &message, ObjectRelationships: data}, nil
 	}
 	message := "Object outgoing relationships retrieved successfully"
-	return &model.Response{Success: true, Message: &message, Data: data}, nil
+	return &model.ObjectRelationshipsResponse{Success: true, Message: &message, ObjectRelationships: data}, nil
 
 }
 
-func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
+func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNodeId string) (*model.ObjectRelationshipsResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	if err := utils.CleanUpObjectNode(&toObjectNode); err != nil {
-		message := err.Error()
-		return &model.Response{Success: false, Message: &message, Data: nil}, nil
-	}
-
-	query := `
-		MATCH (toObjectNode {_name: $fromName, _type: $fromType, _domain: $fromDomain})
-		<-[relationship]-(fromObjectNode)
-		RETURN fromObjectNode, relationship, toObjectNode`
+	query := ` MATCH () - [relationship] -> (toObjectNode{_id:$toObjectNodeId}) RETURN relationship`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"fromName":   toObjectNode.Name,
-		"fromType":   toObjectNode.Type,
-		"fromDomain": toObjectNode.Domain,
+		"toObjectNodeId": toObjectNodeId,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -1169,63 +1064,33 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 		return nil, err
 	}
 
-	data := []map[string]interface{}{}
+	data := []*model.ObjectRelationship{}
 	for result.Next(ctx) {
 		record := result.Record()
-		fromObjectNode, ok := record.Get("fromObjectNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the fromObjectNode")
-		}
 		relationship, ok := record.Get("relationship")
 		if !ok {
 			return nil, fmt.Errorf("failed to retrieve the relationship")
-		}
-		toObjectNode, ok := record.Get("toObjectNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the toObjectNode")
-		}
-		neo4jFromObjectNode, ok := fromObjectNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for fromObjectNode: %T", fromObjectNode)
 		}
 		neo4jRelationship, ok := relationship.(dbtype.Relationship)
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
-		neo4jToObjectNode, ok := toObjectNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for toObjectNode: %T", toObjectNode)
-		}
-		data = append(data, map[string]interface{}{
-			"toObjectNode": map[string]interface{}{
-				"_name":         utils.PopString(neo4jToObjectNode.GetProperties(), "_name"),
-				"_type":         utils.PopString(neo4jToObjectNode.GetProperties(), "_type"),
-				"_domain":       utils.PopString(neo4jToObjectNode.GetProperties(), "_domain"),
-				"_originalName": utils.PopString(neo4jToObjectNode.GetProperties(), "_originalName"),
-				"_properties":   neo4jToObjectNode.GetProperties(),
-				"_labels":       neo4jToObjectNode.Labels,
-			},
-			"relationship": map[string]interface{}{
-				"_relationshipName":         neo4jRelationship.Type,
-				"_originalRelationshipName": utils.PopString(neo4jRelationship.GetProperties(), "_originalRelationshipName"),
-				"_properties":               neo4jRelationship.GetProperties(),
-			},
-			"fromObjectNode": map[string]interface{}{
-				"_name":         utils.PopString(neo4jFromObjectNode.GetProperties(), "_name"),
-				"_type":         utils.PopString(neo4jFromObjectNode.GetProperties(), "_type"),
-				"_domain":       utils.PopString(neo4jFromObjectNode.GetProperties(), "_domain"),
-				"_originalName": utils.PopString(neo4jFromObjectNode.GetProperties(), "_originalName"),
-				"_properties":   neo4jFromObjectNode.GetProperties(),
-				"_labels":       neo4jFromObjectNode.Labels,
-			},
+		data = append(data, &model.ObjectRelationship{
+			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
+			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
+			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
 		})
 	}
 	if len(data) == 0 {
 		message := "No incoming relationships found"
-		return &model.Response{Success: false, Message: &message, Data: data}, nil
+		return &model.ObjectRelationshipsResponse{Success: false, Message: &message, ObjectRelationships: data}, nil
 	}
-	message := "Object outgoing relationships retrieved successfully"
-	return &model.Response{Success: true, Message: &message, Data: data}, nil
+	message := "Object incoming relationships retrieved successfully"
+	return &model.ObjectRelationshipsResponse{Success: true, Message: &message, ObjectRelationships: data}, nil
+
 }
 
 func (db *Neo4jDatabase) GetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error) {

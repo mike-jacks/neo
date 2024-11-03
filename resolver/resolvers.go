@@ -262,8 +262,8 @@ func (r *queryResolver) GetObjectNodes(ctx context.Context, domain *string, type
 }
 
 // GetObjectNodeRelationship is the resolver for the getObjectNodeRelationship field.
-func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.GetObjectNodeRelationship(ctx, relationshipName, fromObjectNode, toObjectNode)
+func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, id string) (*model.ObjectRelationshipResponse, error) {
+	result, err := r.Database.GetObjectNodeRelationship(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -271,8 +271,8 @@ func (r *queryResolver) GetObjectNodeRelationship(ctx context.Context, relations
 }
 
 // GetObjectNodeOutgoingRelationships is the resolver for the getObjectNodeOutgoingRelationships field.
-func (r *queryResolver) GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.GetObjectNodeOutgoingRelationships(ctx, fromObjectNode)
+func (r *queryResolver) GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNodeID string) (*model.ObjectRelationshipsResponse, error) {
+	result, err := r.Database.GetObjectNodeOutgoingRelationships(ctx, fromObjectNodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -280,8 +280,8 @@ func (r *queryResolver) GetObjectNodeOutgoingRelationships(ctx context.Context, 
 }
 
 // GetObjectNodeIncomingRelationships is the resolver for the getObjectNodeIncomingRelationships field.
-func (r *queryResolver) GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.GetObjectNodeIncomingRelationships(ctx, toObjectNode)
+func (r *queryResolver) GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNodeID string) (*model.ObjectRelationshipsResponse, error) {
+	result, err := r.Database.GetObjectNodeIncomingRelationships(ctx, toObjectNodeID)
 	if err != nil {
 		return nil, err
 	}
