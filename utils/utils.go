@@ -14,6 +14,18 @@ import (
 	"github.com/nrednav/cuid2"
 )
 
+var specialProps = map[string]bool{
+	"_originalrelationshipname": true,
+	"_relationshipname":         true,
+	"_domain":                   true,
+	"_name":                     true,
+	"_type":                     true,
+	"_originalname":             true,
+	"_fromtypeschemanodename":   true,
+	"_totypeschemanodename":     true,
+	"_id":                       true,
+}
+
 func DereferenceOrNilString(s *string) interface{} {
 	if s == nil {
 		return nil
@@ -37,10 +49,6 @@ func CreateConstraint(ctx context.Context, driver neo4j.DriverWithContext, queri
 	return nil
 }
 
-func StringPtr(s string) *string {
-	return &s
-}
-
 func PopString(m map[string]interface{}, key string) string {
 	value, ok := m[key]
 	if !ok {
@@ -52,7 +60,7 @@ func PopString(m map[string]interface{}, key string) string {
 
 func CreatePropertiesQuery(query string, properties []*model.PropertyInput, prefix ...string) string {
 	for _, property := range properties {
-		if property.Key == "_originalRelationshipName" || property.Key == "_relationshipName" || property.Key == "_domain" || property.Key == "_name" || property.Key == "_type" || property.Key == "_originalName" || property.Key == "_fromTypeSchemaNodeName" || property.Key == "_toTypeSchemaNodeName" {
+		if specialProps[property.Key] {
 			continue
 		}
 		if len(prefix) > 0 {
@@ -123,14 +131,14 @@ func CreatePropertiesQuery(query string, properties []*model.PropertyInput, pref
 func RemovePropertiesQuery(query string, properties []string, prefix ...string) string {
 	if len(prefix) > 0 {
 		for _, property := range properties {
-			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" || property == "_originalName" || property == "_fromTypeSchemaNodeName" || property == "_toTypeSchemaNodeName" {
+			if specialProps[property] {
 				continue
 			}
 			query += fmt.Sprintf("%v.%v = null, ", prefix[0], property)
 		}
 	} else {
 		for _, property := range properties {
-			if property == "_originalRelationshipName" || property == "_relationshipName" || property == "_domain" || property == "_name" || property == "_type" || property == "_originalName" || property == "_fromTypeSchemaNodeName" || property == "_toTypeSchemaNodeName" {
+			if specialProps[property] {
 				continue
 			}
 			query += fmt.Sprintf("%v: null, ", property)
@@ -163,13 +171,20 @@ func CleanUpPropertyObjects(properties []*model.PropertyInput) error {
 	return nil
 }
 
-func CleanUpPropertyKeys(properties []string) error {
-	if len(properties) == 0 {
+func CleanUpPropertyKeys(properties *[]string) error {
+	if len(*properties) == 0 {
 		return fmt.Errorf("properties are required")
 	}
-	for i, property := range properties {
-		properties[i] = strings.ReplaceAll(strings.Trim(strings.ToLower(property), " "), " ", "_")
+
+	result := []string{}
+	for _, property := range *properties {
+		cleanProp := RemoveSpacesAndLowerCase(property)
+		if !specialProps[cleanProp] {
+			result = append(result, cleanProp)
+		}
 	}
+
+	*properties = result
 	return nil
 }
 
@@ -256,4 +271,16 @@ func ExtractPropertiesFromNeo4jNode(properties map[string]interface{}) []*model.
 		}
 	}
 	return extractedProperties
+}
+
+func RemoveSpacesAndHyphens(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(s), " ", "_"), "-", "_")
+}
+
+func RemoveSpacesAndLowerCase(s string) string {
+	return strings.ReplaceAll(strings.TrimSpace(strings.ToLower(s)), " ", "_")
+}
+
+func RemoveSpacesAndUpperCase(s string) string {
+	return strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(s)), " ", "_")
 }

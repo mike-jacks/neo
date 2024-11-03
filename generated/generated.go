@@ -156,11 +156,11 @@ type ComplexityRoot struct {
 		GetAllDomainSchemaNodes               func(childComplexity int) int
 		GetAllRelationshipsFromTypeSchemaNode func(childComplexity int, domain string, typeSchemaNodeName string) int
 		GetAllTypeSchemaNodes                 func(childComplexity int, domain string) int
-		GetObjectNode                         func(childComplexity int, domain string, name string, typeArg string) int
+		GetObjectNode                         func(childComplexity int, id string) int
 		GetObjectNodeIncomingRelationships    func(childComplexity int, toObjectNode model.ObjectNodeInput) int
 		GetObjectNodeOutgoingRelationships    func(childComplexity int, fromObjectNode model.ObjectNodeInput) int
 		GetObjectNodeRelationship             func(childComplexity int, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) int
-		GetObjectNodes                        func(childComplexity int, domain *string, name *string, typeArg *string, labels []string) int
+		GetObjectNodes                        func(childComplexity int, domain *string, typeArg *string) int
 	}
 
 	RelationshipSchemaNode struct {
@@ -242,8 +242,8 @@ type MutationResolver interface {
 	CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error)
 }
 type QueryResolver interface {
-	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error)
-	GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.ObjectNodesResponse, error)
+	GetObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
+	GetObjectNodes(ctx context.Context, domain *string, typeArg *string) (*model.ObjectNodesResponse, error)
 	GetObjectNodeRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error)
 	GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNode model.ObjectNodeInput) (*model.Response, error)
 	GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNode model.ObjectNodeInput) (*model.Response, error)
@@ -938,7 +938,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetObjectNode(childComplexity, args["domain"].(string), args["name"].(string), args["type"].(string)), true
+		return e.complexity.Query.GetObjectNode(childComplexity, args["id"].(string)), true
 
 	case "Query.getObjectNodeIncomingRelationships":
 		if e.complexity.Query.GetObjectNodeIncomingRelationships == nil {
@@ -986,7 +986,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetObjectNodes(childComplexity, args["domain"].(*string), args["name"].(*string), args["type"].(*string), args["labels"].([]string)), true
+		return e.complexity.Query.GetObjectNodes(childComplexity, args["domain"].(*string), args["type"].(*string)), true
 
 	case "RelationshipSchemaNode.domain":
 		if e.complexity.RelationshipSchemaNode.Domain == nil {
@@ -1450,8 +1450,8 @@ input PropertyInput {
 `, BuiltIn: false},
 	{Name: "../schema/queries.graphql", Input: `type Query {
   # Object Queries
-  getObjectNode(domain: String!, name: String!, type: String!): ObjectNodeResponse!
-  getObjectNodes(domain: String, name: String, type: String, labels: [String!]): ObjectNodesResponse!
+  getObjectNode(id: String!): ObjectNodeResponse!
+  getObjectNodes(domain: String, type: String): ObjectNodesResponse!
 
   getObjectNodeRelationship(_relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
   getObjectNodeOutgoingRelationships(fromObjectNode: ObjectNodeInput!): Response!
@@ -3295,55 +3295,19 @@ func (ec *executionContext) field_Query_getObjectNodeRelationship_argsToObjectNo
 func (ec *executionContext) field_Query_getObjectNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getObjectNode_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Query_getObjectNode_argsID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getObjectNode_argsName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["name"] = arg1
-	arg2, err := ec.field_Query_getObjectNode_argsType(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["type"] = arg2
+	args["id"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Query_getObjectNode_argsDomain(
+func (ec *executionContext) field_Query_getObjectNode_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getObjectNode_argsName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getObjectNode_argsType(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-	if tmp, ok := rawArgs["type"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -3359,21 +3323,11 @@ func (ec *executionContext) field_Query_getObjectNodes_args(ctx context.Context,
 		return nil, err
 	}
 	args["domain"] = arg0
-	arg1, err := ec.field_Query_getObjectNodes_argsName(ctx, rawArgs)
+	arg1, err := ec.field_Query_getObjectNodes_argsType(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["name"] = arg1
-	arg2, err := ec.field_Query_getObjectNodes_argsType(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["type"] = arg2
-	arg3, err := ec.field_Query_getObjectNodes_argsLabels(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["labels"] = arg3
+	args["type"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Query_getObjectNodes_argsDomain(
@@ -3382,19 +3336,6 @@ func (ec *executionContext) field_Query_getObjectNodes_argsDomain(
 ) (*string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
 	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getObjectNodes_argsName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
 		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
@@ -3412,19 +3353,6 @@ func (ec *executionContext) field_Query_getObjectNodes_argsType(
 	}
 
 	var zeroVal *string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getObjectNodes_argsLabels(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) ([]string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
-	if tmp, ok := rawArgs["labels"]; ok {
-		return ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
-	}
-
-	var zeroVal []string
 	return zeroVal, nil
 }
 
@@ -7158,7 +7086,7 @@ func (ec *executionContext) _Query_getObjectNode(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetObjectNode(rctx, fc.Args["domain"].(string), fc.Args["name"].(string), fc.Args["type"].(string))
+		return ec.resolvers.Query().GetObjectNode(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7221,7 +7149,7 @@ func (ec *executionContext) _Query_getObjectNodes(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetObjectNodes(rctx, fc.Args["domain"].(*string), fc.Args["name"].(*string), fc.Args["type"].(*string), fc.Args["labels"].([]string))
+		return ec.resolvers.Query().GetObjectNodes(rctx, fc.Args["domain"].(*string), fc.Args["type"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

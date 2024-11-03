@@ -19,8 +19,8 @@ type Database interface {
 	UpdatePropertiesOnObjectNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)
 	RemovePropertiesFromObjectNode(ctx context.Context, id string, properties []string) (*model.ObjectNodeResponse, error)
 
-	GetObjectNode(ctx context.Context, domain string, name string, typeArg string) (*model.ObjectNodeResponse, error)
-	GetObjectNodes(ctx context.Context, domain *string, name *string, typeArg *string, labels []string) (*model.ObjectNodesResponse, error)
+	GetObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
+	GetObjectNodes(ctx context.Context, domain *string, typeArg *string) (*model.ObjectNodesResponse, error)
 
 	CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error)
 	CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error)
