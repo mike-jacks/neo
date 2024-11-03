@@ -13,22 +13,15 @@ type Mutation {
   createObjectRelationship(
     relationshipName: String!
     properties: [PropertyInput!]
-    fromObjectNode: ObjectNodeInput!
-    toObjectNode: ObjectNodeInput!
-  ): Response!
-  updatePropertiesOnObjectRelationship(
-    relationshipName: String!
-    properties: [PropertyInput!]!
-    fromObjectNode: ObjectNodeInput!
-    toObjectNode: ObjectNodeInput!
-  ): Response!
-  removePropertiesFromObjectRelationship(
-    relationshipName: String!
-    properties: [String!]!
-    fromObjectNode: ObjectNodeInput!
-    toObjectNode: ObjectNodeInput!
-  ): Response!
-  deleteObjectRelationship(relationshipName: String!, fromObjectNode: ObjectNodeInput!, toObjectNode: ObjectNodeInput!): Response!
+    fromObjectNodeId: String!
+    toObjectNodeId: String!
+  ): ObjectRelationshipResponse!
+
+  updatePropertiesOnObjectRelationship(id: String!, properties: [PropertyInput!]!): ObjectRelationshipResponse!
+
+  removePropertiesFromObjectRelationship(id: String!, properties: [String!]!): ObjectRelationshipResponse!
+
+  deleteObjectRelationship(id: String!): ObjectRelationshipResponse!
 
   createDomainSchemaNode(domain: String!): DomainSchemaNodeResponse!
   renameDomainSchemaNode(domain: String!, newName: String!): DomainSchemaNodeResponse!
@@ -42,6 +35,7 @@ type Mutation {
   deleteTypeSchemaNode(domain: String!, name: String!): Response!
 
   createRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
+
   updatePropertiesOnRelationshipSchemaNode(
     relationshipName: String!
     domain: String!
@@ -66,5 +60,5 @@ type Mutation {
   ): Response!
   deleteRelationshipSchemaNode(relationshipName: String!, domain: String!, fromTypeSchemaNodeName: String!, toTypeSchemaNodeName: String!): Response!
 
-  cypherMutation(cypher_statement: String!): [Response!]!
+  cypherMutation(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }

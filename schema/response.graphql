@@ -9,7 +9,7 @@ type Response {
 type ObjectNodeResponse {
   success: Boolean!
   message: String
-  objectNode: ObjectNode!
+  objectNode: ObjectNode
 }
 
 type ObjectNodesResponse {
@@ -18,10 +18,28 @@ type ObjectNodesResponse {
   objectNodes: [ObjectNode!]
 }
 
+type ObjectRelationshipResponse {
+  success: Boolean!
+  message: String
+  objectRelationship: ObjectRelationship
+}
+
+type ObjectRelationshipsResponse {
+  success: Boolean!
+  message: String
+  objectRelationships: [ObjectRelationship!]
+}
+
+type ObjectNodesOrRelationshipNodesResponse {
+  success: Boolean!
+  message: String
+  objectNodesOrRelationshipNodes: [ObjectNodeOrRelationshipNode!]
+}
+
 type DomainSchemaNodeResponse {
   success: Boolean!
   message: String
-  domainSchemaNode: DomainSchemaNode!
+  domainSchemaNode: DomainSchemaNode
 }
 
 type DomainSchemaNodesResponse {
@@ -33,7 +51,7 @@ type DomainSchemaNodesResponse {
 type TypeSchemaNodeResponse {
   success: Boolean!
   message: String
-  typeSchemaNode: TypeSchemaNode!
+  typeSchemaNode: TypeSchemaNode
 }
 
 type TypeSchemaNodesResponse {
@@ -45,7 +63,7 @@ type TypeSchemaNodesResponse {
 type RelationshipSchemaNodeResponse {
   success: Boolean!
   message: String
-  relationshipSchemaNode: RelationshipSchemaNode!
+  relationshipSchemaNode: RelationshipSchemaNode
 }
 
 type RelationshipSchemaNodesResponse {
@@ -57,7 +75,7 @@ type RelationshipSchemaNodesResponse {
 type ObjectRelationshipObjectNodeResponse {
   success: Boolean!
   message: String
-  objectRelationshipObjectNodes: ObjectRelationshipObjectNode!
+  objectRelationshipObjectNodes: ObjectRelationshipObjectNode
 }
 
 type ObjectRelationshipObjectNodesResponse {

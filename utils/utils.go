@@ -24,6 +24,11 @@ var specialProps = map[string]bool{
 	"_fromtypeschemanodename":   true,
 	"_totypeschemanodename":     true,
 	"_id":                       true,
+	"_fromobjectnodename":       true,
+	"_toobjectnodename":         true,
+	"_fromObjectNodeId":         true,
+	"_toobjectnodeid":           true,
+	"_properties":               true,
 }
 
 func DereferenceOrNilString(s *string) interface{} {
@@ -148,34 +153,39 @@ func RemovePropertiesQuery(query string, properties []string, prefix ...string) 
 }
 
 func CleanUpRelationshipName(relationshipName string) string {
-	return strings.ReplaceAll(strings.Trim(strings.ToUpper(relationshipName), " "), " ", "_")
+	return strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(relationshipName)), " ", "_")
 }
 
 func CleanUpObjectNode(objectNode *model.ObjectNodeInput) error {
 	if objectNode == nil {
 		return fmt.Errorf("objectNode is required")
 	}
-	objectNode.Domain = strings.Trim(objectNode.Domain, " ")
-	objectNode.Name = strings.Trim(strings.ToUpper(objectNode.Name), " ")
-	objectNode.Type = strings.Trim(strings.ToUpper(objectNode.Type), " ")
+	objectNode.Domain = strings.TrimSpace(objectNode.Domain)
+	objectNode.Name = strings.TrimSpace(strings.ToUpper(objectNode.Name))
+	objectNode.Type = strings.TrimSpace(strings.ToUpper(objectNode.Type))
 	return nil
 }
 
-func CleanUpPropertyObjects(properties []*model.PropertyInput) error {
-	if len(properties) == 0 {
-		return fmt.Errorf("properties are required")
+func CleanUpPropertyObjects(properties *[]*model.PropertyInput) error {
+	result := []*model.PropertyInput{}
+	for _, property := range *properties {
+		cleanPropKey := RemoveSpacesAndLowerCase(property.Key)
+		if !specialProps[cleanPropKey] {
+			property.Key = cleanPropKey
+			result = append(result, property)
+		}
 	}
-	for _, property := range properties {
-		property.Key = strings.ReplaceAll(strings.Trim(strings.ToLower(property.Key), " "), " ", "_")
-	}
-	return nil
-}
 
-func CleanUpPropertyKeys(properties *[]string) error {
+	*properties = result
+
 	if len(*properties) == 0 {
 		return fmt.Errorf("properties are required")
 	}
 
+	return nil
+}
+
+func CleanUpPropertyKeys(properties *[]string) error {
 	result := []string{}
 	for _, property := range *properties {
 		cleanProp := RemoveSpacesAndLowerCase(property)
@@ -185,6 +195,11 @@ func CleanUpPropertyKeys(properties *[]string) error {
 	}
 
 	*properties = result
+
+	if len(*properties) == 0 {
+		return fmt.Errorf("properties are required")
+	}
+
 	return nil
 }
 

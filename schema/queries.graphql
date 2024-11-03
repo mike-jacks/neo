@@ -11,5 +11,7 @@ type Query {
   getAllTypeSchemaNodes(domain: String!): Response!
   getAllRelationshipsFromTypeSchemaNode(domain: String!, typeSchemaNodeName: String!): Response!
 
-  cypherQuery(cypher_statement: String!): [Response!]!
+  cypherQuery(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }
+
+union ObjectNodeOrRelationshipNode = ObjectNode | ObjectRelationship

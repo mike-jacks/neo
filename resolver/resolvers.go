@@ -77,8 +77,8 @@ func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, i
 }
 
 // CreateObjectRelationship is the resolver for the createObjectRelationship field.
-func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.CreateObjectRelationship(ctx, relationshipName, properties, fromObjectNode, toObjectNode)
+func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) (*model.ObjectRelationshipResponse, error) {
+	result, err := r.Database.CreateObjectRelationship(ctx, relationshipName, properties, fromObjectNodeID, toObjectNodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +86,8 @@ func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, relatio
 }
 
 // UpdatePropertiesOnObjectRelationship is the resolver for the updatePropertiesOnObjectRelationship field.
-func (r *mutationResolver) UpdatePropertiesOnObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.UpdatePropertiesOnObjectRelationship(ctx, relationshipName, properties, fromObjectNode, toObjectNode)
+func (r *mutationResolver) UpdatePropertiesOnObjectRelationship(ctx context.Context, id string, properties []*model.PropertyInput) (*model.ObjectRelationshipResponse, error) {
+	result, err := r.Database.UpdatePropertiesOnObjectRelationship(ctx, id, properties)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +95,8 @@ func (r *mutationResolver) UpdatePropertiesOnObjectRelationship(ctx context.Cont
 }
 
 // RemovePropertiesFromObjectRelationship is the resolver for the removePropertiesFromObjectRelationship field.
-func (r *mutationResolver) RemovePropertiesFromObjectRelationship(ctx context.Context, relationshipName string, properties []string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.RemovePropertiesFromObjectRelationship(ctx, relationshipName, properties, fromObjectNode, toObjectNode)
+func (r *mutationResolver) RemovePropertiesFromObjectRelationship(ctx context.Context, id string, properties []string) (*model.ObjectRelationshipResponse, error) {
+	result, err := r.Database.RemovePropertiesFromObjectRelationship(ctx, id, properties)
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +104,8 @@ func (r *mutationResolver) RemovePropertiesFromObjectRelationship(ctx context.Co
 }
 
 // DeleteObjectRelationship is the resolver for the deleteObjectRelationship field.
-func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, relationshipName string, fromObjectNode model.ObjectNodeInput, toObjectNode model.ObjectNodeInput) (*model.Response, error) {
-	result, err := r.Database.DeleteObjectRelationship(ctx, relationshipName, fromObjectNode, toObjectNode)
+func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, id string) (*model.ObjectRelationshipResponse, error) {
+	result, err := r.Database.DeleteObjectRelationship(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (r *mutationResolver) DeleteRelationshipSchemaNode(ctx context.Context, rel
 }
 
 // CypherMutation is the resolver for the cypherMutation field.
-func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
+func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error) {
 	result, err := r.Database.CypherMutation(ctx, cypherStatement)
 	if err != nil {
 		return nil, err
@@ -312,7 +312,7 @@ func (r *queryResolver) GetAllRelationshipsFromTypeSchemaNode(ctx context.Contex
 }
 
 // CypherQuery is the resolver for the cypherQuery field.
-func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) ([]*model.Response, error) {
+func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error) {
 	result, err := r.Database.CypherQuery(ctx, cypherStatement)
 	if err != nil {
 		return nil, err

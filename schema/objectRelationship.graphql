@@ -1,12 +1,8 @@
 type ObjectRelationship {
   id: String!
   relationshipName: String!
-  fromObjectNode: ObjectNode!
-  toObjectNode: ObjectNode!
+  originalRelationshipName: String!
   properties: [Property!]
-}
-
-input CreateObjectRelationshipInput {
-  fromObjectNode: ObjectNodeInput!
-  toObjectNode: ObjectNodeInput!
+  fromObjectNodeId: String!
+  toObjectNodeId: String!
 }
