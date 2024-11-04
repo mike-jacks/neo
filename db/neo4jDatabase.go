@@ -1255,17 +1255,17 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, id string, 
 	newName = strings.TrimSpace(newName)
 
 	query := `
-		MATCH (schemaDomainNode:DOMAIN_SCHEMA {_id: $id})
-		MATCH (node {_domain: schemaDomainNode._domain})
-		WITH node, node._domain as originalDomainName
-		SET node._domain = $newName,
-			node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END
-		WITH originalDomainName,
-			collect(CASE WHEN node:DOMAIN_SCHEMA THEN node END) as domainSchemaNodes,
+		MATCH (domainSchemaNode:DOMAIN_SCHEMA {_id: $id})
+		WITH domainSchemaNode, domainSchemaNode._domain as originalDomainName
+		OPTIONAL MATCH (node {_domain: originalDomainName}) WHERE NOT node:DOMAIN_SCHEMA
+		SET node._domain = $newName
+		SET domainSchemaNode._domain = $newName,
+			domainSchemaNode._name = $newName
+		WITH domainSchemaNode, originalDomainName,
 			collect(CASE WHEN node:TYPE_SCHEMA THEN node END) as typeSchemaNodes,
 			collect(CASE WHEN node:RELATIONSHIP_SCHEMA THEN node END) as relationshipSchemaNodes,
 			collect(CASE WHEN NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA THEN node END) as objectNodes
-		WITH head(domainSchemaNodes) as domainSchemaNode, size(objectNodes) as objectNodeCount, size(typeSchemaNodes) as typeSchemaNodeCount, size(relationshipSchemaNodes) as relationshipSchemaNodeCount, originalDomainName
+		WITH domainSchemaNode, size(objectNodes) as objectNodeCount, size(typeSchemaNodes) as typeSchemaNodeCount, size(relationshipSchemaNodes) as relationshipSchemaNodeCount, originalDomainName
 		RETURN domainSchemaNode, objectNodeCount, typeSchemaNodeCount, relationshipSchemaNodeCount, originalDomainName
 	`
 
