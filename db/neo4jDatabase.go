@@ -1257,8 +1257,8 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, id string, 
 	query := `
 		MATCH (schemaDomainNode:DOMAIN_SCHEMA {_id: $id})
 		MATCH (node {_domain: schemaDomainNode._domain})
-		SET node._domain as originalDomainName,
-			node._domain = $newName,
+		WITH node, node._domain as originalDomainName
+		SET node._domain = $newName,
 			node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END,
 		WITH originalDomainName,
 			collect(CASE WHEN node:DOMAIN_SCHEMA THEN node END) as domainSchemaNodes,
