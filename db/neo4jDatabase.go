@@ -1206,7 +1206,7 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 		message := "Domain schema node created successfully"
 		return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNode: data}, nil
 	}
-	message := "Domain schema node creation failed"
+	message := fmt.Sprintf("Domain schema node '%s' already exists", domain)
 	return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
 }
 
