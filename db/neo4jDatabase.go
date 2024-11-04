@@ -1360,7 +1360,7 @@ func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, id string) 
 	query := `
 	MATCH (domainSchemaNode:DOMAIN_SCHEMA {_id: $id})
 	WITH domainSchemaNode
-    MATCH (node {_domain: domainSchemaNode._domain}) WHERE NOT node:DOMAIN_SCHEMA
+    OPTIONAL MATCH (node {_domain: domainSchemaNode._domain}) WHERE NOT node:DOMAIN_SCHEMA
     WITH domainSchemaNode,
         collect(CASE WHEN node:TYPE_SCHEMA THEN node END) as typeNodes,
         collect(CASE WHEN node:RELATIONSHIP_SCHEMA THEN node END) as relationshipNodes,
