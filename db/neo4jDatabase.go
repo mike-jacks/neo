@@ -1143,6 +1143,7 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
+	id := utils.GenerateId()
 	domain = strings.Trim(domain, " ")
 
 	query := `
@@ -1157,13 +1158,14 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	}
 
 	query = `
-		CREATE (schemaDomainNode:DOMAIN_SCHEMA {_domain: $domain, _type: "DOMAIN SCHEMA", _name: $domain})
+		CREATE (schemaDomainNode:DOMAIN_SCHEMA {_id: $id, _domain: $domain, _type: "DOMAIN SCHEMA", _name: $domain})
 		RETURN schemaDomainNode
 	`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
+		"id":     id,
 		"domain": domain,
 	}
 
