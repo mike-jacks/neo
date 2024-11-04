@@ -1336,11 +1336,20 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, id string, 
 		message := fmt.Sprintf("Domain schema node %s renamed successfully to %s. %d object nodes, %d type schema nodes, and %d relationship schema nodes were affected.", neo4jOriginalDomainName, newName, objectNodeCountInt, typeSchemaNodeCountInt, relationshipSchemaNodeCountInt)
 		return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNode: data}, nil
 	}
-	if strings.Contains(result.Err().Error(), "already exists") {
-		message := fmt.Sprintf("Domain schema node %s already exists", newName)
+	if result.Err() != nil {
+		if strings.Contains(result.Err().Error(), "already exists") {
+			message := fmt.Sprintf("Domain schema node %s already exists", newName)
+			return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
+		}
+		message := fmt.Sprintf("Domain schema with id %s does not exist", id)
+		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
+
+	}
+	if result.Record() == nil {
+		message := fmt.Sprintf("Domain schema with id %s does not exist", id)
 		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
 	}
-	message := fmt.Sprintf("Domain schema with id %s does not exist", id)
+	message := fmt.Sprintf("Error renaming domain schema node with id %s", id)
 	return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
 }
 
