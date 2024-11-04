@@ -1362,7 +1362,6 @@ func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, id string) 
 	WITH domainSchemaNode
     MATCH (node {_domain: domainSchemaNode._domain}) WHERE NOT node:DOMAIN_SCHEMA
     WITH domainSchemaNode,
-    WITH
         collect(CASE WHEN node:TYPE_SCHEMA THEN node END) as typeNodes,
         collect(CASE WHEN node:RELATIONSHIP_SCHEMA THEN node END) as relationshipNodes,
         collect(CASE WHEN NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA THEN node END) as objectNodes
@@ -1383,7 +1382,6 @@ func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, id string) 
     }
     RETURN
         storedDomainSchema,
-        domainCount,
         typeCount,
         relationshipCount,
         objectCount
@@ -1397,7 +1395,7 @@ func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, id string) 
 
 	result, err := session.Run(ctx, query, parameters)
 	if err != nil {
-		message := fmt.Sprintf("Domain schema node with id %s deletion failed", id)
+		message := fmt.Sprintf("Domain schema node with id %s deletion failed: Error: %s", id, err.Error())
 		return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
 	}
 	var data *model.DomainSchemaNode
