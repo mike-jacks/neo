@@ -1539,56 +1539,85 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 }
 
 func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, id string, newName string) (*model.TypeSchemaNodeResponse, error) {
-	return nil, nil
-	// session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	// defer session.Close(ctx)
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
 
-	// originalNewName := strings.Trim(newName, " ")
-	// domain = strings.Trim(domain, " ")
-	// existingName = strings.TrimSpace(strings.ToUpper(existingName))
-	// newName = strings.TrimSpace(strings.ToUpper(newName))
-	// existingLabel := strings.ReplaceAll(existingName, " ", "_")
-	// newLabel := strings.ReplaceAll(newName, " ", "_")
+	originalNewName := strings.TrimSpace(newName)
+	newName = strings.ToUpper(originalNewName)
+	newLabel := utils.RemoveSpacesAndHyphens(newName)
 
-	// // Single query to check existence, update schema node and object nodes
-	// query := `
-	//     MATCH (existing:TYPE_SCHEMA {_domain: $domain, _name: $existingName, _type: "TYPE SCHEMA"})
-	//     OPTIONAL MATCH (duplicate:TYPE_SCHEMA {_domain: $domain, _name: $newName, _type: "TYPE SCHEMA"})
-	//     WITH existing, duplicate, count(duplicate) as duplicateCount
-	//     WHERE duplicateCount = 0
-	//     MATCH (objectNodes {_domain: $domain, _type: $existingName})
-	//     SET existing._name = $newName,
-	//         existing._originalName = $originalNewName,
-	//         objectNodes._type = $newName
-	//     REMOVE objectNodes:` + existingLabel + `
-	//     SET objectNodes:` + newLabel + `
-	//     RETURN count(objectNodes) as updatedCount
-	// `
+	// Single query to check existence, update schema node and object nodes
 
-	// parameters := map[string]any{
-	// 	"domain":          domain,
-	// 	"existingName":    existingName,
-	// 	"newName":         newName,
-	// 	"originalNewName": originalNewName,
-	// }
+	query := `
+        MATCH (existingTypeSchemaNode:TYPE_SCHEMA {_id: $id})
+        WITH existingTypeSchemaNode, existingTypeSchemaNode._domain as domain, existingTypeSchemaNode._name as existingName
+        OPTIONAL MATCH (duplicateTypeSchemaNode:TYPE_SCHEMA {_domain: domain, _name: $newName, _type: "TYPE SCHEMA"})
+        WITH existingTypeSchemaNode, domain, existingName, duplicateTypeSchemaNode, count(duplicateTypeSchemaNode) as duplicateCount
+        WHERE duplicateCount = 0
+        MATCH (objectNodes {_domain: domain, _type: existingName})
+        SET existingTypeSchemaNode._name = $newName,
+            existingTypeSchemaNode._originalName = $originalNewName,
+		WITH existingTypeSchemaNode, existingName, objectNodes, existingName
+		UNWIND objectNodes as objectNode
+            objectNode._type = $newName
+        REMOVE objectNode:` + `${existingName}` + `
+        SET objectNode:` + newLabel + `
+		WITH existingTypeSchemaNode as typeSchemaNode, count(objectNode) as updatedCount, existingName as previousName
+        RETURN typeSchemaNode, updatedCount, previousName
+    `
+	parameters := map[string]any{
+		"id":              id,
+		"newName":         newName,
+		"originalNewName": originalNewName,
+	}
 
-	// result, err := session.Run(ctx, query, parameters)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
 
-	// if result.Next(ctx) {
-	// 	record := result.Record()
-	// 	updatedCount, _ := record.Get("updatedCount")
-	// 	if updatedCount.(int64) > 0 {
-	// 		message := fmt.Sprintf("Schema type node and related objects renamed from %s to %s", existingName, newName)
-	// 		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: nil}, nil
-	// 	}
-	// }
+	if result.Next(ctx) {
+		record := result.Record()
+		typeSchemaNode, ok := record.Get("typeSchemaNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the typeSchemaNode")
+		}
+		neo4jTypeSchemaNode, ok := typeSchemaNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for typeSchemaNode: %T", typeSchemaNode)
+		}
+		updatedCount, ok := record.Get("updatedCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the updatedCount")
+		}
+		updatedCountInt, ok := updatedCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the updatedCount")
+		}
+		previousName, ok := record.Get("previousName")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the previousName")
+		}
+		previousNameString, ok := previousName.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the previousName")
+		}
+		data := &model.TypeSchemaNode{
+			ID:           utils.PopString(neo4jTypeSchemaNode.Props, "_id"),
+			Domain:       utils.PopString(neo4jTypeSchemaNode.Props, "_domain"),
+			Name:         utils.PopString(neo4jTypeSchemaNode.Props, "_name"),
+			OriginalName: utils.PopString(neo4jTypeSchemaNode.Props, "_originalName"),
+			Type:         utils.PopString(neo4jTypeSchemaNode.Props, "_type"),
+			Properties:   utils.ExtractPropertiesFromNeo4jNode(neo4jTypeSchemaNode.Props),
+			Labels:       neo4jTypeSchemaNode.Labels,
+		}
+		message := fmt.Sprintf("Schema type node renamed from %s to %s, %d object nodes updated", previousNameString, data.Name, updatedCountInt)
+		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: data}, nil
+	}
 
-	// // If we get here, either the duplicate exists or the original wasn't found
-	// message := fmt.Sprintf("Failed to rename schema type - either %s already exists or %s was not found", newName, existingName)
-	// return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
+	// If we get here, either the duplicate exists or the original wasn't found
+	message := fmt.Sprintf("Failed to rename schema type - either %s already exists or type schema node with id %s was not found", newName, id)
+	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
 }
 
 func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.TypeSchemaNodeResponse, error) {
