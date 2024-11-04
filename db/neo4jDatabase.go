@@ -1255,20 +1255,27 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, id string, 
 	newName = strings.TrimSpace(newName)
 
 	query := `
-		MATCH (domainSchemaNode:DOMAIN_SCHEMA {_id: $id})
-		WITH domainSchemaNode, domainSchemaNode._domain as originalDomainName
-		OPTIONAL MATCH (node {_domain: originalDomainName}) WHERE NOT node:DOMAIN_SCHEMA
-		SET node._domain = $newName
-		SET domainSchemaNode._domain = $newName,
-			domainSchemaNode._name = $newName
-		WITH domainSchemaNode, originalDomainName,
-			collect(CASE WHEN node:TYPE_SCHEMA THEN node END) as typeSchemaNodes,
-			collect(CASE WHEN node:RELATIONSHIP_SCHEMA THEN node END) as relationshipSchemaNodes,
-			collect(CASE WHEN NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA THEN node END) as objectNodes
-		WITH domainSchemaNode, size(objectNodes) as objectNodeCount, size(typeSchemaNodes) as typeSchemaNodeCount, size(relationshipSchemaNodes) as relationshipSchemaNodeCount, originalDomainName
-		RETURN domainSchemaNode, objectNodeCount, typeSchemaNodeCount, relationshipSchemaNodeCount, originalDomainName
+	MATCH (domainSchemaNode:DOMAIN_SCHEMA {_id: $id})
+	WITH domainSchemaNode, domainSchemaNode._domain as originalDomainName
+	OPTIONAL MATCH (node {_domain: originalDomainName}) WHERE NOT node:DOMAIN_SCHEMA
+	WITH domainSchemaNode, originalDomainName, collect(node) as nodes
+	CALL {
+		WITH domainSchemaNode
+		SET domainSchemaNode._domain = $newName
+		SET domainSchemaNode._name = $newName
+	}
+	WITH domainSchemaNode, originalDomainName, nodes
+	FOREACH (node IN nodes | SET node._domain = $newName)
+	WITH domainSchemaNode, originalDomainName,
+		[node IN nodes WHERE node:TYPE_SCHEMA | node] as typeSchemaNodes,
+		[node IN nodes WHERE node:RELATIONSHIP_SCHEMA | node] as relationshipSchemaNodes,
+		[node IN nodes WHERE NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA | node] as objectNodes
+	RETURN domainSchemaNode,
+		size(objectNodes) as objectNodeCount,
+		size(typeSchemaNodes) as typeSchemaNodeCount,
+		size(relationshipSchemaNodes) as relationshipSchemaNodeCount,
+		originalDomainName
 	`
-
 	fmt.Println(query)
 
 	parameters := map[string]any{
