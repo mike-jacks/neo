@@ -1548,23 +1548,23 @@ func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, id string, ne
 
 	// Single query to check existence, update schema node and object nodes
 
-	query := `
-        MATCH (existingTypeSchemaNode:TYPE_SCHEMA {_id: $id})
-        WITH existingTypeSchemaNode, existingTypeSchemaNode._domain as domain, existingTypeSchemaNode._name as existingName
-        OPTIONAL MATCH (duplicateTypeSchemaNode:TYPE_SCHEMA {_domain: domain, _name: $newName, _type: "TYPE SCHEMA"})
-        WITH existingTypeSchemaNode, domain, existingName, duplicateTypeSchemaNode, count(duplicateTypeSchemaNode) as duplicateCount
-        WHERE duplicateCount = 0
-        MATCH (objectNodes {_domain: domain, _type: existingName})
-        SET existingTypeSchemaNode._name = $newName,
-            existingTypeSchemaNode._originalName = $originalNewName,
-		WITH existingTypeSchemaNode, existingName, objectNodes, existingName
-		UNWIND objectNodes as objectNode
-            objectNode._type = $newName
-        REMOVE objectNode:` + `${existingName}` + `
-        SET objectNode:` + newLabel + `
-		WITH existingTypeSchemaNode as typeSchemaNode, count(objectNode) as updatedCount, existingName as previousName
-        RETURN typeSchemaNode, updatedCount, previousName
-    `
+	query := fmt.Sprintf(`
+		MATCH (existingTypeSchemaNode:TYPE_SCHEMA {_id: $id})
+		WITH existingTypeSchemaNode, existingTypeSchemaNode._domain as domain, existingTypeSchemaNode._name as existingName
+		OPTIONAL MATCH (duplicateTypeSchemaNode:TYPE_SCHEMA {_domain: domain, _name: $newName, _type: "TYPE SCHEMA"})
+		WITH existingTypeSchemaNode, domain, existingName, duplicateTypeSchemaNode
+		WHERE duplicateTypeSchemaNode IS NULL
+		SET existingTypeSchemaNode._name = $newName,
+			existingTypeSchemaNode._originalName = $originalNewName
+		WITH existingTypeSchemaNode, domain, existingName
+		OPTIONAL MATCH (objectNodes {_domain: domain, _type: existingName})
+		SET objectNodes._type = $newName
+		REMOVE objectNodes:`+"`"+`${existingName}`+"`"+`
+		SET objectNodes:%s
+		WITH existingTypeSchemaNode as typeSchemaNode, count(objectNodes) as updatedCount, existingName as previousName
+		RETURN typeSchemaNode, updatedCount, previousName
+	`, newLabel)
+
 	parameters := map[string]any{
 		"id":              id,
 		"newName":         newName,
