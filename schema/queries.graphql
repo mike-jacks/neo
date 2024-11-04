@@ -7,9 +7,12 @@ type Query {
   getObjectNodeOutgoingRelationships(fromObjectNodeId: String!): ObjectRelationshipsResponse!
   getObjectNodeIncomingRelationships(toObjectNodeId: String!): ObjectRelationshipsResponse!
 
-  getAllDomainSchemaNodes: DomainSchemaNodesResponse!
-  getAllTypeSchemaNodes(domain: String!): Response!
-  getAllRelationshipsFromTypeSchemaNode(domain: String!, typeSchemaNodeName: String!): Response!
+  getDomainSchemaNode(id: String!): DomainSchemaNodeResponse!
+  getDomainSchemaNodes: DomainSchemaNodesResponse!
+
+  getTypeSchemaNode(id: String!): TypeSchemaNodeResponse!
+  getTypeSchemaNodes(domain: String): TypeSchemaNodesResponse!
+  getTypeSchemaNodeRelationships(id: String!): RelationshipSchemaNodesResponse!
 
   cypherQuery(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }

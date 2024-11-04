@@ -1119,10 +1119,11 @@ func (db *Neo4jDatabase) GetAllDomainSchemaNodes(ctx context.Context) (*model.Do
 			return nil, fmt.Errorf("unexpected type for schemaDomainNode: %T", schemaDomainNode)
 		}
 		data = append(data, &model.DomainSchemaNode{
-			Name:       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
-			Type:       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
-			Domain:     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
-			Properties: neo4jSchemaDomainNode.GetProperties(),
+			ID:         utils.PopString(neo4jSchemaDomainNode.Props, "_id"),
+			Name:       utils.PopString(neo4jSchemaDomainNode.Props, "_name"),
+			Type:       utils.PopString(neo4jSchemaDomainNode.Props, "_type"),
+			Domain:     utils.PopString(neo4jSchemaDomainNode.Props, "_domain"),
+			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jSchemaDomainNode.Props),
 			Labels:     neo4jSchemaDomainNode.Labels,
 		})
 	}
@@ -1178,10 +1179,11 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 			return nil, fmt.Errorf("unexpected type for schemaDomainNode: %T", schemaDomainNode)
 		}
 		data := &model.DomainSchemaNode{
-			Name:       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_name"),
-			Type:       utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_type"),
-			Domain:     utils.PopString(neo4jSchemaDomainNode.GetProperties(), "_domain"),
-			Properties: neo4jSchemaDomainNode.GetProperties(),
+			ID:         utils.PopString(neo4jSchemaDomainNode.Props, "_id"),
+			Name:       utils.PopString(neo4jSchemaDomainNode.Props, "_name"),
+			Type:       utils.PopString(neo4jSchemaDomainNode.Props, "_type"),
+			Domain:     utils.PopString(neo4jSchemaDomainNode.Props, "_domain"),
+			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jSchemaDomainNode.Props),
 			Labels:     neo4jSchemaDomainNode.Labels,
 		}
 		message := "Schema domain node created successfully"
@@ -1252,10 +1254,11 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 		}
 		relationshipSchemaNodeCountInt = relationshipSchemaNodeCount.(int64)
 		data := &model.DomainSchemaNode{
-			Name:       utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_name"),
-			Type:       utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_type"),
-			Domain:     utils.PopString(neo4jDomainSchemaNode.GetProperties(), "_domain"),
-			Properties: neo4jDomainSchemaNode.GetProperties(),
+			ID:         utils.PopString(neo4jDomainSchemaNode.Props, "_id"),
+			Name:       utils.PopString(neo4jDomainSchemaNode.Props, "_name"),
+			Type:       utils.PopString(neo4jDomainSchemaNode.Props, "_type"),
+			Domain:     utils.PopString(neo4jDomainSchemaNode.Props, "_domain"),
+			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jDomainSchemaNode.Props),
 			Labels:     neo4jDomainSchemaNode.Labels,
 		}
 		message := fmt.Sprintf("Domain schema node %s renamed successfully to %s. %d object nodes, %d type schema nodes, and %d relationship schema nodes were affected.", domain, newName, objectNodeCountInt, typeSchemaNodeCountInt, relationshipSchemaNodeCountInt)
@@ -1376,10 +1379,11 @@ func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, domain stri
 			}
 		}
 		data = &model.DomainSchemaNode{
+			ID:         utils.PopString(neo4jDomainSchemaNode["properties"].(map[string]interface{}), "_id"),
 			Domain:     utils.PopString(neo4jDomainSchemaNode["properties"].(map[string]interface{}), "_domain"),
 			Name:       utils.PopString(neo4jDomainSchemaNode["properties"].(map[string]interface{}), "_name"),
 			Type:       utils.PopString(neo4jDomainSchemaNode["properties"].(map[string]interface{}), "_type"),
-			Properties: properties,
+			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jDomainSchemaNode["properties"].(map[string]interface{})),
 			Labels:     labels,
 		}
 	}

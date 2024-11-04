@@ -288,27 +288,29 @@ func (r *queryResolver) GetObjectNodeIncomingRelationships(ctx context.Context, 
 	return result, nil
 }
 
-// GetAllDomainSchemaNodes is the resolver for the getAllDomainSchemaNodes field.
-func (r *queryResolver) GetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error) {
-	result, err := r.Database.GetAllDomainSchemaNodes(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+// GetDomainSchemaNode is the resolver for the getDomainSchemaNode field.
+func (r *queryResolver) GetDomainSchemaNode(ctx context.Context, id string) (*model.DomainSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: GetDomainSchemaNode - getDomainSchemaNode"))
 }
 
-// GetAllTypeSchemaNodes is the resolver for the getAllTypeSchemaNodes field.
-func (r *queryResolver) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {
-	result, err := r.Database.GetAllTypeSchemaNodes(ctx, domain)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+// GetDomainSchemaNodes is the resolver for the getDomainSchemaNodes field.
+func (r *queryResolver) GetDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error) {
+	panic(fmt.Errorf("not implemented: GetDomainSchemaNodes - getDomainSchemaNodes"))
 }
 
-// GetAllRelationshipsFromTypeSchemaNode is the resolver for the getAllRelationshipsFromTypeSchemaNode field.
-func (r *queryResolver) GetAllRelationshipsFromTypeSchemaNode(ctx context.Context, domain string, typeSchemaNodeName string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented: GetAllRelationshipsFromTypeSchemaNode - getAllRelationshipsFromTypeSchemaNode"))
+// GetTypeSchemaNode is the resolver for the getTypeSchemaNode field.
+func (r *queryResolver) GetTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: GetTypeSchemaNode - getTypeSchemaNode"))
+}
+
+// GetTypeSchemaNodes is the resolver for the getTypeSchemaNodes field.
+func (r *queryResolver) GetTypeSchemaNodes(ctx context.Context, domain *string) (*model.TypeSchemaNodesResponse, error) {
+	panic(fmt.Errorf("not implemented: GetTypeSchemaNodes - getTypeSchemaNodes"))
+}
+
+// GetTypeSchemaNodeRelationships is the resolver for the getTypeSchemaNodeRelationships field.
+func (r *queryResolver) GetTypeSchemaNodeRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error) {
+	panic(fmt.Errorf("not implemented: GetTypeSchemaNodeRelationships - getTypeSchemaNodeRelationships"))
 }
 
 // CypherQuery is the resolver for the cypherQuery field.
@@ -328,3 +330,29 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *queryResolver) GetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error) {
+	result, err := r.Database.GetAllDomainSchemaNodes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+func (r *queryResolver) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {
+	result, err := r.Database.GetAllTypeSchemaNodes(ctx, domain)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+func (r *queryResolver) GetAllRelationshipsFromTypeSchemaNode(ctx context.Context, domain string, typeSchemaNodeName string) (*model.Response, error) {
+	panic(fmt.Errorf("not implemented: GetAllRelationshipsFromTypeSchemaNode - getAllRelationshipsFromTypeSchemaNode"))
+}
+*/

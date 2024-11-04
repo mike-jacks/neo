@@ -4,5 +4,5 @@ type DomainSchemaNode {
   name: String!
   type: String!
   labels: [String!]
-  properties: JSON
+  properties: [Property!]
 }

@@ -171,15 +171,17 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CypherQuery                           func(childComplexity int, cypherStatement string) int
-		GetAllDomainSchemaNodes               func(childComplexity int) int
-		GetAllRelationshipsFromTypeSchemaNode func(childComplexity int, domain string, typeSchemaNodeName string) int
-		GetAllTypeSchemaNodes                 func(childComplexity int, domain string) int
-		GetObjectNode                         func(childComplexity int, id string) int
-		GetObjectNodeIncomingRelationships    func(childComplexity int, toObjectNodeID string) int
-		GetObjectNodeOutgoingRelationships    func(childComplexity int, fromObjectNodeID string) int
-		GetObjectNodeRelationship             func(childComplexity int, id string) int
-		GetObjectNodes                        func(childComplexity int, domain *string, typeArg *string) int
+		CypherQuery                        func(childComplexity int, cypherStatement string) int
+		GetDomainSchemaNode                func(childComplexity int, id string) int
+		GetDomainSchemaNodes               func(childComplexity int) int
+		GetObjectNode                      func(childComplexity int, id string) int
+		GetObjectNodeIncomingRelationships func(childComplexity int, toObjectNodeID string) int
+		GetObjectNodeOutgoingRelationships func(childComplexity int, fromObjectNodeID string) int
+		GetObjectNodeRelationship          func(childComplexity int, id string) int
+		GetObjectNodes                     func(childComplexity int, domain *string, typeArg *string) int
+		GetTypeSchemaNode                  func(childComplexity int, id string) int
+		GetTypeSchemaNodeRelationships     func(childComplexity int, id string) int
+		GetTypeSchemaNodes                 func(childComplexity int, domain *string) int
 	}
 
 	RelationshipSchemaNode struct {
@@ -266,9 +268,11 @@ type QueryResolver interface {
 	GetObjectNodeRelationship(ctx context.Context, id string) (*model.ObjectRelationshipResponse, error)
 	GetObjectNodeOutgoingRelationships(ctx context.Context, fromObjectNodeID string) (*model.ObjectRelationshipsResponse, error)
 	GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNodeID string) (*model.ObjectRelationshipsResponse, error)
-	GetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error)
-	GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error)
-	GetAllRelationshipsFromTypeSchemaNode(ctx context.Context, domain string, typeSchemaNodeName string) (*model.Response, error)
+	GetDomainSchemaNode(ctx context.Context, id string) (*model.DomainSchemaNodeResponse, error)
+	GetDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error)
+	GetTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error)
+	GetTypeSchemaNodes(ctx context.Context, domain *string) (*model.TypeSchemaNodesResponse, error)
+	GetTypeSchemaNodeRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error)
 	CypherQuery(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
 }
 
@@ -986,36 +990,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CypherQuery(childComplexity, args["cypher_statement"].(string)), true
 
-	case "Query.getAllDomainSchemaNodes":
-		if e.complexity.Query.GetAllDomainSchemaNodes == nil {
+	case "Query.getDomainSchemaNode":
+		if e.complexity.Query.GetDomainSchemaNode == nil {
 			break
 		}
 
-		return e.complexity.Query.GetAllDomainSchemaNodes(childComplexity), true
-
-	case "Query.getAllRelationshipsFromTypeSchemaNode":
-		if e.complexity.Query.GetAllRelationshipsFromTypeSchemaNode == nil {
-			break
-		}
-
-		args, err := ec.field_Query_getAllRelationshipsFromTypeSchemaNode_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getDomainSchemaNode_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetAllRelationshipsFromTypeSchemaNode(childComplexity, args["domain"].(string), args["typeSchemaNodeName"].(string)), true
+		return e.complexity.Query.GetDomainSchemaNode(childComplexity, args["id"].(string)), true
 
-	case "Query.getAllTypeSchemaNodes":
-		if e.complexity.Query.GetAllTypeSchemaNodes == nil {
+	case "Query.getDomainSchemaNodes":
+		if e.complexity.Query.GetDomainSchemaNodes == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getAllTypeSchemaNodes_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.GetAllTypeSchemaNodes(childComplexity, args["domain"].(string)), true
+		return e.complexity.Query.GetDomainSchemaNodes(childComplexity), true
 
 	case "Query.getObjectNode":
 		if e.complexity.Query.GetObjectNode == nil {
@@ -1076,6 +1068,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetObjectNodes(childComplexity, args["domain"].(*string), args["type"].(*string)), true
+
+	case "Query.getTypeSchemaNode":
+		if e.complexity.Query.GetTypeSchemaNode == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getTypeSchemaNode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetTypeSchemaNode(childComplexity, args["id"].(string)), true
+
+	case "Query.getTypeSchemaNodeRelationships":
+		if e.complexity.Query.GetTypeSchemaNodeRelationships == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getTypeSchemaNodeRelationships_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetTypeSchemaNodeRelationships(childComplexity, args["id"].(string)), true
+
+	case "Query.getTypeSchemaNodes":
+		if e.complexity.Query.GetTypeSchemaNodes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getTypeSchemaNodes_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetTypeSchemaNodes(childComplexity, args["domain"].(*string)), true
 
 	case "RelationshipSchemaNode.domain":
 		if e.complexity.RelationshipSchemaNode.Domain == nil {
@@ -1388,7 +1416,7 @@ var sources = []*ast.Source{
   name: String!
   type: String!
   labels: [String!]
-  properties: JSON
+  properties: [Property!]
 }`, BuiltIn: false},
 	{Name: "../schema/mutations.graphql", Input: `type Mutation {
   # Object Mutations
@@ -1534,9 +1562,12 @@ input PropertyInput {
   getObjectNodeOutgoingRelationships(fromObjectNodeId: String!): ObjectRelationshipsResponse!
   getObjectNodeIncomingRelationships(toObjectNodeId: String!): ObjectRelationshipsResponse!
 
-  getAllDomainSchemaNodes: DomainSchemaNodesResponse!
-  getAllTypeSchemaNodes(domain: String!): Response!
-  getAllRelationshipsFromTypeSchemaNode(domain: String!, typeSchemaNodeName: String!): Response!
+  getDomainSchemaNode(id: String!): DomainSchemaNodeResponse!
+  getDomainSchemaNodes: DomainSchemaNodesResponse!
+
+  getTypeSchemaNode(id: String!): TypeSchemaNodeResponse!
+  getTypeSchemaNodes(domain: String): TypeSchemaNodesResponse!
+  getTypeSchemaNodeRelationships(id: String!): RelationshipSchemaNodesResponse!
 
   cypherQuery(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }
@@ -3112,63 +3143,22 @@ func (ec *executionContext) field_Query_cypherQuery_argsCypherStatement(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_getAllRelationshipsFromTypeSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getDomainSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getAllRelationshipsFromTypeSchemaNode_argsDomain(ctx, rawArgs)
+	arg0, err := ec.field_Query_getDomainSchemaNode_argsID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["domain"] = arg0
-	arg1, err := ec.field_Query_getAllRelationshipsFromTypeSchemaNode_argsTypeSchemaNodeName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["typeSchemaNodeName"] = arg1
+	args["id"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Query_getAllRelationshipsFromTypeSchemaNode_argsDomain(
+func (ec *executionContext) field_Query_getDomainSchemaNode_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getAllRelationshipsFromTypeSchemaNode_argsTypeSchemaNodeName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("typeSchemaNodeName"))
-	if tmp, ok := rawArgs["typeSchemaNodeName"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getAllTypeSchemaNodes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_getAllTypeSchemaNodes_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_getAllTypeSchemaNodes_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -3302,6 +3292,75 @@ func (ec *executionContext) field_Query_getObjectNodes_argsType(
 ) (*string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getTypeSchemaNodeRelationships_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_getTypeSchemaNodeRelationships_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_getTypeSchemaNodeRelationships_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getTypeSchemaNode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_getTypeSchemaNode_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_getTypeSchemaNode_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getTypeSchemaNodes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_getTypeSchemaNodes_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_getTypeSchemaNodes_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
 		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
@@ -3603,9 +3662,9 @@ func (ec *executionContext) _DomainSchemaNode_properties(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(map[string]interface{})
+	res := resTmp.([]*model.Property)
 	fc.Result = res
-	return ec.marshalOJSON2map(ctx, field.Selections, res)
+	return ec.marshalOProperty2ᚕᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐPropertyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DomainSchemaNode_properties(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3615,7 +3674,15 @@ func (ec *executionContext) fieldContext_DomainSchemaNode_properties(_ context.C
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type JSON does not have child fields")
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_Property_key(ctx, field)
+			case "value":
+				return ec.fieldContext_Property_value(ctx, field)
+			case "type":
+				return ec.fieldContext_Property_type(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Property", field.Name)
 		},
 	}
 	return fc, nil
@@ -7749,8 +7816,8 @@ func (ec *executionContext) fieldContext_Query_getObjectNodeIncomingRelationship
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getAllDomainSchemaNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getAllDomainSchemaNodes(ctx, field)
+func (ec *executionContext) _Query_getDomainSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getDomainSchemaNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7763,7 +7830,70 @@ func (ec *executionContext) _Query_getAllDomainSchemaNodes(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetAllDomainSchemaNodes(rctx)
+		return ec.resolvers.Query().GetDomainSchemaNode(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DomainSchemaNodeResponse)
+	fc.Result = res
+	return ec.marshalNDomainSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐDomainSchemaNodeResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getDomainSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_DomainSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_DomainSchemaNodeResponse_message(ctx, field)
+			case "domainSchemaNode":
+				return ec.fieldContext_DomainSchemaNodeResponse_domainSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DomainSchemaNodeResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getDomainSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getDomainSchemaNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getDomainSchemaNodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetDomainSchemaNodes(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7780,7 +7910,7 @@ func (ec *executionContext) _Query_getAllDomainSchemaNodes(ctx context.Context, 
 	return ec.marshalNDomainSchemaNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐDomainSchemaNodesResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getAllDomainSchemaNodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getDomainSchemaNodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7801,8 +7931,8 @@ func (ec *executionContext) fieldContext_Query_getAllDomainSchemaNodes(_ context
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getAllTypeSchemaNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getAllTypeSchemaNodes(ctx, field)
+func (ec *executionContext) _Query_getTypeSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getTypeSchemaNode(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7815,7 +7945,7 @@ func (ec *executionContext) _Query_getAllTypeSchemaNodes(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetAllTypeSchemaNodes(rctx, fc.Args["domain"].(string))
+		return ec.resolvers.Query().GetTypeSchemaNode(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7827,12 +7957,12 @@ func (ec *executionContext) _Query_getAllTypeSchemaNodes(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Response)
+	res := resTmp.(*model.TypeSchemaNodeResponse)
 	fc.Result = res
-	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+	return ec.marshalNTypeSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodeResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getAllTypeSchemaNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getTypeSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7841,13 +7971,13 @@ func (ec *executionContext) fieldContext_Query_getAllTypeSchemaNodes(ctx context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_Response_success(ctx, field)
+				return ec.fieldContext_TypeSchemaNodeResponse_success(ctx, field)
 			case "message":
-				return ec.fieldContext_Response_message(ctx, field)
-			case "data":
-				return ec.fieldContext_Response_data(ctx, field)
+				return ec.fieldContext_TypeSchemaNodeResponse_message(ctx, field)
+			case "typeSchemaNode":
+				return ec.fieldContext_TypeSchemaNodeResponse_typeSchemaNode(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TypeSchemaNodeResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -7857,15 +7987,15 @@ func (ec *executionContext) fieldContext_Query_getAllTypeSchemaNodes(ctx context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getAllTypeSchemaNodes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_getTypeSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getAllRelationshipsFromTypeSchemaNode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getAllRelationshipsFromTypeSchemaNode(ctx, field)
+func (ec *executionContext) _Query_getTypeSchemaNodes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getTypeSchemaNodes(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7878,7 +8008,7 @@ func (ec *executionContext) _Query_getAllRelationshipsFromTypeSchemaNode(ctx con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetAllRelationshipsFromTypeSchemaNode(rctx, fc.Args["domain"].(string), fc.Args["typeSchemaNodeName"].(string))
+		return ec.resolvers.Query().GetTypeSchemaNodes(rctx, fc.Args["domain"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7890,12 +8020,12 @@ func (ec *executionContext) _Query_getAllRelationshipsFromTypeSchemaNode(ctx con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Response)
+	res := resTmp.(*model.TypeSchemaNodesResponse)
 	fc.Result = res
-	return ec.marshalNResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx, field.Selections, res)
+	return ec.marshalNTypeSchemaNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodesResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getAllRelationshipsFromTypeSchemaNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getTypeSchemaNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7904,13 +8034,13 @@ func (ec *executionContext) fieldContext_Query_getAllRelationshipsFromTypeSchema
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_Response_success(ctx, field)
+				return ec.fieldContext_TypeSchemaNodesResponse_success(ctx, field)
 			case "message":
-				return ec.fieldContext_Response_message(ctx, field)
-			case "data":
-				return ec.fieldContext_Response_data(ctx, field)
+				return ec.fieldContext_TypeSchemaNodesResponse_message(ctx, field)
+			case "typeSchemaNodes":
+				return ec.fieldContext_TypeSchemaNodesResponse_typeSchemaNodes(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Response", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TypeSchemaNodesResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -7920,7 +8050,70 @@ func (ec *executionContext) fieldContext_Query_getAllRelationshipsFromTypeSchema
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getAllRelationshipsFromTypeSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_getTypeSchemaNodes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getTypeSchemaNodeRelationships(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getTypeSchemaNodeRelationships(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetTypeSchemaNodeRelationships(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.RelationshipSchemaNodesResponse)
+	fc.Result = res
+	return ec.marshalNRelationshipSchemaNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐRelationshipSchemaNodesResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getTypeSchemaNodeRelationships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_RelationshipSchemaNodesResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_RelationshipSchemaNodesResponse_message(ctx, field)
+			case "relationshipSchemaNodes":
+				return ec.fieldContext_RelationshipSchemaNodesResponse_relationshipSchemaNodes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RelationshipSchemaNodesResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getTypeSchemaNodeRelationships_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12379,7 +12572,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getAllDomainSchemaNodes":
+		case "getDomainSchemaNode":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -12388,7 +12581,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getAllDomainSchemaNodes(ctx, field)
+				res = ec._Query_getDomainSchemaNode(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -12401,7 +12594,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getAllTypeSchemaNodes":
+		case "getDomainSchemaNodes":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -12410,7 +12603,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getAllTypeSchemaNodes(ctx, field)
+				res = ec._Query_getDomainSchemaNodes(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -12423,7 +12616,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getAllRelationshipsFromTypeSchemaNode":
+		case "getTypeSchemaNode":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -12432,7 +12625,51 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getAllRelationshipsFromTypeSchemaNode(ctx, field)
+				res = ec._Query_getTypeSchemaNode(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getTypeSchemaNodes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getTypeSchemaNodes(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getTypeSchemaNodeRelationships":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getTypeSchemaNodeRelationships(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -13420,6 +13657,20 @@ func (ec *executionContext) marshalNRelationshipSchemaNode2ᚖgithubᚗcomᚋmik
 	return ec._RelationshipSchemaNode(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNRelationshipSchemaNodesResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐRelationshipSchemaNodesResponse(ctx context.Context, sel ast.SelectionSet, v model.RelationshipSchemaNodesResponse) graphql.Marshaler {
+	return ec._RelationshipSchemaNodesResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRelationshipSchemaNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐRelationshipSchemaNodesResponse(ctx context.Context, sel ast.SelectionSet, v *model.RelationshipSchemaNodesResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RelationshipSchemaNodesResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐResponse(ctx context.Context, sel ast.SelectionSet, v model.Response) graphql.Marshaler {
 	return ec._Response(ctx, sel, &v)
 }
@@ -13489,6 +13740,34 @@ func (ec *executionContext) marshalNTypeSchemaNode2ᚖgithubᚗcomᚋmikeᚑjack
 		return graphql.Null
 	}
 	return ec._TypeSchemaNode(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTypeSchemaNodeResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodeResponse(ctx context.Context, sel ast.SelectionSet, v model.TypeSchemaNodeResponse) graphql.Marshaler {
+	return ec._TypeSchemaNodeResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTypeSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodeResponse(ctx context.Context, sel ast.SelectionSet, v *model.TypeSchemaNodeResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TypeSchemaNodeResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTypeSchemaNodesResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodesResponse(ctx context.Context, sel ast.SelectionSet, v model.TypeSchemaNodesResponse) graphql.Marshaler {
+	return ec._TypeSchemaNodesResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTypeSchemaNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodesResponse(ctx context.Context, sel ast.SelectionSet, v *model.TypeSchemaNodesResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TypeSchemaNodesResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
