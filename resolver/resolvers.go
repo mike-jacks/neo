@@ -140,7 +140,7 @@ func (r *mutationResolver) DeleteDomainSchemaNode(ctx context.Context, id string
 }
 
 // CreateTypeSchemaNode is the resolver for the createTypeSchemaNode field.
-func (r *mutationResolver) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
+func (r *mutationResolver) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.TypeSchemaNodeResponse, error) {
 	result, err := r.Database.CreateTypeSchemaNode(ctx, domain, name)
 	if err != nil {
 		return nil, err
@@ -149,8 +149,8 @@ func (r *mutationResolver) CreateTypeSchemaNode(ctx context.Context, domain stri
 }
 
 // RenameTypeSchemaNode is the resolver for the renameTypeSchemaNode field.
-func (r *mutationResolver) RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error) {
-	result, err := r.Database.RenameTypeSchemaNode(ctx, domain, existingName, newName)
+func (r *mutationResolver) RenameTypeSchemaNode(ctx context.Context, id string, newName string) (*model.TypeSchemaNodeResponse, error) {
+	result, err := r.Database.RenameTypeSchemaNode(ctx, id, newName)
 	if err != nil {
 		return nil, err
 	}
@@ -158,8 +158,8 @@ func (r *mutationResolver) RenameTypeSchemaNode(ctx context.Context, domain stri
 }
 
 // UpdatePropertiesOnTypeSchemaNode is the resolver for the updatePropertiesOnTypeSchemaNode field.
-func (r *mutationResolver) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, domain string, name string, properties []*model.PropertyInput) (*model.Response, error) {
-	result, err := r.Database.UpdatePropertiesOnTypeSchemaNode(ctx, domain, name, properties)
+func (r *mutationResolver) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.TypeSchemaNodeResponse, error) {
+	result, err := r.Database.UpdatePropertiesOnTypeSchemaNode(ctx, id, properties)
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +167,8 @@ func (r *mutationResolver) UpdatePropertiesOnTypeSchemaNode(ctx context.Context,
 }
 
 // RenamePropertyOnTypeSchemaNode is the resolver for the renamePropertyOnTypeSchemaNode field.
-func (r *mutationResolver) RenamePropertyOnTypeSchemaNode(ctx context.Context, domain string, name string, oldPropertyName string, newPropertyName string) (*model.Response, error) {
-	result, err := r.Database.RenamePropertyOnTypeSchemaNode(ctx, domain, name, oldPropertyName, newPropertyName)
+func (r *mutationResolver) RenamePropertyOnTypeSchemaNode(ctx context.Context, id string, oldPropertyName string, newPropertyName string) (*model.TypeSchemaNodeResponse, error) {
+	result, err := r.Database.RenamePropertyOnTypeSchemaNode(ctx, id, oldPropertyName, newPropertyName)
 	if err != nil {
 		return nil, err
 	}
@@ -176,8 +176,8 @@ func (r *mutationResolver) RenamePropertyOnTypeSchemaNode(ctx context.Context, d
 }
 
 // RemovePropertiesFromTypeSchemaNode is the resolver for the removePropertiesFromTypeSchemaNode field.
-func (r *mutationResolver) RemovePropertiesFromTypeSchemaNode(ctx context.Context, domain string, name string, properties []string) (*model.Response, error) {
-	result, err := r.Database.RemovePropertiesFromTypeSchemaNode(ctx, domain, name, properties)
+func (r *mutationResolver) RemovePropertiesFromTypeSchemaNode(ctx context.Context, id string, properties []string) (*model.TypeSchemaNodeResponse, error) {
+	result, err := r.Database.RemovePropertiesFromTypeSchemaNode(ctx, id, properties)
 	if err != nil {
 		return nil, err
 	}
@@ -185,8 +185,8 @@ func (r *mutationResolver) RemovePropertiesFromTypeSchemaNode(ctx context.Contex
 }
 
 // DeleteTypeSchemaNode is the resolver for the deleteTypeSchemaNode field.
-func (r *mutationResolver) DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
-	result, err := r.Database.DeleteTypeSchemaNode(ctx, domain, name)
+func (r *mutationResolver) DeleteTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error) {
+	result, err := r.Database.DeleteTypeSchemaNode(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -308,12 +308,20 @@ func (r *queryResolver) GetDomainSchemaNodes(ctx context.Context) (*model.Domain
 
 // GetTypeSchemaNode is the resolver for the getTypeSchemaNode field.
 func (r *queryResolver) GetTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: GetTypeSchemaNode - getTypeSchemaNode"))
+	result, err := r.Database.GetTypeSchemaNode(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetTypeSchemaNodes is the resolver for the getTypeSchemaNodes field.
 func (r *queryResolver) GetTypeSchemaNodes(ctx context.Context, domain *string) (*model.TypeSchemaNodesResponse, error) {
-	panic(fmt.Errorf("not implemented: GetTypeSchemaNodes - getTypeSchemaNodes"))
+	result, err := r.Database.GetTypeSchemaNodes(ctx, domain)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetTypeSchemaNodeRelationships is the resolver for the getTypeSchemaNodeRelationships field.

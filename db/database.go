@@ -40,13 +40,15 @@ type Database interface {
 	GetDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error)
 	GetDomainSchemaNode(ctx context.Context, id string) (*model.DomainSchemaNodeResponse, error)
 
-	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
-	RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error)
-	UpdatePropertiesOnTypeSchemaNode(ctx context.Context, domain string, name string, properties []*model.PropertyInput) (*model.Response, error)
-	RenamePropertyOnTypeSchemaNode(ctx context.Context, domain string, name string, oldPropertyName string, newPropertyName string) (*model.Response, error)
-	RemovePropertiesFromTypeSchemaNode(ctx context.Context, domain string, name string, properties []string) (*model.Response, error)
-	DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
-	GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error)
+	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.TypeSchemaNodeResponse, error)
+	RenameTypeSchemaNode(ctx context.Context, id string, newName string) (*model.TypeSchemaNodeResponse, error)
+	UpdatePropertiesOnTypeSchemaNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.TypeSchemaNodeResponse, error)
+	RenamePropertyOnTypeSchemaNode(ctx context.Context, id string, oldPropertyName string, newPropertyName string) (*model.TypeSchemaNodeResponse, error)
+	RemovePropertiesFromTypeSchemaNode(ctx context.Context, id string, properties []string) (*model.TypeSchemaNodeResponse, error)
+	DeleteTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error)
+
+	GetTypeSchemaNodes(ctx context.Context, domain *string) (*model.TypeSchemaNodesResponse, error)
+	GetTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error)
 
 	CreateRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error)
 	UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string, properties []*model.PropertyInput) (*model.Response, error)

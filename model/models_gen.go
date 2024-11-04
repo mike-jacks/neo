@@ -165,13 +165,13 @@ type Response struct {
 }
 
 type TypeSchemaNode struct {
-	ID           string                 `json:"id"`
-	Domain       string                 `json:"domain"`
-	Name         string                 `json:"name"`
-	Type         string                 `json:"type"`
-	OriginalName string                 `json:"originalName"`
-	Labels       []string               `json:"labels,omitempty"`
-	Properties   map[string]interface{} `json:"properties,omitempty"`
+	ID           string      `json:"id"`
+	Domain       string      `json:"domain"`
+	Name         string      `json:"name"`
+	Type         string      `json:"type"`
+	OriginalName string      `json:"originalName"`
+	Labels       []string    `json:"labels,omitempty"`
+	Properties   []*Property `json:"properties,omitempty"`
 }
 
 type TypeSchemaNodeResponse struct {

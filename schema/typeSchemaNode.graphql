@@ -5,5 +5,5 @@ type TypeSchemaNode {
   type: String!
   originalName: String!
   labels: [String!]
-  properties: JSON
+  properties: [Property!]
 }

@@ -1463,18 +1463,19 @@ func (db *Neo4jDatabase) DeleteDomainSchemaNode(ctx context.Context, id string) 
 	return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNode: data}, nil
 }
 
-func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
+func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.TypeSchemaNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
+	id := utils.GenerateId()
 	originalName := strings.TrimSpace(name)
 	domain = strings.TrimSpace(domain)
 	name = utils.RemoveSpacesAndUpperCase(name)
 
 	query := `
-		CREATE CONSTRAINT type_schema_node IF NOT EXISTS
+		CREATE CONSTRAINT type_schema_node_key IF NOT EXISTS
 		FOR (n:TYPE_SCHEMA)
-		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
+		REQUIRE (n._id) IS NODE KEY
 		`
 
 	_, err := session.Run(ctx, query, nil)
@@ -1483,13 +1484,24 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 	}
 
 	query = `
-		CREATE (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _type: "TYPE SCHEMA", _name: $name, _originalName: $originalName})
-		RETURN schemaTypeNode
+	CREATE CONSTRAINT type_schema_node_unique IF NOT EXISTS
+	FOR (n:TYPE_SCHEMA)
+	REQUIRE (n._name, n._type, n._domain) IS UNIQUE
 	`
 
+	_, err = session.Run(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	query = `
+		CREATE (schemaTypeNode:TYPE_SCHEMA {_id: $id, _domain: $domain, _type: "TYPE SCHEMA", _name: $name, _originalName: $originalName})
+		RETURN schemaTypeNode
+	`
 	fmt.Println(query)
 
 	parameters := map[string]any{
+		"id":           id,
 		"domain":       domain,
 		"name":         name,
 		"originalName": originalName,
@@ -1510,20 +1522,19 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
 		}
-		data := []map[string]interface{}{}
-		data = append(data, map[string]interface{}{
-			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
-			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
-			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
-			"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
-			"_properties":   neo4jSchemaTypeNode.GetProperties(),
-			"_labels":       neo4jSchemaTypeNode.Labels,
-		})
+		data := &model.TypeSchemaNode{
+			ID:         utils.PopString(neo4jSchemaTypeNode.Props, "_id"),
+			Domain:     utils.PopString(neo4jSchemaTypeNode.Props, "_domain"),
+			Name:       utils.PopString(neo4jSchemaTypeNode.Props, "_name"),
+			Type:       utils.PopString(neo4jSchemaTypeNode.Props, "_type"),
+			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jSchemaTypeNode.Props),
+			Labels:     neo4jSchemaTypeNode.Labels,
+		}
 		message := "Schema type node created successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
+		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: data}, nil
 	}
 	message := "Schema type node creation failed"
-	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
 }
 
 func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error) {
