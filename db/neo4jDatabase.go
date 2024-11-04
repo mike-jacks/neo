@@ -1265,14 +1265,14 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, id string, 
 			collect(CASE WHEN node:TYPE_SCHEMA THEN node END) as typeSchemaNodes,
 			collect(CASE WHEN node:RELATIONSHIP_SCHEMA THEN node END) as relationshipSchemaNodes,
 			collect(CASE WHEN NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA THEN node END) as objectNodes
-		WITH head(domainSchemaNodes) as domainSchemaNode, size(objectNodes) as objectNodeCount, size(typeSchemaNodes) as typeSchemaNodeCount, size(relationshipSchemaNodes) as relationshipSchemaNodeCount
+		WITH head(domainSchemaNodes) as domainSchemaNode, size(objectNodes) as objectNodeCount, size(typeSchemaNodes) as typeSchemaNodeCount, size(relationshipSchemaNodes) as relationshipSchemaNodeCount, originalDomainName
 		RETURN domainSchemaNode, objectNodeCount, typeSchemaNodeCount, relationshipSchemaNodeCount, originalDomainName
 	`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"id":     id,
+		"id":      id,
 		"newName": newName,
 	}
 
