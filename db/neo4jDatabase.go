@@ -1093,7 +1093,11 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 
 }
 
-func (db *Neo4jDatabase) GetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error) {
+func (db *Neo4jDatabase) GetDomainSchemaNode(ctx context.Context, id string) (*model.DomainSchemaNodeResponse, error) {
+	return nil, nil
+}
+
+func (db *Neo4jDatabase) GetDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
@@ -1186,10 +1190,10 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jSchemaDomainNode.Props),
 			Labels:     neo4jSchemaDomainNode.Labels,
 		}
-		message := "Schema domain node created successfully"
+		message := "Domain schema node created successfully"
 		return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNode: data}, nil
 	}
-	message := "Schema domain node creation failed"
+	message := "Domain schema node creation failed"
 	return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
 }
 

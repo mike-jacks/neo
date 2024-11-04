@@ -36,7 +36,8 @@ type Database interface {
 	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error)
 	RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.DomainSchemaNodeResponse, error)
 	DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error)
-	GetAllDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error)
+	GetDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error)
+	GetDomainSchemaNode(ctx context.Context, id string) (*model.DomainSchemaNodeResponse, error)
 
 	CreateTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error)
 	RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error)
