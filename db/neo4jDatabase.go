@@ -1537,120 +1537,119 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
 }
 
-func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, domain string, existingName string, newName string) (*model.Response, error) {
-	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	defer session.Close(ctx)
+func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, id string, newName string) (*model.TypeSchemaNodeResponse, error) {
+	return nil, nil
+	// session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	// defer session.Close(ctx)
 
-	originalNewName := strings.Trim(newName, " ")
-	domain = strings.Trim(domain, " ")
-	existingName = strings.TrimSpace(strings.ToUpper(existingName))
-	newName = strings.TrimSpace(strings.ToUpper(newName))
-	existingLabel := strings.ReplaceAll(existingName, " ", "_")
-	newLabel := strings.ReplaceAll(newName, " ", "_")
+	// originalNewName := strings.Trim(newName, " ")
+	// domain = strings.Trim(domain, " ")
+	// existingName = strings.TrimSpace(strings.ToUpper(existingName))
+	// newName = strings.TrimSpace(strings.ToUpper(newName))
+	// existingLabel := strings.ReplaceAll(existingName, " ", "_")
+	// newLabel := strings.ReplaceAll(newName, " ", "_")
 
-	// Single query to check existence, update schema node and object nodes
-	query := `
-        MATCH (existing:TYPE_SCHEMA {_domain: $domain, _name: $existingName, _type: "TYPE SCHEMA"})
-        OPTIONAL MATCH (duplicate:TYPE_SCHEMA {_domain: $domain, _name: $newName, _type: "TYPE SCHEMA"})
-        WITH existing, duplicate, count(duplicate) as duplicateCount
-        WHERE duplicateCount = 0
-        MATCH (objectNodes {_domain: $domain, _type: $existingName})
-        SET existing._name = $newName,
-            existing._originalName = $originalNewName,
-            objectNodes._type = $newName
-        REMOVE objectNodes:` + existingLabel + `
-        SET objectNodes:` + newLabel + `
-        RETURN count(objectNodes) as updatedCount
-    `
+	// // Single query to check existence, update schema node and object nodes
+	// query := `
+	//     MATCH (existing:TYPE_SCHEMA {_domain: $domain, _name: $existingName, _type: "TYPE SCHEMA"})
+	//     OPTIONAL MATCH (duplicate:TYPE_SCHEMA {_domain: $domain, _name: $newName, _type: "TYPE SCHEMA"})
+	//     WITH existing, duplicate, count(duplicate) as duplicateCount
+	//     WHERE duplicateCount = 0
+	//     MATCH (objectNodes {_domain: $domain, _type: $existingName})
+	//     SET existing._name = $newName,
+	//         existing._originalName = $originalNewName,
+	//         objectNodes._type = $newName
+	//     REMOVE objectNodes:` + existingLabel + `
+	//     SET objectNodes:` + newLabel + `
+	//     RETURN count(objectNodes) as updatedCount
+	// `
 
-	parameters := map[string]any{
-		"domain":          domain,
-		"existingName":    existingName,
-		"newName":         newName,
-		"originalNewName": originalNewName,
-	}
+	// parameters := map[string]any{
+	// 	"domain":          domain,
+	// 	"existingName":    existingName,
+	// 	"newName":         newName,
+	// 	"originalNewName": originalNewName,
+	// }
 
-	result, err := session.Run(ctx, query, parameters)
-	if err != nil {
-		return nil, err
-	}
+	// result, err := session.Run(ctx, query, parameters)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	if result.Next(ctx) {
-		record := result.Record()
-		updatedCount, _ := record.Get("updatedCount")
-		if updatedCount.(int64) > 0 {
-			message := fmt.Sprintf("Schema type node and related objects renamed from %s to %s", existingName, newName)
-			return &model.Response{Success: true, Message: &message, Data: nil}, nil
-		}
-	}
+	// if result.Next(ctx) {
+	// 	record := result.Record()
+	// 	updatedCount, _ := record.Get("updatedCount")
+	// 	if updatedCount.(int64) > 0 {
+	// 		message := fmt.Sprintf("Schema type node and related objects renamed from %s to %s", existingName, newName)
+	// 		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: nil}, nil
+	// 	}
+	// }
 
-	// If we get here, either the duplicate exists or the original wasn't found
-	message := fmt.Sprintf("Failed to rename schema type - either %s already exists or %s was not found", newName, existingName)
-	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	// // If we get here, either the duplicate exists or the original wasn't found
+	// message := fmt.Sprintf("Failed to rename schema type - either %s already exists or %s was not found", newName, existingName)
+	// return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
 }
 
-func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, domain string, name string, properties []*model.PropertyInput) (*model.Response, error) {
-	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	defer session.Close(ctx)
+func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.TypeSchemaNodeResponse, error) {
+	return nil, nil
+	// session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	// defer session.Close(ctx)
 
-	domain = strings.Trim(domain, " ")
-	name = strings.TrimSpace(strings.ToUpper(name))
+	// domain = strings.Trim(domain, " ")
+	// name = strings.TrimSpace(strings.ToUpper(name))
 
-	err := utils.CleanUpPropertyObjects(&properties)
-	if err != nil {
-		message := fmt.Sprintf("Unable to update properties. Error: %s", err.Error())
-		return &model.Response{Success: false, Message: &message, Data: nil}, err
-	}
+	// err := utils.CleanUpPropertyObjects(&properties)
+	// if err != nil {
+	// 	message := fmt.Sprintf("Unable to update properties. Error: %s", err.Error())
+	// 	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, err
+	// }
 
-	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) SET `
-	query = utils.CreatePropertiesQuery(query, properties, "schemaTypeNode")
-	query = strings.TrimSuffix(query, ", ")
-	query += ` RETURN schemaTypeNode`
+	// query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) SET `
+	// query = utils.CreatePropertiesQuery(query, properties, "schemaTypeNode")
+	// query = strings.TrimSuffix(query, ", ")
+	// query += ` RETURN schemaTypeNode`
 
-	fmt.Println(query)
+	// fmt.Println(query)
 
-	parameters := map[string]any{
-		"domain": domain,
-		"name":   name,
-	}
+	// parameters := map[string]any{
+	// 	"domain": domain,
+	// 	"name":   name,
+	// }
 
-	result, err := session.Run(ctx, query, parameters)
-	if err != nil {
-		return nil, err
-	}
+	// result, err := session.Run(ctx, query, parameters)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	data := []map[string]interface{}{}
-	if result.Next(ctx) {
-		record := result.Record()
-		schemaTypeNode, ok := record.Get("schemaTypeNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
-		}
-		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
-		}
-		data = append(data, map[string]interface{}{
-			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
-			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
-			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
-			"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
-			"_properties":   neo4jSchemaTypeNode.GetProperties(),
-			"_labels":       neo4jSchemaTypeNode.Labels,
-		})
-		message := "Schema type node properties updated successfully"
-		return &model.Response{Success: true, Message: &message, Data: data}, nil
-	}
-	message := "Schema type node properties update failed"
-	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	// data := []map[string]interface{}{}
+	// if result.Next(ctx) {
+	// 	record := result.Record()
+	// 	schemaTypeNode, ok := record.Get("schemaTypeNode")
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+	// 	}
+	// 	neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+	// 	}
+	// 	data = append(data, map[string]interface{}{
+	// 		"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+	// 		"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+	// 		"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+	// 		"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
+	// 		"_properties":   neo4jSchemaTypeNode.GetProperties(),
+	// 		"_labels":       neo4jSchemaTypeNode.Labels,
+	// 	})
+	// 	message := "Schema type node properties updated successfully"
+	// 	return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: nil}, nil
+	// }
+	// message := "Schema type node properties update failed"
+	// return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
 }
 
-func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, domain string, name string) (*model.Response, error) {
+func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
-
-	domain = strings.Trim(domain, " ")
-	name = strings.TrimSpace(strings.ToUpper(name))
 
 	query := `
 		MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"})
@@ -1663,8 +1662,7 @@ func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, domain string
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"domain": domain,
-		"name":   name,
+		"id": id,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -1675,18 +1673,21 @@ func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, domain string
 	if result.Next(ctx) {
 		record := result.Record()
 		count, _ := record.Get("count")
-		message := fmt.Sprintf("Type schema node of type %s deleted, %v object nodes deleted successfully", name, count)
-		return &model.Response{Success: true, Message: &message, Data: nil}, nil
+		message := fmt.Sprintf("Type schema node deleted, %v object nodes deleted successfully", count)
+		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: nil}, nil
 	}
-	message := fmt.Sprintf("Unable to delete schema type node of type %s", name)
-	return &model.Response{Success: false, Message: &message, Data: nil}, nil
+	message := "Unable to delete schema type node"
+	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
 }
 
-func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain string) (*model.Response, error) {
+func (db *Neo4jDatabase) GetTypeSchemaNodes(ctx context.Context, domain *string) (*model.TypeSchemaNodesResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	domain = strings.Trim(domain, " ")
+	if domain != nil {
+		trimmedDomain := strings.Trim(*domain, " ")
+		domain = &trimmedDomain
+	}
 
 	query := `
 		MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain})
@@ -1716,6 +1717,7 @@ func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain strin
 			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
 		}
 		data = append(data, map[string]interface{}{
+			"_id":           utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_id"),
 			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
 			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
 			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
@@ -1726,158 +1728,164 @@ func (db *Neo4jDatabase) GetAllTypeSchemaNodes(ctx context.Context, domain strin
 	}
 	if len(data) == 0 {
 		message := "No schema type nodes found"
-		return &model.Response{Success: false, Message: &message, Data: data}, nil
+		return &model.TypeSchemaNodesResponse{Success: false, Message: &message, TypeSchemaNodes: nil}, nil
 	}
 	message := "Schema type nodes retrieved successfully"
-	return &model.Response{Success: true, Message: &message, Data: data}, nil
+	return &model.TypeSchemaNodesResponse{Success: true, Message: &message, TypeSchemaNodes: nil}, nil
 }
 
-func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context, domain string, name string, properties []string) (*model.Response, error) {
-	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+func (db *Neo4jDatabase) GetTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
+	return nil, nil
 
-	domain = strings.TrimSpace(domain)
-	name = strings.TrimSpace(strings.ToUpper(name))
-	labelFromName := strings.ReplaceAll(name, " ", "_")
-	if err := utils.CleanUpPropertyKeys(&properties); err != nil {
-		return nil, err
-	}
-
-	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) `
-	query += fmt.Sprintf(`OPTIONAL MATCH (objectNodes:%s {_domain: $domain, _type: $name}) `, labelFromName)
-	query += `SET `
-	query = utils.RemovePropertiesQuery(query, properties, "schemaTypeNode")
-	query = utils.RemovePropertiesQuery(query, properties, "objectNodes")
-	query = strings.TrimSuffix(query, "SET ")
-	query = strings.TrimSuffix(query, ", ")
-	query += ` WITH schemaTypeNode, count(objectNodes) as count`
-	query += ` RETURN schemaTypeNode, count`
-
-	fmt.Println(query)
-
-	parameters := map[string]any{
-		"domain": domain,
-		"name":   name,
-	}
-
-	result, err := session.Run(ctx, query, parameters)
-	if err != nil {
-		return nil, err
-	}
-
-	data := []map[string]interface{}{}
-	countInt := int64(0)
-	if result.Next(ctx) {
-		record := result.Record()
-		schemaTypeNode, ok := record.Get("schemaTypeNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
-		}
-		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
-		}
-		count, ok := record.Get("count")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the count")
-		}
-		countInt, ok = count.(int64)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for count: %T", count)
-		}
-
-		data = append(data, map[string]interface{}{
-			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
-			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
-			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
-			"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
-			"_properties":   neo4jSchemaTypeNode.GetProperties(),
-			"_labels":       neo4jSchemaTypeNode.Labels,
-		})
-	}
-	if len(data) == 0 {
-		message := "No schema type nodes found"
-		return &model.Response{Success: false, Message: &message, Data: data}, nil
-	}
-	message := fmt.Sprintf("%v properties removed from schema type node of type %s. %v object nodes updated successfully", len(properties), name, countInt)
-	return &model.Response{Success: true, Message: &message, Data: data}, nil
 }
 
-func (db *Neo4jDatabase) RenamePropertyOnTypeSchemaNode(ctx context.Context, domain string, name string, oldPropertyName string, newPropertyName string) (*model.Response, error) {
-	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	defer session.Close(ctx)
+func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context, id string, properties []string) (*model.TypeSchemaNodeResponse, error) {
+	return nil, nil
+	// session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	// defer session.Close(ctx)
 
-	domain = strings.TrimSpace(domain)
-	name = strings.TrimSpace(strings.ToUpper(name))
-	oldPropertyName = strings.ReplaceAll(strings.TrimSpace(strings.ToLower(oldPropertyName)), " ", "_")
-	newPropertyName = strings.ReplaceAll(strings.TrimSpace(strings.ToLower(newPropertyName)), " ", "_")
+	// if err := utils.CleanUpPropertyKeys(&properties); err != nil {
+	// 	return nil, err
+	// }
 
-	if oldPropertyName == "_originalName" || oldPropertyName == "_relationshipName" || oldPropertyName == "_domain" || oldPropertyName == "_name" || oldPropertyName == "_type" {
-		return nil, fmt.Errorf("oldPropertyName cannot be %s", oldPropertyName)
-	}
+	// query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) `
+	// query += fmt.Sprintf(`OPTIONAL MATCH (objectNodes:%s {_domain: $domain, _type: $name}) `, labelFromName)
+	// query += `SET `
+	// query = utils.RemovePropertiesQuery(query, properties, "schemaTypeNode")
+	// query = utils.RemovePropertiesQuery(query, properties, "objectNodes")
+	// query = strings.TrimSuffix(query, "SET ")
+	// query = strings.TrimSuffix(query, ", ")
+	// query += ` WITH schemaTypeNode, count(objectNodes) as count`
+	// query += ` RETURN schemaTypeNode, count`
 
-	if newPropertyName == "_originalName" || newPropertyName == "_relationshipName" || newPropertyName == "_domain" || newPropertyName == "_name" || newPropertyName == "_type" {
-		return nil, fmt.Errorf("newPropertyName cannot be %s", newPropertyName)
-	}
+	// fmt.Println(query)
 
-	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) `
-	query += `OPTIONAL MATCH (objectNodes {_domain: $domain, _type: $name}) `
-	query += `SET `
-	query = utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "schemaTypeNode")
-	query = utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "objectNodes")
-	query = strings.TrimSuffix(query, ", ")
-	query += ` WITH schemaTypeNode, count(objectNodes) as count`
-	query += ` RETURN schemaTypeNode, count`
+	// parameters := map[string]any{
+	// 	"domain": domain,
+	// 	"name":   name,
+	// }
 
-	fmt.Println(query)
+	// result, err := session.Run(ctx, query, parameters)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	parameters := map[string]any{
-		"domain":          domain,
-		"name":            name,
-		"oldPropertyName": oldPropertyName,
-		"newPropertyName": newPropertyName,
-	}
+	// data := []map[string]interface{}{}
+	// countInt := int64(0)
+	// if result.Next(ctx) {
+	// 	record := result.Record()
+	// 	schemaTypeNode, ok := record.Get("schemaTypeNode")
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+	// 	}
+	// 	neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+	// 	}
+	// 	count, ok := record.Get("count")
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("failed to retrieve the count")
+	// 	}
+	// 	countInt, ok = count.(int64)
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("unexpected type for count: %T", count)
+	// 	}
 
-	result, err := session.Run(ctx, query, parameters)
-	if err != nil {
-		return nil, err
-	}
+	// 	data = append(data, map[string]interface{}{
+	// 		"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+	// 		"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+	// 		"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+	// 		"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
+	// 		"_properties":   neo4jSchemaTypeNode.GetProperties(),
+	// 		"_labels":       neo4jSchemaTypeNode.Labels,
+	// 	})
+	// }
+	// if len(data) == 0 {
+	// 	message := "No schema type nodes found"
+	// 	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
+	// }
+	// message := fmt.Sprintf("%v properties removed from schema type node of type %s. %v object nodes updated successfully", len(properties), name, countInt)
+	// return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: nil}, nil
+}
 
-	data := []map[string]interface{}{}
-	countInt := int64(0)
-	if result.Next(ctx) {
-		record := result.Record()
-		schemaTypeNode, ok := record.Get("schemaTypeNode")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
-		}
-		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
-		}
-		count, ok := record.Get("count")
-		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the count")
-		}
-		countInt, ok = count.(int64)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for count: %T", count)
-		}
-		data = append(data, map[string]interface{}{
-			"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
-			"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
-			"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
-			"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
-			"_properties":   neo4jSchemaTypeNode.GetProperties(),
-			"_labels":       neo4jSchemaTypeNode.Labels,
-		})
-	}
-	if len(data) == 0 {
-		message := "No schema type nodes found"
-		return &model.Response{Success: false, Message: &message, Data: data}, nil
-	}
-	message := fmt.Sprintf("%s property renamed to %s on schema type node of type %s. %v object nodes updated successfully", oldPropertyName, newPropertyName, name, countInt)
-	return &model.Response{Success: true, Message: &message, Data: data}, nil
+func (db *Neo4jDatabase) RenamePropertyOnTypeSchemaNode(ctx context.Context, id string, oldPropertyName string, newPropertyName string) (*model.TypeSchemaNodeResponse, error) {
+	return nil, nil
+	// session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	// defer session.Close(ctx)
+
+	// domain = strings.TrimSpace(domain)
+	// name = strings.TrimSpace(strings.ToUpper(name))
+	// oldPropertyName = strings.ReplaceAll(strings.TrimSpace(strings.ToLower(oldPropertyName)), " ", "_")
+	// newPropertyName = strings.ReplaceAll(strings.TrimSpace(strings.ToLower(newPropertyName)), " ", "_")
+
+	// if oldPropertyName == "_originalName" || oldPropertyName == "_relationshipName" || oldPropertyName == "_domain" || oldPropertyName == "_name" || oldPropertyName == "_type" {
+	// 	return nil, fmt.Errorf("oldPropertyName cannot be %s", oldPropertyName)
+	// }
+
+	// if newPropertyName == "_originalName" || newPropertyName == "_relationshipName" || newPropertyName == "_domain" || newPropertyName == "_name" || newPropertyName == "_type" {
+	// 	return nil, fmt.Errorf("newPropertyName cannot be %s", newPropertyName)
+	// }
+
+	// query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) `
+	// query += `OPTIONAL MATCH (objectNodes {_domain: $domain, _type: $name}) `
+	// query += `SET `
+	// query = utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "schemaTypeNode")
+	// query = utils.RenamePropertyQuery(query, oldPropertyName, newPropertyName, "objectNodes")
+	// query = strings.TrimSuffix(query, ", ")
+	// query += ` WITH schemaTypeNode, count(objectNodes) as count`
+	// query += ` RETURN schemaTypeNode, count`
+
+	// fmt.Println(query)
+
+	// parameters := map[string]any{
+	// 	"domain":          domain,
+	// 	"name":            name,
+	// 	"oldPropertyName": oldPropertyName,
+	// 	"newPropertyName": newPropertyName,
+	// }
+
+	// result, err := session.Run(ctx, query, parameters)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// data := []map[string]interface{}{}
+	// countInt := int64(0)
+	// if result.Next(ctx) {
+	// 	record := result.Record()
+	// 	schemaTypeNode, ok := record.Get("schemaTypeNode")
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+	// 	}
+	// 	neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+	// 	}
+	// 	count, ok := record.Get("count")
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("failed to retrieve the count")
+	// 	}
+	// 	countInt, ok = count.(int64)
+	// 	if !ok {
+	// 		return nil, fmt.Errorf("unexpected type for count: %T", count)
+	// 	}
+	// 	data = append(data, map[string]interface{}{
+	// 		"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
+	// 		"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
+	// 		"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
+	// 		"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
+	// 		"_properties":   neo4jSchemaTypeNode.GetProperties(),
+	// 		"_labels":       neo4jSchemaTypeNode.Labels,
+	// 	})
+	// }
+	// if len(data) == 0 {
+	// 	message := "No schema type nodes found"
+	// 	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
+	// }
+	// message := fmt.Sprintf("%s property renamed to %s on schema type node of type %s. %v object nodes updated successfully", oldPropertyName, newPropertyName, name, countInt)
+	// return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: nil}, nil
 }
 
 func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, relationshipName string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.Response, error) {
