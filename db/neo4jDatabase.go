@@ -1147,12 +1147,23 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	domain = strings.Trim(domain, " ")
 
 	query := `
-		CREATE CONSTRAINT domain_schema_node IF NOT EXISTS
+		CREATE CONSTRAINT domain_schema_node_key IF NOT EXISTS
 		FOR (n:DOMAIN_SCHEMA)
-		REQUIRE (n._name, n._type, n._domain) IS NODE KEY
+		REQUIRE (n._id) IS NODE KEY
 		`
 
 	_, err := session.Run(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	query = `
+		CREATE CONSTRAINT domain_schema_node_unique IF NOT EXISTS
+		FOR (n:DOMAIN_SCHEMA)
+		REQUIRE (n._name, n._type, n._domain) IS UNIQUE
+	`
+
+	_, err = session.Run(ctx, query, nil)
 	if err != nil {
 		return nil, err
 	}
