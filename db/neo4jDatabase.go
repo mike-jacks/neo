@@ -1523,12 +1523,13 @@ func (db *Neo4jDatabase) CreateTypeSchemaNode(ctx context.Context, domain string
 			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
 		}
 		data := &model.TypeSchemaNode{
-			ID:         utils.PopString(neo4jSchemaTypeNode.Props, "_id"),
-			Domain:     utils.PopString(neo4jSchemaTypeNode.Props, "_domain"),
-			Name:       utils.PopString(neo4jSchemaTypeNode.Props, "_name"),
-			Type:       utils.PopString(neo4jSchemaTypeNode.Props, "_type"),
-			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jSchemaTypeNode.Props),
-			Labels:     neo4jSchemaTypeNode.Labels,
+			ID:           utils.PopString(neo4jSchemaTypeNode.Props, "_id"),
+			Domain:       utils.PopString(neo4jSchemaTypeNode.Props, "_domain"),
+			Name:         utils.PopString(neo4jSchemaTypeNode.Props, "_name"),
+			OriginalName: utils.PopString(neo4jSchemaTypeNode.Props, "_originalName"),
+			Type:         utils.PopString(neo4jSchemaTypeNode.Props, "_type"),
+			Properties:   utils.ExtractPropertiesFromNeo4jNode(neo4jSchemaTypeNode.Props),
+			Labels:       neo4jSchemaTypeNode.Labels,
 		}
 		message := "Schema type node created successfully"
 		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: data}, nil
