@@ -34,8 +34,9 @@ type Database interface {
 	GetObjectNodeIncomingRelationships(ctx context.Context, toObjectNodeId string) (*model.ObjectRelationshipsResponse, error)
 
 	CreateDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error)
-	RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.DomainSchemaNodeResponse, error)
-	DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error)
+	RenameDomainSchemaNode(ctx context.Context, id string, newName string) (*model.DomainSchemaNodeResponse, error)
+	DeleteDomainSchemaNode(ctx context.Context, id string) (*model.DomainSchemaNodeResponse, error)
+	
 	GetDomainSchemaNodes(ctx context.Context) (*model.DomainSchemaNodesResponse, error)
 	GetDomainSchemaNode(ctx context.Context, id string) (*model.DomainSchemaNodeResponse, error)
 

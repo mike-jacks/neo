@@ -122,8 +122,8 @@ func (r *mutationResolver) CreateDomainSchemaNode(ctx context.Context, domain st
 }
 
 // RenameDomainSchemaNode is the resolver for the renameDomainSchemaNode field.
-func (r *mutationResolver) RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.DomainSchemaNodeResponse, error) {
-	result, err := r.Database.RenameDomainSchemaNode(ctx, domain, newName)
+func (r *mutationResolver) RenameDomainSchemaNode(ctx context.Context, id string, newName string) (*model.DomainSchemaNodeResponse, error) {
+	result, err := r.Database.RenameDomainSchemaNode(ctx, id, newName)
 	if err != nil {
 		return nil, err
 	}
@@ -131,8 +131,8 @@ func (r *mutationResolver) RenameDomainSchemaNode(ctx context.Context, domain st
 }
 
 // DeleteDomainSchemaNode is the resolver for the deleteDomainSchemaNode field.
-func (r *mutationResolver) DeleteDomainSchemaNode(ctx context.Context, domain string) (*model.DomainSchemaNodeResponse, error) {
-	result, err := r.Database.DeleteDomainSchemaNode(ctx, domain)
+func (r *mutationResolver) DeleteDomainSchemaNode(ctx context.Context, id string) (*model.DomainSchemaNodeResponse, error) {
+	result, err := r.Database.DeleteDomainSchemaNode(ctx, id)
 	if err != nil {
 		return nil, err
 	}

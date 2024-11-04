@@ -1248,29 +1248,31 @@ func (db *Neo4jDatabase) CreateDomainSchemaNode(ctx context.Context, domain stri
 	return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
 }
 
-func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain string, newName string) (*model.DomainSchemaNodeResponse, error) {
+func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, id string, newName string) (*model.DomainSchemaNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	domain = strings.TrimSpace(domain)
 	newName = strings.TrimSpace(newName)
 
 	query := `
-		MATCH (node {_domain: $domain})
-		SET node._domain = $newName,
-			node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END
-		WITH collect(CASE WHEN node:DOMAIN_SCHEMA THEN node END) as domainSchemaNodes,
+		MATCH (schemaDomainNode:DOMAIN_SCHEMA {_id: $id})
+		MATCH (node {_domain: schemaDomainNode._domain})
+		SET node._domain as originalDomainName,
+			node._domain = $newName,
+			node._name = CASE WHEN node:DOMAIN_SCHEMA THEN $newName ELSE node._name END,
+		WITH originalDomainName,
+			collect(CASE WHEN node:DOMAIN_SCHEMA THEN node END) as domainSchemaNodes,
 			collect(CASE WHEN node:TYPE_SCHEMA THEN node END) as typeSchemaNodes,
 			collect(CASE WHEN node:RELATIONSHIP_SCHEMA THEN node END) as relationshipSchemaNodes,
 			collect(CASE WHEN NOT node:DOMAIN_SCHEMA AND NOT node:TYPE_SCHEMA AND NOT node:RELATIONSHIP_SCHEMA THEN node END) as objectNodes
 		WITH head(domainSchemaNodes) as domainSchemaNode, size(objectNodes) as objectNodeCount, size(typeSchemaNodes) as typeSchemaNodeCount, size(relationshipSchemaNodes) as relationshipSchemaNodeCount
-		RETURN domainSchemaNode, objectNodeCount, typeSchemaNodeCount, relationshipSchemaNodeCount
+		RETURN domainSchemaNode, objectNodeCount, typeSchemaNodeCount, relationshipSchemaNodeCount, originalDomainName
 	`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"domain":  domain,
+		"id":     id,
 		"newName": newName,
 	}
 
@@ -1308,6 +1310,14 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNodeCount")
 		}
 		relationshipSchemaNodeCountInt = relationshipSchemaNodeCount.(int64)
+		originalDomainName, ok := record.Get("originalDomainName")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the originalDomainName")
+		}
+		neo4jOriginalDomainName, ok := originalDomainName.(string)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for originalDomainName: %T", originalDomainName)
+		}
 		data := &model.DomainSchemaNode{
 			ID:         utils.PopString(neo4jDomainSchemaNode.Props, "_id"),
 			Name:       utils.PopString(neo4jDomainSchemaNode.Props, "_name"),
@@ -1316,10 +1326,10 @@ func (db *Neo4jDatabase) RenameDomainSchemaNode(ctx context.Context, domain stri
 			Properties: utils.ExtractPropertiesFromNeo4jNode(neo4jDomainSchemaNode.Props),
 			Labels:     neo4jDomainSchemaNode.Labels,
 		}
-		message := fmt.Sprintf("Domain schema node %s renamed successfully to %s. %d object nodes, %d type schema nodes, and %d relationship schema nodes were affected.", domain, newName, objectNodeCountInt, typeSchemaNodeCountInt, relationshipSchemaNodeCountInt)
+		message := fmt.Sprintf("Domain schema node %s renamed successfully to %s. %d object nodes, %d type schema nodes, and %d relationship schema nodes were affected.", neo4jOriginalDomainName, newName, objectNodeCountInt, typeSchemaNodeCountInt, relationshipSchemaNodeCountInt)
 		return &model.DomainSchemaNodeResponse{Success: true, Message: &message, DomainSchemaNode: data}, nil
 	}
-	message := fmt.Sprintf("Domain schema node %s rename failed", domain)
+	message := fmt.Sprintf("Domain schema node with id '%s' not found", id)
 	return &model.DomainSchemaNodeResponse{Success: false, Message: &message, DomainSchemaNode: nil}, nil
 }
 

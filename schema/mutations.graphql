@@ -24,8 +24,8 @@ type Mutation {
   deleteObjectRelationship(id: String!): ObjectRelationshipResponse!
 
   createDomainSchemaNode(domain: String!): DomainSchemaNodeResponse!
-  renameDomainSchemaNode(domain: String!, newName: String!): DomainSchemaNodeResponse!
-  deleteDomainSchemaNode(domain: String!): DomainSchemaNodeResponse!
+  renameDomainSchemaNode(id: String!, newName: String!): DomainSchemaNodeResponse!
+  deleteDomainSchemaNode(id: String!): DomainSchemaNodeResponse!
 
   createTypeSchemaNode(domain: String!, name: String!): Response!
   renameTypeSchemaNode(domain: String!, existingName: String!, newName: String!): Response!
