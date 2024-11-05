@@ -1630,10 +1630,10 @@ func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, i
 		return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, err
 	}
 
-	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_id: $id}) SET `
-	query = utils.CreatePropertiesQuery(query, properties, "schemaTypeNode")
+	query := `MATCH (typeSchemaNode:TYPE_SCHEMA {_id: $id}) SET `
+	query = utils.CreatePropertiesQuery(query, properties, "typeSchemaNode")
 	query = strings.TrimSuffix(query, ", ")
-	query += ` RETURN schemaTypeNode`
+	query += ` RETURN typeSchemaNode`
 
 	fmt.Println(query)
 
@@ -1648,22 +1648,22 @@ func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, i
 
 	if result.Next(ctx) {
 		record := result.Record()
-		schemaTypeNode, ok := record.Get("schemaTypeNode")
+		typeSchemaNode, ok := record.Get("typeSchemaNode")
 		if !ok {
-			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+			return nil, fmt.Errorf("failed to retrieve the typeSchemaNode")
 		}
-		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+		neo4jTypeSchemaNode, ok := typeSchemaNode.(dbtype.Node)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+			return nil, fmt.Errorf("unexpected type for typeSchemaNode: %T", typeSchemaNode)
 		}
 		data := &model.TypeSchemaNode{
-			ID:           utils.PopString(neo4jSchemaTypeNode.Props, "_id"),
-			Domain:       utils.PopString(neo4jSchemaTypeNode.Props, "_domain"),
-			Name:         utils.PopString(neo4jSchemaTypeNode.Props, "_name"),
-			OriginalName: utils.PopString(neo4jSchemaTypeNode.Props, "_originalName"),
-			Type:         utils.PopString(neo4jSchemaTypeNode.Props, "_type"),
-			Properties:   utils.ExtractPropertiesFromNeo4jNode(neo4jSchemaTypeNode.Props),
-			Labels:       neo4jSchemaTypeNode.Labels,
+			ID:           utils.PopString(neo4jTypeSchemaNode.Props, "_id"),
+			Domain:       utils.PopString(neo4jTypeSchemaNode.Props, "_domain"),
+			Name:         utils.PopString(neo4jTypeSchemaNode.Props, "_name"),
+			OriginalName: utils.PopString(neo4jTypeSchemaNode.Props, "_originalName"),
+			Type:         utils.PopString(neo4jTypeSchemaNode.Props, "_type"),
+			Properties:   utils.ExtractPropertiesFromNeo4jNode(neo4jTypeSchemaNode.Props),
+			Labels:       neo4jTypeSchemaNode.Labels,
 		}
 		message := "Schema type node properties updated successfully"
 		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: data}, nil
@@ -1677,11 +1677,16 @@ func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, id string) (*
 	defer session.Close(ctx)
 
 	query := `
-		MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"})
-		OPTIONAL MATCH (objectNodes {_domain: $domain, _type: $name})
-		DETACH DELETE schemaTypeNode, objectNodes
-		WITH count(objectNodes) as count
-		RETURN count
+		MATCH (typeSchemaNode:TYPE_SCHEMA {_id: $id})
+		WITH typeSchemaNode
+		WHERE typeSchemaNode IS NOT NULL
+		OPTIONAL MATCH (objectNodes {_domain: typeSchemaNode._domain, _type: typeSchemaNode._name})
+		WITH typeSchemaNode, collect(objectNodes) as objectNodesToDelete, properties(typeSchemaNode) as typeSchemaNodeProperties, labels(typeSchemaNode) as typeSchemaNodeLabels
+		WITH typeSchemaNode, objectNodesToDelete, typeSchemaNodeProperties, typeSchemaNodeLabels, size(objectNodesToDelete) as objectNodesCount
+		FOREACH (node IN objectNodesToDelete | DETACH DELETE node)
+		DETACH DELETE typeSchemaNode
+		WITH typeSchemaNode, typeSchemaNodeProperties, typeSchemaNodeLabels, objectNodesCount
+		RETURN objectNodesCount, typeSchemaNodeProperties, typeSchemaNodeLabels
 	`
 
 	fmt.Println(query)
@@ -1697,12 +1702,49 @@ func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, id string) (*
 
 	if result.Next(ctx) {
 		record := result.Record()
-		count, _ := record.Get("count")
-		message := fmt.Sprintf("Type schema node deleted, %v object nodes deleted successfully", count)
-		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: nil}, nil
+		typeSchemaNodeProperties, ok := record.Get("typeSchemaNodeProperties")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the typeSchemaNodeProperties")
+		}
+		typeSchemaNodePropertiesMap, ok := typeSchemaNodeProperties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for typeSchemaNodeProperties: %T", typeSchemaNodeProperties)
+		}
+		objectNodesCount, ok := record.Get("objectNodesCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the objectNodesCount")
+		}
+		objectNodesCountInt, ok := objectNodesCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for objectNodesCount: %T", objectNodesCount)
+		}
+		typeSchemaNodeLabels, ok := record.Get("typeSchemaNodeLabels")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the typeSchemaNodeLabels")
+		}
+		typeSchemaNodeLabelsSliceAny, ok := typeSchemaNodeLabels.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for typeSchemaNodeLabels: %T", typeSchemaNodeLabels)
+		}
+		typeSchemaNodeLabelsSliceString := make([]string, len(typeSchemaNodeLabelsSliceAny))
+		for i, label := range typeSchemaNodeLabelsSliceAny {
+			typeSchemaNodeLabelsSliceString[i] = label.(string)
+		}
+		data := &model.TypeSchemaNode{
+			ID:           utils.PopString(typeSchemaNodePropertiesMap, "_id"),
+			Domain:       utils.PopString(typeSchemaNodePropertiesMap, "_domain"),
+			Name:         utils.PopString(typeSchemaNodePropertiesMap, "_name"),
+			OriginalName: utils.PopString(typeSchemaNodePropertiesMap, "_originalName"),
+			Type:         utils.PopString(typeSchemaNodePropertiesMap, "_type"),
+			Properties:   utils.ExtractPropertiesFromNeo4jNode(typeSchemaNodePropertiesMap),
+			Labels:       typeSchemaNodeLabelsSliceString,
+		}
+		message := fmt.Sprintf("Type schema node '%s' deleted successfully. %v object nodes deleted successfully", data.Name, objectNodesCountInt)
+		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: data}, nil
 	}
-	message := "Unable to delete schema type node"
+	message := "Unable to delete type schema node"
 	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
+
 }
 
 func (db *Neo4jDatabase) RemovePropertiesFromTypeSchemaNode(ctx context.Context, id string, properties []string) (*model.TypeSchemaNodeResponse, error) {
