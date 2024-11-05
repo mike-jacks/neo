@@ -14,7 +14,7 @@ import (
 	"github.com/nrednav/cuid2"
 )
 
-var specialProps = map[string]bool{
+var SpecialProps = map[string]bool{
 	"_originalrelationshipname": true,
 	"_relationshipname":         true,
 	"_domain":                   true,
@@ -65,7 +65,7 @@ func PopString(m map[string]interface{}, key string) string {
 
 func CreatePropertiesQuery(query string, properties []*model.PropertyInput, prefix ...string) string {
 	for _, property := range properties {
-		if specialProps[property.Key] {
+		if SpecialProps[property.Key] {
 			continue
 		}
 		if len(prefix) > 0 {
@@ -136,14 +136,14 @@ func CreatePropertiesQuery(query string, properties []*model.PropertyInput, pref
 func RemovePropertiesQuery(query string, properties []string, prefix ...string) string {
 	if len(prefix) > 0 {
 		for _, property := range properties {
-			if specialProps[property] {
+			if SpecialProps[property] {
 				continue
 			}
 			query += fmt.Sprintf("%v.%v = null, ", prefix[0], property)
 		}
 	} else {
 		for _, property := range properties {
-			if specialProps[property] {
+			if SpecialProps[property] {
 				continue
 			}
 			query += fmt.Sprintf("%v: null, ", property)
@@ -170,7 +170,7 @@ func CleanUpPropertyObjects(properties *[]*model.PropertyInput) error {
 	result := []*model.PropertyInput{}
 	for _, property := range *properties {
 		cleanPropKey := RemoveSpacesAndLowerCase(property.Key)
-		if !specialProps[cleanPropKey] {
+		if !SpecialProps[cleanPropKey] {
 			property.Key = cleanPropKey
 			result = append(result, property)
 		}
@@ -189,7 +189,7 @@ func CleanUpPropertyKeys(properties *[]string) error {
 	result := []string{}
 	for _, property := range *properties {
 		cleanProp := RemoveSpacesAndLowerCase(property)
-		if !specialProps[cleanProp] {
+		if !SpecialProps[cleanProp] {
 			result = append(result, cleanProp)
 		}
 	}
