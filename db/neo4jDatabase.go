@@ -1621,60 +1621,55 @@ func (db *Neo4jDatabase) RenameTypeSchemaNode(ctx context.Context, id string, ne
 }
 
 func (db *Neo4jDatabase) UpdatePropertiesOnTypeSchemaNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.TypeSchemaNodeResponse, error) {
-	return nil, nil
-	// session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
-	// defer session.Close(ctx)
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
 
-	// domain = strings.Trim(domain, " ")
-	// name = strings.TrimSpace(strings.ToUpper(name))
+	err := utils.CleanUpPropertyObjects(&properties)
+	if err != nil {
+		message := fmt.Sprintf("Unable to update properties. Error: %s", err.Error())
+		return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, err
+	}
 
-	// err := utils.CleanUpPropertyObjects(&properties)
-	// if err != nil {
-	// 	message := fmt.Sprintf("Unable to update properties. Error: %s", err.Error())
-	// 	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, err
-	// }
+	query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_id: $id}) SET `
+	query = utils.CreatePropertiesQuery(query, properties, "schemaTypeNode")
+	query = strings.TrimSuffix(query, ", ")
+	query += ` RETURN schemaTypeNode`
 
-	// query := `MATCH (schemaTypeNode:TYPE_SCHEMA {_domain: $domain, _name: $name, _type: "TYPE SCHEMA"}) SET `
-	// query = utils.CreatePropertiesQuery(query, properties, "schemaTypeNode")
-	// query = strings.TrimSuffix(query, ", ")
-	// query += ` RETURN schemaTypeNode`
+	fmt.Println(query)
 
-	// fmt.Println(query)
+	parameters := map[string]any{
+		"id": id,
+	}
 
-	// parameters := map[string]any{
-	// 	"domain": domain,
-	// 	"name":   name,
-	// }
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
 
-	// result, err := session.Run(ctx, query, parameters)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// data := []map[string]interface{}{}
-	// if result.Next(ctx) {
-	// 	record := result.Record()
-	// 	schemaTypeNode, ok := record.Get("schemaTypeNode")
-	// 	if !ok {
-	// 		return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
-	// 	}
-	// 	neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
-	// 	if !ok {
-	// 		return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
-	// 	}
-	// 	data = append(data, map[string]interface{}{
-	// 		"_name":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_name"),
-	// 		"_type":         utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_type"),
-	// 		"_domain":       utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_domain"),
-	// 		"_originalName": utils.PopString(neo4jSchemaTypeNode.GetProperties(), "_originalName"),
-	// 		"_properties":   neo4jSchemaTypeNode.GetProperties(),
-	// 		"_labels":       neo4jSchemaTypeNode.Labels,
-	// 	})
-	// 	message := "Schema type node properties updated successfully"
-	// 	return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: nil}, nil
-	// }
-	// message := "Schema type node properties update failed"
-	// return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
+	if result.Next(ctx) {
+		record := result.Record()
+		schemaTypeNode, ok := record.Get("schemaTypeNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the schemaTypeNode")
+		}
+		neo4jSchemaTypeNode, ok := schemaTypeNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for schemaTypeNode: %T", schemaTypeNode)
+		}
+		data := &model.TypeSchemaNode{
+			ID:           utils.PopString(neo4jSchemaTypeNode.Props, "_id"),
+			Domain:       utils.PopString(neo4jSchemaTypeNode.Props, "_domain"),
+			Name:         utils.PopString(neo4jSchemaTypeNode.Props, "_name"),
+			OriginalName: utils.PopString(neo4jSchemaTypeNode.Props, "_originalName"),
+			Type:         utils.PopString(neo4jSchemaTypeNode.Props, "_type"),
+			Properties:   utils.ExtractPropertiesFromNeo4jNode(neo4jSchemaTypeNode.Props),
+			Labels:       neo4jSchemaTypeNode.Labels,
+		}
+		message := "Schema type node properties updated successfully"
+		return &model.TypeSchemaNodeResponse{Success: true, Message: &message, TypeSchemaNode: data}, nil
+	}
+	message := "Schema type node properties update failed"
+	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
 }
 
 func (db *Neo4jDatabase) DeleteTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error) {
