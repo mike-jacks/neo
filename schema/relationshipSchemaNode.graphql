@@ -1,8 +1,11 @@
 type RelationshipSchemaNode {
   id: String!
-  relationshipName: String!
   domain: String!
+  name: String!
+  originalName: String!
+  type: String!
   fromTypeSchemaNodeName: String!
   toTypeSchemaNodeName: String!
-  properties: JSON
+  properties: [Property!]
+  labels: [String!]
 }
