@@ -740,14 +740,14 @@ func (db *Neo4jDatabase) CypherMutation(ctx context.Context, cypherStatement str
 	// return []*model.Response{{Success: true, Message: &message, Data: data}}, nil
 }
 
-func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNodeId string, toObjectNodeId string) (*model.ObjectRelationshipResponse, error) {
+func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNodeId string, toObjectNodeId string) (*model.ObjectRelationshipResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
 	id := utils.GenerateId()
-	originalRelationshipName := strings.Trim(relationshipName, " ")
-	relationshipName = utils.CleanUpRelationshipName(relationshipName)
-	if relationshipName == "" {
+	originalName := strings.Trim(name, " ")
+	name = utils.CleanUpRelationshipName(name)
+	if name == "" {
 		message := "Relationship name is required"
 		return &model.ObjectRelationshipResponse{Success: false, Message: &message, ObjectRelationship: nil}, nil
 	}
@@ -759,7 +759,7 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, relations
 		}
 	}
 
-	query := fmt.Sprintf("MATCH (fromObjectNode{_id: $fromObjectNodeId}), (toObjectNode{_id: $toObjectNodeId}) MERGE (fromObjectNode)-[relationship:%v {_id: $id, _relationshipName: $relationshipName, _originalRelationshipName: $originalRelationshipName, _fromObjectNodeId: $fromObjectNodeId, _toObjectNodeId: $toObjectNodeId}]->(toObjectNode)", relationshipName)
+	query := fmt.Sprintf("MATCH (fromObjectNode{_id: $fromObjectNodeId}), (toObjectNode{_id: $toObjectNodeId}) MERGE (fromObjectNode)-[relationship:%v {_id: $id, _name: $name, _originalName: $originalName, _fromObjectNodeId: $fromObjectNodeId, _toObjectNodeId: $toObjectNodeId}]->(toObjectNode)", name)
 	if len(properties) > 0 {
 		query += " SET "
 		query = utils.CreatePropertiesQuery(query, properties, "relationship")
@@ -769,8 +769,8 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, relations
 
 	parameters := map[string]any{
 		"id":                       id,
-		"relationshipName":         relationshipName,
-		"originalRelationshipName": originalRelationshipName,
+		"name":                     name,
+		"originalName":             originalName,
 		"fromObjectNodeId":         fromObjectNodeId,
 		"toObjectNodeId":           toObjectNodeId,
 	}
