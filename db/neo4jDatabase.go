@@ -2023,7 +2023,7 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, name 
 	}
 
 	query = `
-		CREATE (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id, _domain: $domain, _name: $name, _originalName: $originalName, _fromTypeSchemaNodeName: $fromTypeSchemaNodeName, _toTypeSchemaNodeName: $toTypeSchemaNodeName})
+		CREATE (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id, _domain: $domain, _name: $name, _originalName: $originalName, _type: "RELATIONSHIP SCHEMA", _fromTypeSchemaNodeName: $fromTypeSchemaNodeName, _toTypeSchemaNodeName: $toTypeSchemaNodeName})
 		RETURN relationshipSchemaNode
 	`
 
@@ -2055,9 +2055,9 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, name 
 		}
 		data := &model.RelationshipSchemaNode{
 			ID:                     utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+			Domain:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
 			Name:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
 			OriginalName:           utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
-			Domain:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
 			Type:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
 			FromTypeSchemaNodeName: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeName"),
 			ToTypeSchemaNodeName:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeName"),
