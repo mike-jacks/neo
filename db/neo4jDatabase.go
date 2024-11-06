@@ -2091,11 +2091,11 @@ func (db *Neo4jDatabase) RenameRelationshipSchemaNode(ctx context.Context, id st
     OPTIONAL MATCH (fromObjectNode)-[oldRel]->(toObjectNode)
     WHERE oldRel._domain = domain AND oldRel._name = existingName
     WITH relationshipSchemaNode, collect({fromNode: fromObjectNode, toNode: toObjectNode, rel: oldRel}) as rels, existingName
-    FOREACH (r IN rels |
-        CALL apoc.create.relationship(r.fromNode, $newName, properties(r.rel), r.toNode) YIELD rel
-        DELETE r.rel
-    )
-    RETURN relationshipSchemaNode, size(rels) as updatedCount, existingName as previousName
+	UNWIND rels as r
+    CALL apoc.create.relationship(r.fromNode, $newName, properties(r.rel), r.toNode) YIELD rel
+	WITH relationshipSchemaNode, r.oldRel as oldRel, rel, size(rels) as updatedCount, existingName as previousName
+    DELETE oldRel
+    RETURN relationshipSchemaNode, updatedCount, previousName
 `
 
 	parameters := map[string]any{
