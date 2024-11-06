@@ -2078,7 +2078,7 @@ func (db *Neo4jDatabase) RenameRelationshipSchemaNode(ctx context.Context, id st
 	originalNewName := strings.TrimSpace(newName)
 	newName = utils.RemoveSpacesAndHyphens(strings.ToUpper(newName))
 
-	query := `
+	query := fmt.Sprintf(`
     OPTIONAL MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
     WHERE relationshipSchemaNode IS NOT NULL
     WITH relationshipSchemaNode, relationshipSchemaNode._domain as domain, relationshipSchemaNode._name as existingName
@@ -2088,15 +2088,15 @@ func (db *Neo4jDatabase) RenameRelationshipSchemaNode(ctx context.Context, id st
     SET relationshipSchemaNode._name = $newName,
         relationshipSchemaNode._originalName = $originalNewName
     WITH relationshipSchemaNode, domain, existingName
-    OPTIONAL MATCH (fromObjectNode)-[oldRel]->(toObjectNode)
-    WHERE oldRel._domain = domain AND oldRel._name = existingName
-    WITH relationshipSchemaNode, collect({fromNode: fromObjectNode, toNode: toObjectNode, rel: oldRel}) as rels, existingName
-	UNWIND rels as r
-    CALL apoc.create.relationship(r.fromNode, $newName, properties(r.rel), r.toNode) YIELD rel
-	WITH relationshipSchemaNode, r.oldRel as oldRel, rel, size(rels) as updatedCount, existingName as previousName
-    DELETE oldRel
-    RETURN relationshipSchemaNode, updatedCount, previousName
-`
+    OPTIONAL MATCH (fromObjectNode)-[oldRel {_name: existingName}]->(toObjectNode)
+	CREATE (fromObjectNode)-[newRel:%s]->(toObjectNode)
+	SET newRel = properties(oldRel), newRel._name = $newName, newRel._originalName = $originalNewName
+	WITH relationshipSchemaNode, oldRel, count(newRel) as updatedCount, existingName as previousName
+	DELETE oldRel
+	RETURN relationshipSchemaNode, updatedCount, previousName
+`, newName)
+
+	fmt.Println(query)
 
 	parameters := map[string]any{
 		"id":              id,
