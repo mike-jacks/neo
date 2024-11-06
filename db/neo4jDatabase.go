@@ -448,7 +448,7 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectNode(ctx context.Context, id st
 
 	if result.Next(ctx) {
 		record := result.Record()
-		node, ok := record.Get("o")
+		node, ok := record.Get("objectNode")
 		if !ok {
 			return nil, fmt.Errorf("failed to retrieve the updated node")
 		}
