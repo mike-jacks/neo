@@ -768,11 +768,11 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, name stri
 	query += " WITH relationship RETURN relationship"
 
 	parameters := map[string]any{
-		"id":                       id,
-		"name":                     name,
-		"originalName":             originalName,
-		"fromObjectNodeId":         fromObjectNodeId,
-		"toObjectNodeId":           toObjectNodeId,
+		"id":               id,
+		"name":             name,
+		"originalName":     originalName,
+		"fromObjectNodeId": fromObjectNodeId,
+		"toObjectNodeId":   toObjectNodeId,
 	}
 
 	fmt.Println(query)
@@ -793,12 +793,12 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, name stri
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
 		data := &model.ObjectRelationship{
-			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
-			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
-			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
-			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
-			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
+			ID:               utils.PopString(neo4jRelationship.Props, "_id"),
+			Name:             utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:     utils.PopString(neo4jRelationship.Props, "_originalName"),
+			FromObjectNodeID: utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:   utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:       utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
 		}
 		message := "Object relationship created successfully"
 		return &model.ObjectRelationshipResponse{Success: true, Message: &message, ObjectRelationship: data}, nil
@@ -844,12 +844,12 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Contex
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
 		data := &model.ObjectRelationship{
-			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
-			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
-			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
-			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
-			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
+			ID:               utils.PopString(neo4jRelationship.Props, "_id"),
+			Name:             utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:     utils.PopString(neo4jRelationship.Props, "_originalName"),
+			FromObjectNodeID: utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:   utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:       utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
 		}
 		message := "Object relationship properties updated successfully"
 		return &model.ObjectRelationshipResponse{Success: true, Message: &message, ObjectRelationship: data}, nil
@@ -895,12 +895,12 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectRelationship(ctx context.Cont
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
 		data := &model.ObjectRelationship{
-			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
-			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
-			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
-			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
-			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.GetProperties()),
+			ID:               utils.PopString(neo4jRelationship.Props, "_id"),
+			Name:             utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:     utils.PopString(neo4jRelationship.Props, "_originalName"),
+			FromObjectNodeID: utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:   utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:       utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.GetProperties()),
 		}
 
 		message := "Object relationship properties removed successfully"
@@ -944,12 +944,12 @@ func (db *Neo4jDatabase) DeleteObjectRelationship(ctx context.Context, id string
 			return nil, fmt.Errorf("unexpected type for relationship_id: %T", properties)
 		}
 		data := &model.ObjectRelationship{
-			ID:                       utils.PopString(propertiesMap, "_id"),
-			Name:                     utils.PopString(propertiesMap, "_name"),
-			OriginalName:             utils.PopString(propertiesMap, "_originalName"),
-			FromObjectNodeID:         utils.PopString(propertiesMap, "_fromObjectNodeId"),
-			ToObjectNodeID:           utils.PopString(propertiesMap, "_toObjectNodeId"),
-			Properties:               utils.ExtractPropertiesFromNeo4jNode(propertiesMap),
+			ID:               utils.PopString(propertiesMap, "_id"),
+			Name:             utils.PopString(propertiesMap, "_name"),
+			OriginalName:     utils.PopString(propertiesMap, "_originalName"),
+			FromObjectNodeID: utils.PopString(propertiesMap, "_fromObjectNodeId"),
+			ToObjectNodeID:   utils.PopString(propertiesMap, "_toObjectNodeId"),
+			Properties:       utils.ExtractPropertiesFromNeo4jNode(propertiesMap),
 		}
 		message := "Object relationship deleted successfully"
 		return &model.ObjectRelationshipResponse{Success: true, Message: &message, ObjectRelationship: data}, nil
@@ -986,12 +986,12 @@ func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, id strin
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
 		data := &model.ObjectRelationship{
-			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
-			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
-			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
-			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
-			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
+			ID:               utils.PopString(neo4jRelationship.Props, "_id"),
+			Name:             utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:     utils.PopString(neo4jRelationship.Props, "_originalName"),
+			FromObjectNodeID: utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:   utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:       utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
 		}
 		message := "Object relationship retrieved successfully"
 		return &model.ObjectRelationshipResponse{Success: true, Message: &message, ObjectRelationship: data}, nil
@@ -1030,12 +1030,12 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
 		data = append(data, &model.ObjectRelationship{
-			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
-			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
-			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
-			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
-			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
+			ID:               utils.PopString(neo4jRelationship.Props, "_id"),
+			Name:             utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:     utils.PopString(neo4jRelationship.Props, "_originalName"),
+			FromObjectNodeID: utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:   utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:       utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
 		})
 	}
 	if len(data) == 0 {
@@ -1076,12 +1076,12 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 			return nil, fmt.Errorf("unexpected type for relationship: %T", relationship)
 		}
 		data = append(data, &model.ObjectRelationship{
-			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
-			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
-			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
-			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
-			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
+			ID:               utils.PopString(neo4jRelationship.Props, "_id"),
+			Name:             utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:     utils.PopString(neo4jRelationship.Props, "_originalName"),
+			FromObjectNodeID: utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
+			ToObjectNodeID:   utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
+			Properties:       utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
 		})
 	}
 	if len(data) == 0 {
@@ -2078,7 +2078,7 @@ func (db *Neo4jDatabase) RenameRelationshipSchemaNode(ctx context.Context, id st
 	originalNewName := strings.TrimSpace(newName)
 	newName = utils.RemoveSpacesAndHyphens(strings.ToUpper(newName))
 
-query := fmt.Sprintf(`
+	query := fmt.Sprintf(`
     OPTIONAL MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
     WHERE relationshipSchemaNode IS NOT NULL
     WITH relationshipSchemaNode, relationshipSchemaNode._domain as domain, relationshipSchemaNode._name as existingName
@@ -2088,12 +2088,12 @@ query := fmt.Sprintf(`
     SET relationshipSchemaNode._name = $newName,
         relationshipSchemaNode._originalName = $originalNewName
     WITH relationshipSchemaNode, domain, existingName
-    OPTIONAL MATCH (fromObjectNode)-[oldRel {_name: existingName}]->(toObjectNode)
-    WHERE fromObjectNode IS NOT NULL AND toObjectNode IS NOT NULL
+    MATCH (fromObjectNode)-[oldRel {_name: existingName}]->(toObjectNode)
+    WITH relationshipSchemaNode, fromObjectNode, toObjectNode, oldRel, existingName
     CREATE (fromObjectNode)-[newRel:%s]->(toObjectNode)
     SET newRel = properties(oldRel), newRel._name = $newName, newRel._originalName = $originalNewName
-    WITH relationshipSchemaNode, oldRel, count(newRel) as updatedCount, existingName as previousName
-    DELETE oldRel
+    WITH relationshipSchemaNode, collect(oldRel) as oldRels, count(newRel) as updatedCount, existingName as previousName
+    FOREACH (oldRel IN oldRels | DELETE oldRel)
     RETURN relationshipSchemaNode, updatedCount, previousName
 `, newName)
 
@@ -2149,6 +2149,9 @@ query := fmt.Sprintf(`
 		}
 		message := fmt.Sprintf("%s relationship schema node renamed to %s. %v object nodes updated successfully", previousNameString, newName, updatedCountInt)
 		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil
+	}
+	if result.Err() != nil {
+		return nil, result.Err()
 	}
 	message := "Unable to rename relationship schema node"
 	return &model.RelationshipSchemaNodeResponse{Success: false, Message: &message, RelationshipSchemaNode: nil}, nil
