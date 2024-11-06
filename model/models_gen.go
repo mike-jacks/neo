@@ -81,12 +81,12 @@ type ObjectNodesResponse struct {
 }
 
 type ObjectRelationship struct {
-	ID                       string      `json:"id"`
-	RelationshipName         string      `json:"relationshipName"`
-	OriginalRelationshipName string      `json:"originalRelationshipName"`
-	Properties               []*Property `json:"properties,omitempty"`
-	FromObjectNodeID         string      `json:"fromObjectNodeId"`
-	ToObjectNodeID           string      `json:"toObjectNodeId"`
+	ID               string      `json:"id"`
+	Name             string      `json:"name"`
+	OriginalName     string      `json:"originalName"`
+	Properties       []*Property `json:"properties,omitempty"`
+	FromObjectNodeID string      `json:"fromObjectNodeId"`
+	ToObjectNodeID   string      `json:"toObjectNodeId"`
 }
 
 func (ObjectRelationship) IsObjectNodeOrRelationshipNode() {}

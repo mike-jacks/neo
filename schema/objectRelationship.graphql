@@ -1,7 +1,7 @@
 type ObjectRelationship {
   id: String!
-  relationshipName: String!
-  originalRelationshipName: String!
+  name: String!
+  originalName: String!
   properties: [Property!]
   fromObjectNodeId: String!
   toObjectNodeId: String!

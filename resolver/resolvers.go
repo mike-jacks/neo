@@ -76,8 +76,8 @@ func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, i
 }
 
 // CreateObjectRelationship is the resolver for the createObjectRelationship field.
-func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) (*model.ObjectRelationshipResponse, error) {
-	result, err := r.Database.CreateObjectRelationship(ctx, relationshipName, properties, fromObjectNodeID, toObjectNodeID)
+func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) (*model.ObjectRelationshipResponse, error) {
+	result, err := r.Database.CreateObjectRelationship(ctx, name, properties, fromObjectNodeID, toObjectNodeID)
 	if err != nil {
 		return nil, err
 	}

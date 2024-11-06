@@ -794,8 +794,8 @@ func (db *Neo4jDatabase) CreateObjectRelationship(ctx context.Context, relations
 		}
 		data := &model.ObjectRelationship{
 			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
-			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
 			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
 			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
 			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
@@ -845,8 +845,8 @@ func (db *Neo4jDatabase) UpdatePropertiesOnObjectRelationship(ctx context.Contex
 		}
 		data := &model.ObjectRelationship{
 			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
-			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
 			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
 			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
 			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
@@ -896,8 +896,8 @@ func (db *Neo4jDatabase) RemovePropertiesFromObjectRelationship(ctx context.Cont
 		}
 		data := &model.ObjectRelationship{
 			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
-			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
 			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
 			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
 			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.GetProperties()),
@@ -945,8 +945,8 @@ func (db *Neo4jDatabase) DeleteObjectRelationship(ctx context.Context, id string
 		}
 		data := &model.ObjectRelationship{
 			ID:                       utils.PopString(propertiesMap, "_id"),
-			RelationshipName:         utils.PopString(propertiesMap, "_relationshipName"),
-			OriginalRelationshipName: utils.PopString(propertiesMap, "_originalRelationshipName"),
+			Name:                     utils.PopString(propertiesMap, "_name"),
+			OriginalName:             utils.PopString(propertiesMap, "_originalName"),
 			FromObjectNodeID:         utils.PopString(propertiesMap, "_fromObjectNodeId"),
 			ToObjectNodeID:           utils.PopString(propertiesMap, "_toObjectNodeId"),
 			Properties:               utils.ExtractPropertiesFromNeo4jNode(propertiesMap),
@@ -987,8 +987,8 @@ func (db *Neo4jDatabase) GetObjectNodeRelationship(ctx context.Context, id strin
 		}
 		data := &model.ObjectRelationship{
 			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
-			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
 			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
 			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
 			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
@@ -1031,8 +1031,8 @@ func (db *Neo4jDatabase) GetObjectNodeOutgoingRelationships(ctx context.Context,
 		}
 		data = append(data, &model.ObjectRelationship{
 			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
-			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
 			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
 			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
 			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
@@ -1077,8 +1077,8 @@ func (db *Neo4jDatabase) GetObjectNodeIncomingRelationships(ctx context.Context,
 		}
 		data = append(data, &model.ObjectRelationship{
 			ID:                       utils.PopString(neo4jRelationship.Props, "_id"),
-			RelationshipName:         utils.PopString(neo4jRelationship.Props, "_relationshipName"),
-			OriginalRelationshipName: utils.PopString(neo4jRelationship.Props, "_originalRelationshipName"),
+			Name:                     utils.PopString(neo4jRelationship.Props, "_name"),
+			OriginalName:             utils.PopString(neo4jRelationship.Props, "_originalName"),
 			FromObjectNodeID:         utils.PopString(neo4jRelationship.Props, "_fromObjectNodeId"),
 			ToObjectNodeID:           utils.PopString(neo4jRelationship.Props, "_toObjectNodeId"),
 			Properties:               utils.ExtractPropertiesFromNeo4jNode(neo4jRelationship.Props),
@@ -2078,7 +2078,7 @@ func (db *Neo4jDatabase) RenameRelationshipSchemaNode(ctx context.Context, id st
 	originalNewName := strings.TrimSpace(newName)
 	newName = utils.RemoveSpacesAndHyphens(strings.ToUpper(newName))
 
-	query := fmt.Sprintf(`
+query := fmt.Sprintf(`
     OPTIONAL MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
     WHERE relationshipSchemaNode IS NOT NULL
     WITH relationshipSchemaNode, relationshipSchemaNode._domain as domain, relationshipSchemaNode._name as existingName
@@ -2089,11 +2089,12 @@ func (db *Neo4jDatabase) RenameRelationshipSchemaNode(ctx context.Context, id st
         relationshipSchemaNode._originalName = $originalNewName
     WITH relationshipSchemaNode, domain, existingName
     OPTIONAL MATCH (fromObjectNode)-[oldRel {_name: existingName}]->(toObjectNode)
-	CREATE (fromObjectNode)-[newRel:%s]->(toObjectNode)
-	SET newRel = properties(oldRel), newRel._name = $newName, newRel._originalName = $originalNewName
-	WITH relationshipSchemaNode, oldRel, count(newRel) as updatedCount, existingName as previousName
-	DELETE oldRel
-	RETURN relationshipSchemaNode, updatedCount, previousName
+    WHERE fromObjectNode IS NOT NULL AND toObjectNode IS NOT NULL
+    CREATE (fromObjectNode)-[newRel:%s]->(toObjectNode)
+    SET newRel = properties(oldRel), newRel._name = $newName, newRel._originalName = $originalNewName
+    WITH relationshipSchemaNode, oldRel, count(newRel) as updatedCount, existingName as previousName
+    DELETE oldRel
+    RETURN relationshipSchemaNode, updatedCount, previousName
 `, newName)
 
 	fmt.Println(query)

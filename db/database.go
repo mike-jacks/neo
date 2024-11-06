@@ -23,7 +23,7 @@ type Database interface {
 	GetObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
 	GetObjectNodes(ctx context.Context, domain *string, typeArg *string) (*model.ObjectNodesResponse, error)
 
-	CreateObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNodeId string, toObjectNodeId string) (*model.ObjectRelationshipResponse, error)
+	CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNodeId string, toObjectNodeId string) (*model.ObjectRelationshipResponse, error)
 	DeleteObjectRelationship(ctx context.Context, id string) (*model.ObjectRelationshipResponse, error)
 
 	UpdatePropertiesOnObjectRelationship(ctx context.Context, id string, properties []*model.PropertyInput) (*model.ObjectRelationshipResponse, error)

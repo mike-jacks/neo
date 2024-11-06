@@ -71,7 +71,7 @@ type ComplexityRoot struct {
 		AddLabelsOnObjectNode                      func(childComplexity int, id string, labels []string) int
 		CreateDomainSchemaNode                     func(childComplexity int, domain string) int
 		CreateObjectNode                           func(childComplexity int, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) int
-		CreateObjectRelationship                   func(childComplexity int, relationshipName string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) int
+		CreateObjectRelationship                   func(childComplexity int, name string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) int
 		CreateRelationshipSchemaNode               func(childComplexity int, name string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
 		CreateTypeSchemaNode                       func(childComplexity int, domain string, name string) int
 		CypherMutation                             func(childComplexity int, cypherStatement string) int
@@ -126,12 +126,12 @@ type ComplexityRoot struct {
 	}
 
 	ObjectRelationship struct {
-		FromObjectNodeID         func(childComplexity int) int
-		ID                       func(childComplexity int) int
-		OriginalRelationshipName func(childComplexity int) int
-		Properties               func(childComplexity int) int
-		RelationshipName         func(childComplexity int) int
-		ToObjectNodeID           func(childComplexity int) int
+		FromObjectNodeID func(childComplexity int) int
+		ID               func(childComplexity int) int
+		Name             func(childComplexity int) int
+		OriginalName     func(childComplexity int) int
+		Properties       func(childComplexity int) int
+		ToObjectNodeID   func(childComplexity int) int
 	}
 
 	ObjectRelationshipObjectNode struct {
@@ -246,7 +246,7 @@ type MutationResolver interface {
 	RemoveLabelsFromObjectNode(ctx context.Context, id string, labels []string) (*model.ObjectNodeResponse, error)
 	UpdatePropertiesOnObjectNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.ObjectNodeResponse, error)
 	RemovePropertiesFromObjectNode(ctx context.Context, id string, properties []string) (*model.ObjectNodeResponse, error)
-	CreateObjectRelationship(ctx context.Context, relationshipName string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) (*model.ObjectRelationshipResponse, error)
+	CreateObjectRelationship(ctx context.Context, name string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) (*model.ObjectRelationshipResponse, error)
 	UpdatePropertiesOnObjectRelationship(ctx context.Context, id string, properties []*model.PropertyInput) (*model.ObjectRelationshipResponse, error)
 	RemovePropertiesFromObjectRelationship(ctx context.Context, id string, properties []string) (*model.ObjectRelationshipResponse, error)
 	DeleteObjectRelationship(ctx context.Context, id string) (*model.ObjectRelationshipResponse, error)
@@ -430,7 +430,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateObjectRelationship(childComplexity, args["relationshipName"].(string), args["properties"].([]*model.PropertyInput), args["fromObjectNodeId"].(string), args["toObjectNodeId"].(string)), true
+		return e.complexity.Mutation.CreateObjectRelationship(childComplexity, args["name"].(string), args["properties"].([]*model.PropertyInput), args["fromObjectNodeId"].(string), args["toObjectNodeId"].(string)), true
 
 	case "Mutation.createRelationshipSchemaNode":
 		if e.complexity.Mutation.CreateRelationshipSchemaNode == nil {
@@ -834,12 +834,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ObjectRelationship.ID(childComplexity), true
 
-	case "ObjectRelationship.originalRelationshipName":
-		if e.complexity.ObjectRelationship.OriginalRelationshipName == nil {
+	case "ObjectRelationship.name":
+		if e.complexity.ObjectRelationship.Name == nil {
 			break
 		}
 
-		return e.complexity.ObjectRelationship.OriginalRelationshipName(childComplexity), true
+		return e.complexity.ObjectRelationship.Name(childComplexity), true
+
+	case "ObjectRelationship.originalName":
+		if e.complexity.ObjectRelationship.OriginalName == nil {
+			break
+		}
+
+		return e.complexity.ObjectRelationship.OriginalName(childComplexity), true
 
 	case "ObjectRelationship.properties":
 		if e.complexity.ObjectRelationship.Properties == nil {
@@ -847,13 +854,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ObjectRelationship.Properties(childComplexity), true
-
-	case "ObjectRelationship.relationshipName":
-		if e.complexity.ObjectRelationship.RelationshipName == nil {
-			break
-		}
-
-		return e.complexity.ObjectRelationship.RelationshipName(childComplexity), true
 
 	case "ObjectRelationship.toObjectNodeId":
 		if e.complexity.ObjectRelationship.ToObjectNodeID == nil {
@@ -1469,7 +1469,7 @@ var sources = []*ast.Source{
   removePropertiesFromObjectNode(id: String!, properties: [String!]!): ObjectNodeResponse!
 
   createObjectRelationship(
-    relationshipName: String!
+    name: String!
     properties: [PropertyInput!]
     fromObjectNodeId: String!
     toObjectNodeId: String!
@@ -1539,8 +1539,8 @@ input DeleteObjectNodeInput {
 `, BuiltIn: false},
 	{Name: "../schema/objectRelationship.graphql", Input: `type ObjectRelationship {
   id: String!
-  relationshipName: String!
-  originalRelationshipName: String!
+  name: String!
+  originalName: String!
   properties: [Property!]
   fromObjectNodeId: String!
   toObjectNodeId: String!
@@ -1880,11 +1880,11 @@ func (ec *executionContext) field_Mutation_createObjectNode_argsProperties(
 func (ec *executionContext) field_Mutation_createObjectRelationship_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_createObjectRelationship_argsRelationshipName(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createObjectRelationship_argsName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["relationshipName"] = arg0
+	args["name"] = arg0
 	arg1, err := ec.field_Mutation_createObjectRelationship_argsProperties(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -1902,12 +1902,12 @@ func (ec *executionContext) field_Mutation_createObjectRelationship_args(ctx con
 	args["toObjectNodeId"] = arg3
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createObjectRelationship_argsRelationshipName(
+func (ec *executionContext) field_Mutation_createObjectRelationship_argsName(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("relationshipName"))
-	if tmp, ok := rawArgs["relationshipName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -4187,7 +4187,7 @@ func (ec *executionContext) _Mutation_createObjectRelationship(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateObjectRelationship(rctx, fc.Args["relationshipName"].(string), fc.Args["properties"].([]*model.PropertyInput), fc.Args["fromObjectNodeId"].(string), fc.Args["toObjectNodeId"].(string))
+		return ec.resolvers.Mutation().CreateObjectRelationship(rctx, fc.Args["name"].(string), fc.Args["properties"].([]*model.PropertyInput), fc.Args["fromObjectNodeId"].(string), fc.Args["toObjectNodeId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6197,8 +6197,8 @@ func (ec *executionContext) fieldContext_ObjectRelationship_id(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _ObjectRelationship_relationshipName(ctx context.Context, field graphql.CollectedField, obj *model.ObjectRelationship) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ObjectRelationship_relationshipName(ctx, field)
+func (ec *executionContext) _ObjectRelationship_name(ctx context.Context, field graphql.CollectedField, obj *model.ObjectRelationship) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectRelationship_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6211,7 +6211,7 @@ func (ec *executionContext) _ObjectRelationship_relationshipName(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.RelationshipName, nil
+		return obj.Name, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6228,7 +6228,7 @@ func (ec *executionContext) _ObjectRelationship_relationshipName(ctx context.Con
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ObjectRelationship_relationshipName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ObjectRelationship_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ObjectRelationship",
 		Field:      field,
@@ -6241,8 +6241,8 @@ func (ec *executionContext) fieldContext_ObjectRelationship_relationshipName(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _ObjectRelationship_originalRelationshipName(ctx context.Context, field graphql.CollectedField, obj *model.ObjectRelationship) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ObjectRelationship_originalRelationshipName(ctx, field)
+func (ec *executionContext) _ObjectRelationship_originalName(ctx context.Context, field graphql.CollectedField, obj *model.ObjectRelationship) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectRelationship_originalName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6255,7 +6255,7 @@ func (ec *executionContext) _ObjectRelationship_originalRelationshipName(ctx con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.OriginalRelationshipName, nil
+		return obj.OriginalName, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6272,7 +6272,7 @@ func (ec *executionContext) _ObjectRelationship_originalRelationshipName(ctx con
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ObjectRelationship_originalRelationshipName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ObjectRelationship_originalName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ObjectRelationship",
 		Field:      field,
@@ -7045,10 +7045,10 @@ func (ec *executionContext) fieldContext_ObjectRelationshipResponse_objectRelati
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ObjectRelationship_id(ctx, field)
-			case "relationshipName":
-				return ec.fieldContext_ObjectRelationship_relationshipName(ctx, field)
-			case "originalRelationshipName":
-				return ec.fieldContext_ObjectRelationship_originalRelationshipName(ctx, field)
+			case "name":
+				return ec.fieldContext_ObjectRelationship_name(ctx, field)
+			case "originalName":
+				return ec.fieldContext_ObjectRelationship_originalName(ctx, field)
 			case "properties":
 				return ec.fieldContext_ObjectRelationship_properties(ctx, field)
 			case "fromObjectNodeId":
@@ -7185,10 +7185,10 @@ func (ec *executionContext) fieldContext_ObjectRelationshipsResponse_objectRelat
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ObjectRelationship_id(ctx, field)
-			case "relationshipName":
-				return ec.fieldContext_ObjectRelationship_relationshipName(ctx, field)
-			case "originalRelationshipName":
-				return ec.fieldContext_ObjectRelationship_originalRelationshipName(ctx, field)
+			case "name":
+				return ec.fieldContext_ObjectRelationship_name(ctx, field)
+			case "originalName":
+				return ec.fieldContext_ObjectRelationship_originalName(ctx, field)
 			case "properties":
 				return ec.fieldContext_ObjectRelationship_properties(ctx, field)
 			case "fromObjectNodeId":
@@ -12120,13 +12120,13 @@ func (ec *executionContext) _ObjectRelationship(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "relationshipName":
-			out.Values[i] = ec._ObjectRelationship_relationshipName(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._ObjectRelationship_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "originalRelationshipName":
-			out.Values[i] = ec._ObjectRelationship_originalRelationshipName(ctx, field, obj)
+		case "originalName":
+			out.Values[i] = ec._ObjectRelationship_originalName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
