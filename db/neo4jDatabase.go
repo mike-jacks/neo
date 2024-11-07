@@ -2231,27 +2231,27 @@ func (db *Neo4jDatabase) RenamePropertyOnRelationshipSchemaNode(ctx context.Cont
 	}
 
 	query := fmt.Sprintf(`
-        OPTIONAL MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
-        WHERE relationshipSchemaNode.%s IS NOT NULL
-        WITH relationshipSchemaNode
-        OPTIONAL MATCH ()-[rel {_name: relationshipSchemaNode._name}]->()
-        WITH relationshipSchemaNode, collect(rel) as relationships
-        SET relationshipSchemaNode.%s = relationshipSchemaNode.%s
-        REMOVE relationshipSchemaNode.%s
-        WITH relationshipSchemaNode, relationships
-        UNWIND relationships as rel
-        SET rel.%s = rel.%s
-        REMOVE rel.%s
-        WITH relationshipSchemaNode, count(relationships) as updatedCount
-        RETURN relationshipSchemaNode, updatedCount
-    `, oldPropertyName, newPropertyName, oldPropertyName, oldPropertyName, newPropertyName, oldPropertyName, oldPropertyName)
+    MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
+    WITH relationshipSchemaNode
+    WHERE relationshipSchemaNode.%s IS NOT NULL
+    WITH relationshipSchemaNode, relationshipSchemaNode.%s as oldValue
+    SET relationshipSchemaNode.%s = oldValue
+    REMOVE relationshipSchemaNode.%s
+    WITH relationshipSchemaNode
+    OPTIONAL MATCH ()-[rel {_name: relationshipSchemaNode._name}]->()
+    WITH relationshipSchemaNode, collect(rel) as relationships, count(rel) as updatedCount
+    FOREACH (r IN relationships | 
+        SET r.%s = r.%s
+        REMOVE r.%s
+    )
+    RETURN relationshipSchemaNode, updatedCount
+`, oldPropertyName, oldPropertyName, newPropertyName, oldPropertyName,
+		newPropertyName, oldPropertyName, oldPropertyName)
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"id":              id,
-		"oldPropertyName": oldPropertyName,
-		"newPropertyName": newPropertyName,
+		"id": id,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -2289,6 +2289,9 @@ func (db *Neo4jDatabase) RenamePropertyOnRelationshipSchemaNode(ctx context.Cont
 		}
 		message := fmt.Sprintf("%s relationship schema node property renamed to %s. %v object nodes updated successfully", oldPropertyName, newPropertyName, updatedCountInt)
 		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil
+	}
+	if result.Err() != nil {
+		return nil, result.Err()
 	}
 	message := "Unable to rename relationship schema node property"
 	return &model.RelationshipSchemaNodeResponse{Success: false, Message: &message, RelationshipSchemaNode: nil}, nil
