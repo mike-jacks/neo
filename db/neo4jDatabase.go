@@ -2369,7 +2369,80 @@ func (db *Neo4jDatabase) RemovePropertiesFromRelationshipSchemaNode(ctx context.
 }
 
 func (db *Neo4jDatabase) DeleteRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error) {
-	return nil, nil
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(ctx)
+
+	query := `
+    MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
+    OPTIONAL MATCH ()-[rel {_name: relationshipSchemaNode._name}]->()
+    WITH relationshipSchemaNode, collect(rel) as relationships, properties(relationshipSchemaNode) as relationshipSchemaNodeProperties, labels(relationshipSchemaNode) as relationshipSchemaNodeLabels
+    WITH relationshipSchemaNode, relationships, relationshipSchemaNodeProperties, relationshipSchemaNodeLabels, size(relationships) as relationshipsCount
+    FOREACH (rel IN relationships | DELETE rel)
+    DELETE relationshipSchemaNode
+    WITH relationshipSchemaNodeProperties, relationshipSchemaNodeLabels, relationshipsCount
+    RETURN relationshipsCount, relationshipSchemaNodeProperties, relationshipSchemaNodeLabels
+`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"id": id,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+	if result.Next(ctx) {
+		record := result.Record()
+		relationshipsCount, ok := record.Get("relationshipsCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipsCount")
+		}
+		relationshipsCountInt, ok := relationshipsCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipsCount")
+		}
+		relationshipSchemaNodeProperties, ok := record.Get("relationshipSchemaNodeProperties")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNodeProperties")
+		}
+		relationshipSchemaNodePropertiesMap, ok := relationshipSchemaNodeProperties.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNodeProperties")
+		}
+		relationshipSchemaNodeLabels, ok := record.Get("relationshipSchemaNodeLabels")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNodeLabels")
+		}
+		relationshipSchemaNodeLabelsArray, ok := relationshipSchemaNodeLabels.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNodeLabels")
+		}
+		labels := []string{}
+		for _, label := range relationshipSchemaNodeLabelsArray {
+			labels = append(labels, label.(string))
+		}
+		data := &model.RelationshipSchemaNode{
+			ID:                   utils.PopString(relationshipSchemaNodePropertiesMap, "_id"),
+			Name:                 utils.PopString(relationshipSchemaNodePropertiesMap, "_name"),
+			OriginalName:         utils.PopString(relationshipSchemaNodePropertiesMap, "_originalName"),
+			Domain:               utils.PopString(relationshipSchemaNodePropertiesMap, "_domain"),
+			Type:                 utils.PopString(relationshipSchemaNodePropertiesMap, "_type"),
+			FromTypeSchemaNodeID: utils.PopString(relationshipSchemaNodePropertiesMap, "_fromTypeSchemaNodeId"),
+			ToTypeSchemaNodeID:   utils.PopString(relationshipSchemaNodePropertiesMap, "_toTypeSchemaNodeId"),
+			Properties:           utils.ExtractPropertiesFromNeo4jNode(relationshipSchemaNodePropertiesMap),
+			Labels:               labels,
+		}
+		message := fmt.Sprintf("Relationship schema node %s deleted successfully. %v relationships deleted successfully", data.Name, relationshipsCountInt)
+		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil
+	}
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
+	message := "Unable to delete relationship schema node"
+	return &model.RelationshipSchemaNodeResponse{Success: false, Message: &message, RelationshipSchemaNode: nil}, nil
+
 }
 
 func (db *Neo4jDatabase) GetTypeSchemaNodeRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error) {
