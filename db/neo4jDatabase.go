@@ -2231,7 +2231,7 @@ func (db *Neo4jDatabase) RenamePropertyOnRelationshipSchemaNode(ctx context.Cont
 	}
 
 	query := fmt.Sprintf(`
-        MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
+        OPTIONAL MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
         WHERE relationshipSchemaNode.%s IS NOT NULL
         WITH relationshipSchemaNode
         OPTIONAL MATCH ()-[rel {_name: relationshipSchemaNode._name}]->()
