@@ -2215,8 +2215,79 @@ func (db *Neo4jDatabase) RenamePropertyOnRelationshipSchemaNode(ctx context.Cont
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
-	return nil, nil
+	oldPropertyName = utils.RemoveSpacesAndLowerCase(oldPropertyName)
+	newPropertyName = utils.RemoveSpacesAndLowerCase(newPropertyName)
 
+	if strings.HasPrefix(oldPropertyName, "_") {
+		return nil, fmt.Errorf("oldPropertyName cannot be %s", oldPropertyName)
+	}
+
+	if strings.HasPrefix(newPropertyName, "_") {
+		return nil, fmt.Errorf("newPropertyName cannot be %s", newPropertyName)
+	}
+
+	query := fmt.Sprintf(`
+        MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
+        WHERE relationshipSchemaNode.%s IS NOT NULL
+        WITH relationshipSchemaNode
+        OPTIONAL MATCH ()-[rel {_name: relationshipSchemaNode._name}]->()
+        WITH relationshipSchemaNode, collect(rel) as relationships
+        SET relationshipSchemaNode.%s = relationshipSchemaNode.%s
+        REMOVE relationshipSchemaNode.%s
+        WITH relationshipSchemaNode, relationships
+        UNWIND relationships as rel
+        SET rel.%s = rel.%s
+        REMOVE rel.%s
+        WITH relationshipSchemaNode, count(relationships) as updatedCount
+        RETURN relationshipSchemaNode, updatedCount
+    `, oldPropertyName, newPropertyName, oldPropertyName, oldPropertyName, newPropertyName, oldPropertyName, oldPropertyName)
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"id":              id,
+		"oldPropertyName": oldPropertyName,
+		"newPropertyName": newPropertyName,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		relationshipSchemaNode, ok := record.Get("relationshipSchemaNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNode")
+		}
+		neo4jRelationshipSchemaNode, ok := relationshipSchemaNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNode)
+		}
+		updatedCount, ok := record.Get("updatedCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the updatedCount")
+		}
+		updatedCountInt, ok := updatedCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the updatedCount")
+		}
+		data := &model.RelationshipSchemaNode{
+			ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+			Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+			Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
+			Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
+			FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
+			ToTypeSchemaNodeID:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeId"),
+			Properties:           utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
+			Labels:               neo4jRelationshipSchemaNode.Labels,
+		}
+		message := fmt.Sprintf("%s relationship schema node property renamed to %s. %v object nodes updated successfully", oldPropertyName, newPropertyName, updatedCountInt)
+		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil
+	}
+	message := "Unable to rename relationship schema node property"
+	return &model.RelationshipSchemaNodeResponse{Success: false, Message: &message, RelationshipSchemaNode: nil}, nil
 }
 
 func (db *Neo4jDatabase) RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, id string, properties []string) (*model.RelationshipSchemaNodeResponse, error) {
