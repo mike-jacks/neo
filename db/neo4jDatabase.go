@@ -2088,11 +2088,15 @@ func (db *Neo4jDatabase) RenameRelationshipSchemaNode(ctx context.Context, id st
     SET relationshipSchemaNode._name = $newName,
         relationshipSchemaNode._originalName = $originalNewName
     WITH relationshipSchemaNode, domain, existingName
-    MATCH (fromObjectNode)-[oldRel {_name: existingName}]->(toObjectNode)
+    OPTIONAL MATCH (fromObjectNode)-[oldRel {_name: existingName}]->(toObjectNode)
     WITH relationshipSchemaNode, fromObjectNode, toObjectNode, oldRel, existingName
-    CREATE (fromObjectNode)-[newRel:%s]->(toObjectNode)
-    SET newRel = properties(oldRel), newRel._name = $newName, newRel._originalName = $originalNewName
-    WITH relationshipSchemaNode, collect(oldRel) as oldRels, count(newRel) as updatedCount, existingName as previousName
+    CALL apoc.do.when(
+        fromObjectNode IS NOT NULL AND toObjectNode IS NOT NULL AND oldRel IS NOT NULL,
+        'CREATE (fromObjectNode)-[newRel:%s]->(toObjectNode) SET newRel = properties(oldRel), newRel._name = $newName, newRel._originalName = $originalNewName RETURN newRel',
+        'RETURN null as newRel',
+        {fromObjectNode: fromObjectNode, toObjectNode: toObjectNode, oldRel: oldRel, newName: $newName, originalNewName: $originalNewName}
+    ) YIELD value
+    WITH relationshipSchemaNode, collect(oldRel) as oldRels, count(value.newRel) as updatedCount, existingName as previousName
     FOREACH (oldRel IN oldRels | DELETE oldRel)
     RETURN relationshipSchemaNode, updatedCount, previousName
 `, newName)
