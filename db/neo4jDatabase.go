@@ -2309,9 +2309,11 @@ func (db *Neo4jDatabase) RemovePropertiesFromRelationshipSchemaNode(ctx context.
 	query := `MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id}) `
 	query += `OPTIONAL MATCH ()-[rel {_name: relationshipSchemaNode._name}]->() `
 	query += `WITH relationshipSchemaNode, collect(rel) as relationships, count(rel) as updatedCount `
+	query += `SET `
 	query = utils.RemovePropertiesQuery(query, properties, "relationshipSchemaNode")
-	query += `WITH relationshipSchemaNode, relationships, updatedCount `
-	query += `FOREACH (rel IN relationships | `
+	query = strings.TrimSuffix(query, ", ")
+	query += ` WITH relationshipSchemaNode, relationships, updatedCount `
+	query += `FOREACH (rel IN relationships | SET `
 	query = utils.RemovePropertiesQuery(query, properties, "rel")
 	query = strings.TrimSuffix(query, ", ")
 	query += `) RETURN relationshipSchemaNode, updatedCount`
