@@ -2197,6 +2197,7 @@ func (db *Neo4jDatabase) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Co
 		data := &model.RelationshipSchemaNode{
 			ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
 			Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+			OriginalName:         utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
 			Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
 			Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
 			FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
