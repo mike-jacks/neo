@@ -4,8 +4,8 @@ type RelationshipSchemaNode {
   name: String!
   originalName: String!
   type: String!
-  fromTypeSchemaNodeName: String!
-  toTypeSchemaNodeName: String!
+  fromTypeSchemaNodeId: String!
+  toTypeSchemaNodeId: String!
   properties: [Property!]
   labels: [String!]
 }

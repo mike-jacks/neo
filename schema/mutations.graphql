@@ -37,8 +37,8 @@ type Mutation {
   createRelationshipSchemaNode(
     name: String!
     domain: String!
-    fromTypeSchemaNodeName: String!
-    toTypeSchemaNodeName: String!
+    fromTypeSchemaNodeId: String!
+    toTypeSchemaNodeId: String!
   ): RelationshipSchemaNodeResponse!
   renameRelationshipSchemaNode(id: String!, newName: String!): RelationshipSchemaNodeResponse!
   updatePropertiesOnRelationshipSchemaNode(id: String!, properties: [PropertyInput!]!): RelationshipSchemaNodeResponse!

@@ -72,7 +72,7 @@ type ComplexityRoot struct {
 		CreateDomainSchemaNode                     func(childComplexity int, domain string) int
 		CreateObjectNode                           func(childComplexity int, domain string, name string, typeArg string, labels []string, properties []*model.PropertyInput) int
 		CreateObjectRelationship                   func(childComplexity int, name string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) int
-		CreateRelationshipSchemaNode               func(childComplexity int, name string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) int
+		CreateRelationshipSchemaNode               func(childComplexity int, name string, domain string, fromTypeSchemaNodeID string, toTypeSchemaNodeID string) int
 		CreateTypeSchemaNode                       func(childComplexity int, domain string, name string) int
 		CypherMutation                             func(childComplexity int, cypherStatement string) int
 		DeleteDomainSchemaNode                     func(childComplexity int, id string) int
@@ -186,15 +186,15 @@ type ComplexityRoot struct {
 	}
 
 	RelationshipSchemaNode struct {
-		Domain                 func(childComplexity int) int
-		FromTypeSchemaNodeName func(childComplexity int) int
-		ID                     func(childComplexity int) int
-		Labels                 func(childComplexity int) int
-		Name                   func(childComplexity int) int
-		OriginalName           func(childComplexity int) int
-		Properties             func(childComplexity int) int
-		ToTypeSchemaNodeName   func(childComplexity int) int
-		Type                   func(childComplexity int) int
+		Domain               func(childComplexity int) int
+		FromTypeSchemaNodeID func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		Labels               func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		OriginalName         func(childComplexity int) int
+		Properties           func(childComplexity int) int
+		ToTypeSchemaNodeID   func(childComplexity int) int
+		Type                 func(childComplexity int) int
 	}
 
 	RelationshipSchemaNodeResponse struct {
@@ -259,7 +259,7 @@ type MutationResolver interface {
 	RenamePropertyOnTypeSchemaNode(ctx context.Context, id string, oldPropertyName string, newPropertyName string) (*model.TypeSchemaNodeResponse, error)
 	RemovePropertiesFromTypeSchemaNode(ctx context.Context, id string, properties []string) (*model.TypeSchemaNodeResponse, error)
 	DeleteTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error)
-	CreateRelationshipSchemaNode(ctx context.Context, name string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.RelationshipSchemaNodeResponse, error)
+	CreateRelationshipSchemaNode(ctx context.Context, name string, domain string, fromTypeSchemaNodeID string, toTypeSchemaNodeID string) (*model.RelationshipSchemaNodeResponse, error)
 	RenameRelationshipSchemaNode(ctx context.Context, id string, newName string) (*model.RelationshipSchemaNodeResponse, error)
 	UpdatePropertiesOnRelationshipSchemaNode(ctx context.Context, id string, properties []*model.PropertyInput) (*model.RelationshipSchemaNodeResponse, error)
 	RenamePropertyOnRelationshipSchemaNode(ctx context.Context, id string, oldPropertyName string, newPropertyName string) (*model.RelationshipSchemaNodeResponse, error)
@@ -442,7 +442,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateRelationshipSchemaNode(childComplexity, args["name"].(string), args["domain"].(string), args["fromTypeSchemaNodeName"].(string), args["toTypeSchemaNodeName"].(string)), true
+		return e.complexity.Mutation.CreateRelationshipSchemaNode(childComplexity, args["name"].(string), args["domain"].(string), args["fromTypeSchemaNodeId"].(string), args["toTypeSchemaNodeId"].(string)), true
 
 	case "Mutation.createTypeSchemaNode":
 		if e.complexity.Mutation.CreateTypeSchemaNode == nil {
@@ -1129,12 +1129,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RelationshipSchemaNode.Domain(childComplexity), true
 
-	case "RelationshipSchemaNode.fromTypeSchemaNodeName":
-		if e.complexity.RelationshipSchemaNode.FromTypeSchemaNodeName == nil {
+	case "RelationshipSchemaNode.fromTypeSchemaNodeId":
+		if e.complexity.RelationshipSchemaNode.FromTypeSchemaNodeID == nil {
 			break
 		}
 
-		return e.complexity.RelationshipSchemaNode.FromTypeSchemaNodeName(childComplexity), true
+		return e.complexity.RelationshipSchemaNode.FromTypeSchemaNodeID(childComplexity), true
 
 	case "RelationshipSchemaNode.id":
 		if e.complexity.RelationshipSchemaNode.ID == nil {
@@ -1171,12 +1171,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RelationshipSchemaNode.Properties(childComplexity), true
 
-	case "RelationshipSchemaNode.toTypeSchemaNodeName":
-		if e.complexity.RelationshipSchemaNode.ToTypeSchemaNodeName == nil {
+	case "RelationshipSchemaNode.toTypeSchemaNodeId":
+		if e.complexity.RelationshipSchemaNode.ToTypeSchemaNodeID == nil {
 			break
 		}
 
-		return e.complexity.RelationshipSchemaNode.ToTypeSchemaNodeName(childComplexity), true
+		return e.complexity.RelationshipSchemaNode.ToTypeSchemaNodeID(childComplexity), true
 
 	case "RelationshipSchemaNode.type":
 		if e.complexity.RelationshipSchemaNode.Type == nil {
@@ -1495,8 +1495,8 @@ var sources = []*ast.Source{
   createRelationshipSchemaNode(
     name: String!
     domain: String!
-    fromTypeSchemaNodeName: String!
-    toTypeSchemaNodeName: String!
+    fromTypeSchemaNodeId: String!
+    toTypeSchemaNodeId: String!
   ): RelationshipSchemaNodeResponse!
   renameRelationshipSchemaNode(id: String!, newName: String!): RelationshipSchemaNodeResponse!
   updatePropertiesOnRelationshipSchemaNode(id: String!, properties: [PropertyInput!]!): RelationshipSchemaNodeResponse!
@@ -1604,8 +1604,8 @@ union ObjectNodeOrRelationshipNode = ObjectNode | ObjectRelationship
   name: String!
   originalName: String!
   type: String!
-  fromTypeSchemaNodeName: String!
-  toTypeSchemaNodeName: String!
+  fromTypeSchemaNodeId: String!
+  toTypeSchemaNodeId: String!
   properties: [Property!]
   labels: [String!]
 }
@@ -1967,16 +1967,16 @@ func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_args(ctx
 		return nil, err
 	}
 	args["domain"] = arg1
-	arg2, err := ec.field_Mutation_createRelationshipSchemaNode_argsFromTypeSchemaNodeName(ctx, rawArgs)
+	arg2, err := ec.field_Mutation_createRelationshipSchemaNode_argsFromTypeSchemaNodeID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["fromTypeSchemaNodeName"] = arg2
-	arg3, err := ec.field_Mutation_createRelationshipSchemaNode_argsToTypeSchemaNodeName(ctx, rawArgs)
+	args["fromTypeSchemaNodeId"] = arg2
+	arg3, err := ec.field_Mutation_createRelationshipSchemaNode_argsToTypeSchemaNodeID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["toTypeSchemaNodeName"] = arg3
+	args["toTypeSchemaNodeId"] = arg3
 	return args, nil
 }
 func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsName(
@@ -2005,12 +2005,12 @@ func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsDoma
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsFromTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsFromTypeSchemaNodeID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("fromTypeSchemaNodeName"))
-	if tmp, ok := rawArgs["fromTypeSchemaNodeName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("fromTypeSchemaNodeId"))
+	if tmp, ok := rawArgs["fromTypeSchemaNodeId"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -2018,12 +2018,12 @@ func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsFrom
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsToTypeSchemaNodeName(
+func (ec *executionContext) field_Mutation_createRelationshipSchemaNode_argsToTypeSchemaNodeID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("toTypeSchemaNodeName"))
-	if tmp, ok := rawArgs["toTypeSchemaNodeName"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("toTypeSchemaNodeId"))
+	if tmp, ok := rawArgs["toTypeSchemaNodeId"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -5006,7 +5006,7 @@ func (ec *executionContext) _Mutation_createRelationshipSchemaNode(ctx context.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateRelationshipSchemaNode(rctx, fc.Args["name"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeName"].(string), fc.Args["toTypeSchemaNodeName"].(string))
+		return ec.resolvers.Mutation().CreateRelationshipSchemaNode(rctx, fc.Args["name"].(string), fc.Args["domain"].(string), fc.Args["fromTypeSchemaNodeId"].(string), fc.Args["toTypeSchemaNodeId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6575,10 +6575,10 @@ func (ec *executionContext) fieldContext_ObjectRelationshipObjectNode_relationsh
 				return ec.fieldContext_RelationshipSchemaNode_originalName(ctx, field)
 			case "type":
 				return ec.fieldContext_RelationshipSchemaNode_type(ctx, field)
-			case "fromTypeSchemaNodeName":
-				return ec.fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeName(ctx, field)
-			case "toTypeSchemaNodeName":
-				return ec.fieldContext_RelationshipSchemaNode_toTypeSchemaNodeName(ctx, field)
+			case "fromTypeSchemaNodeId":
+				return ec.fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeId(ctx, field)
+			case "toTypeSchemaNodeId":
+				return ec.fieldContext_RelationshipSchemaNode_toTypeSchemaNodeId(ctx, field)
 			case "properties":
 				return ec.fieldContext_RelationshipSchemaNode_properties(ctx, field)
 			case "labels":
@@ -8365,8 +8365,8 @@ func (ec *executionContext) fieldContext_RelationshipSchemaNode_type(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _RelationshipSchemaNode_fromTypeSchemaNodeName(ctx context.Context, field graphql.CollectedField, obj *model.RelationshipSchemaNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeName(ctx, field)
+func (ec *executionContext) _RelationshipSchemaNode_fromTypeSchemaNodeId(ctx context.Context, field graphql.CollectedField, obj *model.RelationshipSchemaNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8379,7 +8379,7 @@ func (ec *executionContext) _RelationshipSchemaNode_fromTypeSchemaNodeName(ctx c
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.FromTypeSchemaNodeName, nil
+		return obj.FromTypeSchemaNodeID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8396,7 +8396,7 @@ func (ec *executionContext) _RelationshipSchemaNode_fromTypeSchemaNodeName(ctx c
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RelationshipSchemaNode",
 		Field:      field,
@@ -8409,8 +8409,8 @@ func (ec *executionContext) fieldContext_RelationshipSchemaNode_fromTypeSchemaNo
 	return fc, nil
 }
 
-func (ec *executionContext) _RelationshipSchemaNode_toTypeSchemaNodeName(ctx context.Context, field graphql.CollectedField, obj *model.RelationshipSchemaNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_RelationshipSchemaNode_toTypeSchemaNodeName(ctx, field)
+func (ec *executionContext) _RelationshipSchemaNode_toTypeSchemaNodeId(ctx context.Context, field graphql.CollectedField, obj *model.RelationshipSchemaNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RelationshipSchemaNode_toTypeSchemaNodeId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8423,7 +8423,7 @@ func (ec *executionContext) _RelationshipSchemaNode_toTypeSchemaNodeName(ctx con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ToTypeSchemaNodeName, nil
+		return obj.ToTypeSchemaNodeID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8440,7 +8440,7 @@ func (ec *executionContext) _RelationshipSchemaNode_toTypeSchemaNodeName(ctx con
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RelationshipSchemaNode_toTypeSchemaNodeName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RelationshipSchemaNode_toTypeSchemaNodeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RelationshipSchemaNode",
 		Field:      field,
@@ -8674,10 +8674,10 @@ func (ec *executionContext) fieldContext_RelationshipSchemaNodeResponse_relation
 				return ec.fieldContext_RelationshipSchemaNode_originalName(ctx, field)
 			case "type":
 				return ec.fieldContext_RelationshipSchemaNode_type(ctx, field)
-			case "fromTypeSchemaNodeName":
-				return ec.fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeName(ctx, field)
-			case "toTypeSchemaNodeName":
-				return ec.fieldContext_RelationshipSchemaNode_toTypeSchemaNodeName(ctx, field)
+			case "fromTypeSchemaNodeId":
+				return ec.fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeId(ctx, field)
+			case "toTypeSchemaNodeId":
+				return ec.fieldContext_RelationshipSchemaNode_toTypeSchemaNodeId(ctx, field)
 			case "properties":
 				return ec.fieldContext_RelationshipSchemaNode_properties(ctx, field)
 			case "labels":
@@ -8820,10 +8820,10 @@ func (ec *executionContext) fieldContext_RelationshipSchemaNodesResponse_relatio
 				return ec.fieldContext_RelationshipSchemaNode_originalName(ctx, field)
 			case "type":
 				return ec.fieldContext_RelationshipSchemaNode_type(ctx, field)
-			case "fromTypeSchemaNodeName":
-				return ec.fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeName(ctx, field)
-			case "toTypeSchemaNodeName":
-				return ec.fieldContext_RelationshipSchemaNode_toTypeSchemaNodeName(ctx, field)
+			case "fromTypeSchemaNodeId":
+				return ec.fieldContext_RelationshipSchemaNode_fromTypeSchemaNodeId(ctx, field)
+			case "toTypeSchemaNodeId":
+				return ec.fieldContext_RelationshipSchemaNode_toTypeSchemaNodeId(ctx, field)
 			case "properties":
 				return ec.fieldContext_RelationshipSchemaNode_properties(ctx, field)
 			case "labels":
@@ -12768,13 +12768,13 @@ func (ec *executionContext) _RelationshipSchemaNode(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "fromTypeSchemaNodeName":
-			out.Values[i] = ec._RelationshipSchemaNode_fromTypeSchemaNodeName(ctx, field, obj)
+		case "fromTypeSchemaNodeId":
+			out.Values[i] = ec._RelationshipSchemaNode_fromTypeSchemaNodeId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "toTypeSchemaNodeName":
-			out.Values[i] = ec._RelationshipSchemaNode_toTypeSchemaNodeName(ctx, field, obj)
+		case "toTypeSchemaNodeId":
+			out.Values[i] = ec._RelationshipSchemaNode_toTypeSchemaNodeId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

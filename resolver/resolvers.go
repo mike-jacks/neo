@@ -193,8 +193,8 @@ func (r *mutationResolver) DeleteTypeSchemaNode(ctx context.Context, id string) 
 }
 
 // CreateRelationshipSchemaNode is the resolver for the createRelationshipSchemaNode field.
-func (r *mutationResolver) CreateRelationshipSchemaNode(ctx context.Context, name string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.RelationshipSchemaNodeResponse, error) {
-	result, err := r.Database.CreateRelationshipSchemaNode(ctx, name, domain, fromTypeSchemaNodeName, toTypeSchemaNodeName)
+func (r *mutationResolver) CreateRelationshipSchemaNode(ctx context.Context, name string, domain string, fromTypeSchemaNodeID string, toTypeSchemaNodeID string) (*model.RelationshipSchemaNodeResponse, error) {
+	result, err := r.Database.CreateRelationshipSchemaNode(ctx, name, domain, fromTypeSchemaNodeID, toTypeSchemaNodeID)
 	if err != nil {
 		return nil, err
 	}

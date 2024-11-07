@@ -1983,7 +1983,7 @@ func (db *Neo4jDatabase) RenamePropertyOnTypeSchemaNode(ctx context.Context, id 
 	return &model.TypeSchemaNodeResponse{Success: false, Message: &message, TypeSchemaNode: nil}, nil
 }
 
-func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, name string, domain string, fromTypeSchemaNodeName string, toTypeSchemaNodeName string) (*model.RelationshipSchemaNodeResponse, error) {
+func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, name string, domain string, fromTypeSchemaNodeId string, toTypeSchemaNodeId string) (*model.RelationshipSchemaNodeResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
@@ -1991,8 +1991,6 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, name 
 	domain = strings.TrimSpace(domain)
 	originalName := strings.TrimSpace(name)
 	name = utils.RemoveSpacesAndHyphens(strings.ToUpper(name))
-	fromTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(fromTypeSchemaNodeName))
-	toTypeSchemaNodeName = strings.TrimSpace(strings.ToUpper(toTypeSchemaNodeName))
 
 	query := `
 		CREATE CONSTRAINT relationship_schema_node_key IF NOT EXISTS
@@ -2011,7 +2009,7 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, name 
 	query = `
 		CREATE CONSTRAINT relationship_schema_node_unique IF NOT EXISTS
 		FOR (n:RELATIONSHIP_SCHEMA)
-		REQUIRE (n._name, n._domain, n._fromTypeSchemaNodeName, n._toTypeSchemaNodeName) IS UNIQUE
+		REQUIRE (n._name, n._domain, n._fromTypeSchemaNodeId, n._toTypeSchemaNodeId) IS UNIQUE
 	`
 
 	fmt.Println(query)
@@ -2023,19 +2021,19 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, name 
 	}
 
 	query = `
-		CREATE (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id, _domain: $domain, _name: $name, _originalName: $originalName, _type: "RELATIONSHIP SCHEMA", _fromTypeSchemaNodeName: $fromTypeSchemaNodeName, _toTypeSchemaNodeName: $toTypeSchemaNodeName})
+		CREATE (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id, _domain: $domain, _name: $name, _originalName: $originalName, _type: "RELATIONSHIP SCHEMA", _fromTypeSchemaNodeId: $fromTypeSchemaNodeId, _toTypeSchemaNodeId: $toTypeSchemaNodeId})
 		RETURN relationshipSchemaNode
 	`
 
 	fmt.Println(query)
 
 	parameters := map[string]any{
-		"id":                     id,
-		"domain":                 domain,
-		"name":                   name,
-		"originalName":           originalName,
-		"fromTypeSchemaNodeName": fromTypeSchemaNodeName,
-		"toTypeSchemaNodeName":   toTypeSchemaNodeName,
+		"id":                   id,
+		"domain":               domain,
+		"name":                 name,
+		"originalName":         originalName,
+		"fromTypeSchemaNodeId": fromTypeSchemaNodeId,
+		"toTypeSchemaNodeId":   toTypeSchemaNodeId,
 	}
 
 	result, err := session.Run(ctx, query, parameters)
@@ -2054,15 +2052,15 @@ func (db *Neo4jDatabase) CreateRelationshipSchemaNode(ctx context.Context, name 
 			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNode)
 		}
 		data := &model.RelationshipSchemaNode{
-			ID:                     utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
-			Domain:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
-			Name:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
-			OriginalName:           utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
-			Type:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
-			FromTypeSchemaNodeName: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeName"),
-			ToTypeSchemaNodeName:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeName"),
-			Properties:             utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
-			Labels:                 neo4jRelationshipSchemaNode.Labels,
+			ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+			Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
+			Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+			OriginalName:         utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
+			Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
+			FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
+			ToTypeSchemaNodeID:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeId"),
+			Properties:           utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
+			Labels:               neo4jRelationshipSchemaNode.Labels,
 		}
 		message := "Relationship schema created successfully"
 		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil
@@ -2141,15 +2139,15 @@ func (db *Neo4jDatabase) RenameRelationshipSchemaNode(ctx context.Context, id st
 			return nil, fmt.Errorf("failed to retrieve the previousName")
 		}
 		data := &model.RelationshipSchemaNode{
-			ID:                     utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
-			Name:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
-			OriginalName:           utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
-			Domain:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
-			Type:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
-			FromTypeSchemaNodeName: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeName"),
-			ToTypeSchemaNodeName:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeName"),
-			Properties:             utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
-			Labels:                 neo4jRelationshipSchemaNode.Labels,
+			ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+			Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+			OriginalName:         utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
+			Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
+			Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
+			FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
+			ToTypeSchemaNodeID:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeId"),
+			Properties:           utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
+			Labels:               neo4jRelationshipSchemaNode.Labels,
 		}
 		message := fmt.Sprintf("%s relationship schema node renamed to %s. %v object nodes updated successfully", previousNameString, newName, updatedCountInt)
 		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil
@@ -2197,14 +2195,14 @@ func (db *Neo4jDatabase) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Co
 			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNode)
 		}
 		data := &model.RelationshipSchemaNode{
-			ID:                     utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
-			Name:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
-			Domain:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
-			Type:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
-			FromTypeSchemaNodeName: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeName"),
-			ToTypeSchemaNodeName:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeName"),
-			Properties:             utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
-			Labels:                 neo4jRelationshipSchemaNode.Labels,
+			ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+			Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+			Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
+			Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
+			FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
+			ToTypeSchemaNodeID:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeId"),
+			Properties:           utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
+			Labels:               neo4jRelationshipSchemaNode.Labels,
 		}
 		message := "Relationship schema node properties updated successfully"
 		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil

@@ -138,15 +138,15 @@ type Query struct {
 }
 
 type RelationshipSchemaNode struct {
-	ID                     string      `json:"id"`
-	Domain                 string      `json:"domain"`
-	Name                   string      `json:"name"`
-	OriginalName           string      `json:"originalName"`
-	Type                   string      `json:"type"`
-	FromTypeSchemaNodeName string      `json:"fromTypeSchemaNodeName"`
-	ToTypeSchemaNodeName   string      `json:"toTypeSchemaNodeName"`
-	Properties             []*Property `json:"properties,omitempty"`
-	Labels                 []string    `json:"labels,omitempty"`
+	ID                   string      `json:"id"`
+	Domain               string      `json:"domain"`
+	Name                 string      `json:"name"`
+	OriginalName         string      `json:"originalName"`
+	Type                 string      `json:"type"`
+	FromTypeSchemaNodeID string      `json:"fromTypeSchemaNodeId"`
+	ToTypeSchemaNodeID   string      `json:"toTypeSchemaNodeId"`
+	Properties           []*Property `json:"properties,omitempty"`
+	Labels               []string    `json:"labels,omitempty"`
 }
 
 type RelationshipSchemaNodeResponse struct {
