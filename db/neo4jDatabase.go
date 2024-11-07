@@ -2208,6 +2208,9 @@ func (db *Neo4jDatabase) UpdatePropertiesOnRelationshipSchemaNode(ctx context.Co
 		message := "Relationship schema node properties updated successfully"
 		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil
 	}
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
 	message := "Relationship schema node properties update failed"
 	return &model.RelationshipSchemaNodeResponse{Success: false, Message: &message, RelationshipSchemaNode: nil}, nil
 }
