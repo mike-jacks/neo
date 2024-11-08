@@ -2445,6 +2445,170 @@ func (db *Neo4jDatabase) DeleteRelationshipSchemaNode(ctx context.Context, id st
 
 }
 
-func (db *Neo4jDatabase) GetTypeSchemaNodeRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error) {
+func (db *Neo4jDatabase) GetTypeSchemaNodeOutgoingRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	query := `
+	MATCH (typeSchemaNode:TYPE_SCHEMA {_id: $id})
+	OPTIONAL MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_fromTypeSchemaNodeId: $id})
+	WITH collect(relationshipSchemaNode) as relationshipSchemaNodes, count(relationshipSchemaNode) as relationshipsCount, typeSchemaNode
+	RETURN 
+		CASE WHEN typeSchemaNode IS NULL
+			THEN null
+            ELSE relationshipSchemaNodes
+        END as relationshipSchemaNodes,
+        CASE WHEN typeSchemaNode IS NULL
+            THEN null
+            ELSE relationshipsCount
+        END as relationshipsCount
+	`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"id": id,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		message := fmt.Sprintf("Unable to get type schema node outgoing relationships. Error: %s", err.Error())
+		return &model.RelationshipSchemaNodesResponse{Success: false, Message: &message, RelationshipSchemaNodes: nil}, nil
+	}
+	if result.Next(ctx) {
+		record := result.Record()
+		relationshipSchemaNodes, ok := record.Get("relationshipSchemaNodes")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNodes")
+		}
+		RelationshipSchemaNodesArray, ok := relationshipSchemaNodes.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNodes)
+		}
+		relationshipsCount, ok := record.Get("relationshipsCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipsCount")
+		}
+		relationshipsCountInt, ok := relationshipsCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipsCount")
+		}
+		data := []*model.RelationshipSchemaNode{}
+		for _, neo4jRelationshipSchemaNode := range RelationshipSchemaNodesArray {
+			neo4jRelationshipSchemaNode, ok := neo4jRelationshipSchemaNode.(dbtype.Node)
+			if !ok {
+				return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", neo4jRelationshipSchemaNode)
+			}
+			data = append(data, &model.RelationshipSchemaNode{
+				ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+				Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
+				Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+				OriginalName:         utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
+				Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
+				FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
+				ToTypeSchemaNodeID:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeId"),
+				Properties:           utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
+				Labels:               neo4jRelationshipSchemaNode.Labels,
+			})
+		}
+		message := fmt.Sprintf("Type schema node outgoing relationships retrieved successfully. %v relationships found", relationshipsCountInt)
+		return &model.RelationshipSchemaNodesResponse{Success: true, Message: &message, RelationshipSchemaNodes: data}, nil
+	}
+	if result.Err() != nil {
+		message := fmt.Sprintf("Unable to get type schema node outgoing relationships. Error: %s", result.Err().Error())
+		return &model.RelationshipSchemaNodesResponse{Success: false, Message: &message, RelationshipSchemaNodes: nil}, nil
+	}
+	message := fmt.Sprintf("Type schema node with id '%s' does not exist.", id)
+	return &model.RelationshipSchemaNodesResponse{Success: false, Message: &message, RelationshipSchemaNodes: nil}, nil
+}
+
+func (db *Neo4jDatabase) GetTypeSchemaNodeIncomingRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	query := `
+	MATCH (typeSchemaNode:TYPE_SCHEMA {_id: $id})
+	OPTIONAL MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_toTypeSchemaNodeId: $id})
+	WITH collect(relationshipSchemaNode) as relationshipSchemaNodes, count(relationshipSchemaNode) as relationshipsCount, typeSchemaNode
+	RETURN
+		CASE WHEN typeSchemaNode IS NULL
+			THEN null
+            ELSE relationshipSchemaNodes
+        END as relationshipSchemaNodes,
+        CASE WHEN typeSchemaNode IS NULL
+            THEN null
+            ELSE relationshipsCount
+        END as relationshipsCount
+	`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"id": id,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		message := fmt.Sprintf("Unable to get type schema node outgoing relationships. Error: %s", err.Error())
+		return &model.RelationshipSchemaNodesResponse{Success: false, Message: &message, RelationshipSchemaNodes: nil}, nil
+	}
+	if result.Next(ctx) {
+		record := result.Record()
+		relationshipSchemaNodes, ok := record.Get("relationshipSchemaNodes")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNodes")
+		}
+		RelationshipSchemaNodesArray, ok := relationshipSchemaNodes.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNodes)
+		}
+		relationshipsCount, ok := record.Get("relationshipsCount")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipsCount")
+		}
+		relationshipsCountInt, ok := relationshipsCount.(int64)
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipsCount")
+		}
+		data := []*model.RelationshipSchemaNode{}
+		for _, neo4jRelationshipSchemaNode := range RelationshipSchemaNodesArray {
+			neo4jRelationshipSchemaNode, ok := neo4jRelationshipSchemaNode.(dbtype.Node)
+			if !ok {
+				return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", neo4jRelationshipSchemaNode)
+			}
+			data = append(data, &model.RelationshipSchemaNode{
+				ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+				Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
+				Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+				OriginalName:         utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
+				Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
+				FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
+				ToTypeSchemaNodeID:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeId"),
+				Properties:           utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
+				Labels:               neo4jRelationshipSchemaNode.Labels,
+			})
+		}
+		message := fmt.Sprintf("Type schema node outgoing relationships retrieved successfully. %v relationships found", relationshipsCountInt)
+		return &model.RelationshipSchemaNodesResponse{Success: true, Message: &message, RelationshipSchemaNodes: data}, nil
+	}
+	if result.Err() != nil {
+		message := fmt.Sprintf("Unable to get type schema node outgoing relationships. Error: %s", result.Err().Error())
+		return &model.RelationshipSchemaNodesResponse{Success: false, Message: &message, RelationshipSchemaNodes: nil}, nil
+	}
+	message := fmt.Sprintf("Type schema node with id '%s' does not exist.", id)
+	return &model.RelationshipSchemaNodesResponse{Success: false, Message: &message, RelationshipSchemaNodes: nil}, nil
+}
+
+func (db *Neo4jDatabase) GetRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	return nil, nil
+}
+
+func (db *Neo4jDatabase) GetRelationshipSchemaNodes(ctx context.Context, domain *string) (*model.RelationshipSchemaNodesResponse, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
 	return nil, nil
 }

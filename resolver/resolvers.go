@@ -6,7 +6,6 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mike-jacks/neo/generated"
 	"github.com/mike-jacks/neo/model"
@@ -339,22 +338,38 @@ func (r *queryResolver) GetTypeSchemaNodes(ctx context.Context, domain *string) 
 
 // GetTypeSchemaNodeOutgoingRelationships is the resolver for the getTypeSchemaNodeOutgoingRelationships field.
 func (r *queryResolver) GetTypeSchemaNodeOutgoingRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error) {
-	panic(fmt.Errorf("not implemented: GetTypeSchemaNodeOutgoingRelationships - getTypeSchemaNodeOutgoingRelationships"))
+	result, err := r.Database.GetTypeSchemaNodeOutgoingRelationships(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetTypeSchemaNodeIncomingRelationships is the resolver for the getTypeSchemaNodeIncomingRelationships field.
 func (r *queryResolver) GetTypeSchemaNodeIncomingRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error) {
-	panic(fmt.Errorf("not implemented: GetTypeSchemaNodeIncomingRelationships - getTypeSchemaNodeIncomingRelationships"))
+	result, err := r.Database.GetTypeSchemaNodeIncomingRelationships(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetRelationshipSchemaNode is the resolver for the getRelationshipSchemaNode field.
 func (r *queryResolver) GetRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: GetRelationshipSchemaNode - getRelationshipSchemaNode"))
+	result, err := r.Database.GetRelationshipSchemaNode(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetRelationshipSchemaNodes is the resolver for the getRelationshipSchemaNodes field.
 func (r *queryResolver) GetRelationshipSchemaNodes(ctx context.Context, domain *string) (*model.RelationshipSchemaNodesResponse, error) {
-	panic(fmt.Errorf("not implemented: GetRelationshipSchemaNodes - getRelationshipSchemaNodes"))
+	result, err := r.Database.GetRelationshipSchemaNodes(ctx, domain)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // CypherQuery is the resolver for the cypherQuery field.
@@ -374,19 +389,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *queryResolver) GetTypeSchemaNodeRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error) {
-	result, err := r.Database.GetTypeSchemaNodeRelationships(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-*/
