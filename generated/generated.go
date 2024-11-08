@@ -74,7 +74,6 @@ type ComplexityRoot struct {
 		CreateObjectRelationship                   func(childComplexity int, name string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) int
 		CreateRelationshipSchemaNode               func(childComplexity int, name string, domain string, fromTypeSchemaNodeID string, toTypeSchemaNodeID string) int
 		CreateTypeSchemaNode                       func(childComplexity int, domain string, name string) int
-		CypherMutation                             func(childComplexity int, cypherStatement string) int
 		DeleteDomainSchemaNode                     func(childComplexity int, id string) int
 		DeleteObjectNode                           func(childComplexity int, id string) int
 		DeleteObjectRelationship                   func(childComplexity int, id string) int
@@ -172,7 +171,6 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CypherQuery                            func(childComplexity int, cypherStatement string) int
 		GetDomainSchemaNode                    func(childComplexity int, id string) int
 		GetDomainSchemaNodes                   func(childComplexity int) int
 		GetObjectNode                          func(childComplexity int, id string) int
@@ -268,7 +266,6 @@ type MutationResolver interface {
 	RenamePropertyOnRelationshipSchemaNode(ctx context.Context, id string, oldPropertyName string, newPropertyName string) (*model.RelationshipSchemaNodeResponse, error)
 	RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, id string, properties []string) (*model.RelationshipSchemaNodeResponse, error)
 	DeleteRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error)
-	CypherMutation(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
 }
 type QueryResolver interface {
 	GetObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
@@ -284,7 +281,6 @@ type QueryResolver interface {
 	GetTypeSchemaNodeIncomingRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error)
 	GetRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error)
 	GetRelationshipSchemaNodes(ctx context.Context, domain *string) (*model.RelationshipSchemaNodesResponse, error)
-	CypherQuery(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
 }
 
 type executableSchema struct {
@@ -461,18 +457,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateTypeSchemaNode(childComplexity, args["domain"].(string), args["name"].(string)), true
-
-	case "Mutation.cypherMutation":
-		if e.complexity.Mutation.CypherMutation == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_cypherMutation_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CypherMutation(childComplexity, args["cypher_statement"].(string)), true
 
 	case "Mutation.deleteDomainSchemaNode":
 		if e.complexity.Mutation.DeleteDomainSchemaNode == nil {
@@ -1000,18 +984,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Property.Value(childComplexity), true
-
-	case "Query.cypherQuery":
-		if e.complexity.Query.CypherQuery == nil {
-			break
-		}
-
-		args, err := ec.field_Query_cypherQuery_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.CypherQuery(childComplexity, args["cypher_statement"].(string)), true
 
 	case "Query.getDomainSchemaNode":
 		if e.complexity.Query.GetDomainSchemaNode == nil {
@@ -1546,7 +1518,6 @@ var sources = []*ast.Source{
   removePropertiesFromRelationshipSchemaNode(id: String!, properties: [String!]!): RelationshipSchemaNodeResponse!
   deleteRelationshipSchemaNode(id: String!): RelationshipSchemaNodeResponse!
 
-  cypherMutation(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }
 `, BuiltIn: false},
 	{Name: "../schema/objectNode.graphql", Input: `type ObjectNode {
@@ -1639,7 +1610,6 @@ input PropertyInput {
   getRelationshipSchemaNode(id: String!): RelationshipSchemaNodeResponse!
   getRelationshipSchemaNodes(domain: String): RelationshipSchemaNodesResponse!
 
-  cypherQuery(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }
 
 union ObjectNodeOrRelationshipNode = ObjectNode | ObjectRelationship
@@ -2111,29 +2081,6 @@ func (ec *executionContext) field_Mutation_createTypeSchemaNode_argsName(
 ) (string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cypherMutation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_cypherMutation_argsCypherStatement(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["cypher_statement"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_cypherMutation_argsCypherStatement(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cypher_statement"))
-	if tmp, ok := rawArgs["cypher_statement"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -2923,29 +2870,6 @@ func (ec *executionContext) field_Query___type_argsName(
 ) (string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_cypherQuery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_cypherQuery_argsCypherStatement(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["cypher_statement"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_cypherQuery_argsCypherStatement(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cypher_statement"))
-	if tmp, ok := rawArgs["cypher_statement"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -5479,69 +5403,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteRelationshipSchemaNode(c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteRelationshipSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_cypherMutation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_cypherMutation(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CypherMutation(rctx, fc.Args["cypher_statement"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ObjectNodesOrRelationshipNodesResponse)
-	fc.Result = res
-	return ec.marshalNObjectNodesOrRelationshipNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesOrRelationshipNodesResponse(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_cypherMutation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "success":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_success(ctx, field)
-			case "message":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_message(ctx, field)
-			case "objectNodesOrRelationshipNodes":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_objectNodesOrRelationshipNodes(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ObjectNodesOrRelationshipNodesResponse", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_cypherMutation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -8251,69 +8112,6 @@ func (ec *executionContext) fieldContext_Query_getRelationshipSchemaNodes(ctx co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getRelationshipSchemaNodes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_cypherQuery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_cypherQuery(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CypherQuery(rctx, fc.Args["cypher_statement"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ObjectNodesOrRelationshipNodesResponse)
-	fc.Result = res
-	return ec.marshalNObjectNodesOrRelationshipNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesOrRelationshipNodesResponse(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_cypherQuery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "success":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_success(ctx, field)
-			case "message":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_message(ctx, field)
-			case "objectNodesOrRelationshipNodes":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_objectNodesOrRelationshipNodes(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ObjectNodesOrRelationshipNodesResponse", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_cypherQuery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12186,13 +11984,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "cypherMutation":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_cypherMutation(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13049,28 +12840,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "cypherQuery":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_cypherQuery(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -13906,20 +13675,6 @@ func (ec *executionContext) marshalNObjectNodeResponse2ᚖgithubᚗcomᚋmikeᚑ
 		return graphql.Null
 	}
 	return ec._ObjectNodeResponse(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNObjectNodesOrRelationshipNodesResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesOrRelationshipNodesResponse(ctx context.Context, sel ast.SelectionSet, v model.ObjectNodesOrRelationshipNodesResponse) graphql.Marshaler {
-	return ec._ObjectNodesOrRelationshipNodesResponse(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNObjectNodesOrRelationshipNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesOrRelationshipNodesResponse(ctx context.Context, sel ast.SelectionSet, v *model.ObjectNodesOrRelationshipNodesResponse) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ObjectNodesOrRelationshipNodesResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNObjectNodesResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesResponse(ctx context.Context, sel ast.SelectionSet, v model.ObjectNodesResponse) graphql.Marshaler {

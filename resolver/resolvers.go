@@ -246,15 +246,6 @@ func (r *mutationResolver) DeleteRelationshipSchemaNode(ctx context.Context, id 
 	return result, nil
 }
 
-// CypherMutation is the resolver for the cypherMutation field.
-func (r *mutationResolver) CypherMutation(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error) {
-	result, err := r.Database.CypherMutation(ctx, cypherStatement)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
 // GetObjectNode is the resolver for the getObjectNode field.
 func (r *queryResolver) GetObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error) {
 	result, err := r.Database.GetObjectNode(ctx, id)
@@ -366,15 +357,6 @@ func (r *queryResolver) GetRelationshipSchemaNode(ctx context.Context, id string
 // GetRelationshipSchemaNodes is the resolver for the getRelationshipSchemaNodes field.
 func (r *queryResolver) GetRelationshipSchemaNodes(ctx context.Context, domain *string) (*model.RelationshipSchemaNodesResponse, error) {
 	result, err := r.Database.GetRelationshipSchemaNodes(ctx, domain)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-// CypherQuery is the resolver for the cypherQuery field.
-func (r *queryResolver) CypherQuery(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error) {
-	result, err := r.Database.CypherQuery(ctx, cypherStatement)
 	if err != nil {
 		return nil, err
 	}

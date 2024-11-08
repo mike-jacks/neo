@@ -18,7 +18,6 @@ type Query {
   getRelationshipSchemaNode(id: String!): RelationshipSchemaNodeResponse!
   getRelationshipSchemaNodes(domain: String): RelationshipSchemaNodesResponse!
 
-  cypherQuery(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }
 
 union ObjectNodeOrRelationshipNode = ObjectNode | ObjectRelationship

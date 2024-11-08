@@ -62,6 +62,4 @@ type Database interface {
 	RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, id string, properties []string) (*model.RelationshipSchemaNodeResponse, error)
 	DeleteRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error)
 
-	CypherQuery(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
-	CypherMutation(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
 }
