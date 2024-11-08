@@ -12,7 +12,11 @@ type Query {
 
   getTypeSchemaNode(id: String!): TypeSchemaNodeResponse!
   getTypeSchemaNodes(domain: String): TypeSchemaNodesResponse!
-  getTypeSchemaNodeRelationships(id: String!): RelationshipSchemaNodesResponse!
+  getTypeSchemaNodeOutgoingRelationships(id: String!): RelationshipSchemaNodesResponse!
+  getTypeSchemaNodeIncomingRelationships(id: String!): RelationshipSchemaNodesResponse!
+
+  getRelationshipSchemaNode(id: String!): RelationshipSchemaNodeResponse!
+  getRelationshipSchemaNodes(domain: String): RelationshipSchemaNodesResponse!
 
   cypherQuery(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }
