@@ -24,11 +24,16 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	server := handler.NewDefaultServer(schema)
 
+	// Create a custom upgrader with very permissive settings
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
+			// Log the origin for debugging
+			origin := r.Header.Get("Origin")
+			log.Printf("Websocket connection attempt from origin: %s", origin)
 			return true
 		},
 		EnableCompression: true,
+		HandshakeTimeout:  10 * time.Second,
 	}
 
 	// Add WebSocket transport without InitFunc
@@ -61,15 +66,28 @@ func main() {
 	srv := setupGraphQLServer(neo4jdb)
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"*", "Sec-WebSocket-Protocol"},
-		AllowCredentials: true,
-		Debug:            true,
+		AllowedOrigins:      []string{"*"},
+		AllowedMethods:      []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:      []string{"*"},
+		ExposedHeaders:      []string{"*"},
+		AllowCredentials:    true,
+		AllowPrivateNetwork: true,
+		Debug:               true,
+	})
+
+	// Create a wrapper handler that logs headers
+	loggingHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Log all headers for debugging
+		log.Printf("Incoming request headers:")
+		for name, values := range r.Header {
+			log.Printf("%s: %v", name, values)
+		}
+
+		corsHandler.Handler(srv).ServeHTTP(w, r)
 	})
 
 	http.Handle("/graphql", corsHandler.Handler(playground.Handler("GraphQL Playground", "/query")))
-	http.Handle("/query", corsHandler.Handler(srv))
+	http.Handle("/query", loggingHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
