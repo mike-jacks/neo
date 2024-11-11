@@ -6,12 +6,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/mike-jacks/neo/db"
 	"github.com/mike-jacks/neo/generated"
@@ -24,31 +22,8 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	server := handler.NewDefaultServer(schema)
 
-	upgrader := websocket.Upgrader{
-		EnableCompression: true,
-		CheckOrigin: func(r *http.Request) bool {
-			origin := r.Header.Get("Origin")
-			log.Printf("WebSocket connection attempt from origin: %s", origin)
-
-			// Accept connections from your Vercel frontend and null origin
-			return origin == "https://neo-frontend-v2.vercel.app" ||
-				origin == "null" ||
-				origin == ""
-		},
-		Subprotocols: []string{"graphql-transport-ws"},
-	}
-
 	// Add WebSocket transport without InitFunc
-	server.AddTransport(&transport.Websocket{
-		KeepAlivePingInterval: 10 * time.Second,
-		PingPongInterval:      10 * time.Second,
-		Upgrader:              upgrader,
-	},
-	// For production, you might want to check specific origins:
-	// origin := r.Header.Get("Origin")
-	// return origin == "http://localhost:3000" ||
-	//        origin == "https://your-production-domain.com"
-	)
+	server.AddTransport(&transport.Websocket{})
 	return server
 }
 
@@ -68,13 +43,9 @@ func main() {
 	srv := setupGraphQLServer(neo4jdb)
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:      []string{"*"},
-		AllowedMethods:      []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:      []string{"*"},
-		ExposedHeaders:      []string{"*"},
-		AllowCredentials:    true,
-		AllowPrivateNetwork: true,
-		Debug:               true,
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
 	})
 
 	// Create a wrapper handler that logs headers
