@@ -25,11 +25,17 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	server := handler.NewDefaultServer(schema)
 
 	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
 		EnableCompression: true,
-		Subprotocols:      []string{"graphql-transport-ws"},
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			log.Printf("WebSocket connection attempt from origin: %s", origin)
+
+			// Accept connections from your Vercel frontend and null origin
+			return origin == "https://neo-frontend-v2.vercel.app" ||
+				origin == "null" ||
+				origin == ""
+		},
+		Subprotocols: []string{"graphql-transport-ws"},
 	}
 
 	// Add WebSocket transport without InitFunc
