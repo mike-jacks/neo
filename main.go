@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -25,6 +26,7 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	// Add WebSocket transport without InitFunc
 	server.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
+		PingPongInterval:      10 * time.Second,
 	})
 
 	return server
@@ -48,8 +50,9 @@ func main() {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
+		AllowedHeaders:   []string{"*", "Sec-WebSocket-Protocol"},
 		AllowCredentials: true,
+		Debug:            true,
 	})
 
 	http.Handle("/graphql", corsHandler.Handler(playground.Handler("GraphQL Playground", "/query")))
@@ -60,11 +63,18 @@ func main() {
 		port = "8080"
 	}
 	url := os.Getenv("URL")
+
+	var websocketUrl string
 	if url == "" {
 		url = "http://localhost" + ":" + port
+		websocketUrl = "ws://localhost" + ":" + port + "/query"
+	} else {
+		url = "https://" + url
+		websocketUrl = strings.Replace(url, "https://", "ws://", 1)
 	}
 
 	log.Printf("Connect to %s/graphql for GraphQL Playground", url)
+	log.Printf("GraphQL WebSocket endpoint: %s", websocketUrl)
 	log.Printf("Connect to %s/query for GraphQL API", url)
 	log.Printf("Connect to https://console.neo4j.io for Neo4j Browser Console")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
