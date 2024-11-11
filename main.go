@@ -26,6 +26,8 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	allowedOrigins := map[string]bool{
 		"https://neo-frontend-v2.vercel.app": true,
 		"http://localhost:5173":              true,
+		"http://localhost":                   true,
+		"http://172.0.0.1":                   true,
 	}
 
 	// Add WebSocket transport without InitFunc
@@ -33,8 +35,11 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
-				log.Printf("WebSocket connection attempt from origin: %s", origin)
-				return allowedOrigins[origin]
+				if !allowedOrigins[origin] {
+					log.Printf("WebSocket connection attempt from disallowed origin: %s", origin)
+					return false
+				}
+				return true
 			},
 		},
 	})
@@ -69,8 +74,13 @@ func main() {
 		// for name, values := range r.Header {
 		// 	log.Printf("%s: %v", name, values)
 		// }
-
-		corsHandler.Handler(srv).ServeHTTP(w, r)
+		if websocket.IsWebSocketUpgrade(r) {
+			log.Printf("WebSocket connection attempt from origin: %s", r.Header.Get("Origin"))
+			srv.ServeHTTP(w, r)
+		} else {
+			log.Printf("HTTP connection attempt from origin: %s", r.Header.Get("Origin"))
+			corsHandler.Handler(srv).ServeHTTP(w, r)
+		}
 	})
 
 	http.Handle("/graphql", corsHandler.Handler(playground.Handler("GraphQL Playground", "/query")))
