@@ -21,7 +21,7 @@ import (
 func setupGraphQLServer(db db.Database) *handler.Server {
 	resolver := resolver.NewResolver(db)
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
-	server := handler.NewDefaultServer(schema)
+	server := handler.New(schema)
 
 	allowedOrigins := map[string]bool{
 		"https://neo-frontend-v2.vercel.app": true,
@@ -31,16 +31,24 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	}
 
 	// Add WebSocket transport without InitFunc
-	server.AddTransport(&transport.Websocket{
+	server.AddTransport(transport.Websocket{
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				origin := r.Header.Get("Origin")
-				log.Printf("These are the same: %v", origin == "http://localhost:5173")
-				log.Printf("WebSocket connection attempt from origin: %s", origin)
+				origin := strings.TrimRight(r.Header.Get("Origin"), "/")
+				log.Printf("WebSocket Origin: '%s'", origin)
+
+				// Debug allowed origins
+				for allowed := range allowedOrigins {
+					log.Printf("Comparing with allowed origin: '%s'", allowed)
+				}
+
+				// Compare directly with map
 				if !allowedOrigins[origin] {
-					log.Printf("WebSocket connection attempt from disallowed origin: %s", origin)
+					log.Printf("WebSocket connection rejected from origin: '%s'", origin)
 					return false
 				}
+
+				log.Printf("WebSocket connection accepted from origin: '%s'", origin)
 				return true
 			},
 		},
@@ -69,18 +77,14 @@ func main() {
 		AllowedHeaders: []string{"*"},
 	})
 
-	// Create a wrapper handler that logs headers
 	loggingHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Log all headers for debugging
-		// log.Printf("Incoming request headers:")
-		// for name, values := range r.Header {
-		// 	log.Printf("%s: %v", name, values)
-		// }
+		log.Printf("Request received: Method: %s, Path: %s", r.Method, r.URL.Path)
 		if websocket.IsWebSocketUpgrade(r) {
-			log.Printf("WebSocket connection attempt from origin: %s", r.Header.Get("Origin"))
+			log.Printf("WebSocket Upgrade Detected. Origin: %s", r.Header.Get("Origin"))
 			srv.ServeHTTP(w, r)
+			return
 		} else {
-			log.Printf("HTTP connection attempt from origin: %s", r.Header.Get("Origin"))
+			log.Printf("Non-WebSocket Request Detected. Origin: %s", r.Header.Get("Origin"))
 			corsHandler.Handler(srv).ServeHTTP(w, r)
 		}
 	})
