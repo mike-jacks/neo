@@ -2603,12 +2603,115 @@ func (db *Neo4jDatabase) GetRelationshipSchemaNode(ctx context.Context, id strin
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	return nil, nil
+	query := `
+	MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_id: $id})
+	RETURN relationshipSchemaNode
+	`
+
+	fmt.Println(query)
+
+	parameters := map[string]any{
+		"id": id,
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Next(ctx) {
+		record := result.Record()
+		relationshipSchemaNode, ok := record.Get("relationshipSchemaNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNode")
+		}
+		neo4jRelationshipSchemaNode, ok := relationshipSchemaNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNode)
+		}
+		data := &model.RelationshipSchemaNode{
+			ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+			Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
+			Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+			OriginalName:         utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
+			Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
+			FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
+			ToTypeSchemaNodeID:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeId"),
+			Properties:           utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
+			Labels:               neo4jRelationshipSchemaNode.Labels,
+		}
+		message := "Relationship schema node retrieved successfully"
+		return &model.RelationshipSchemaNodeResponse{Success: true, Message: &message, RelationshipSchemaNode: data}, nil
+	}
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
+	message := fmt.Sprintf("Relationship schema node with id '%s' does not exist.", id)
+	return &model.RelationshipSchemaNodeResponse{Success: false, Message: &message, RelationshipSchemaNode: nil}, nil
 }
 
 func (db *Neo4jDatabase) GetRelationshipSchemaNodes(ctx context.Context, domain *string) (*model.RelationshipSchemaNodesResponse, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
 
-	return nil, nil
+	var query string
+	if domain != nil {
+		query = `
+		MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA {_domain: $domain})
+		RETURN relationshipSchemaNode
+		`
+	} else {
+		query = `
+		MATCH (relationshipSchemaNode:RELATIONSHIP_SCHEMA)
+		RETURN relationshipSchemaNode
+		`
+	}
+
+	fmt.Println(query)
+
+	parameters := map[string]any{}
+	if domain != nil {
+		parameters["domain"] = domain
+	}
+
+	result, err := session.Run(ctx, query, parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	data := []*model.RelationshipSchemaNode{}
+	for result.Next(ctx) {
+		record := result.Record()
+		relationshipSchemaNode, ok := record.Get("relationshipSchemaNode")
+		if !ok {
+			return nil, fmt.Errorf("failed to retrieve the relationshipSchemaNode")
+		}
+		neo4jRelationshipSchemaNode, ok := relationshipSchemaNode.(dbtype.Node)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for relationshipSchemaNode: %T", relationshipSchemaNode)
+		}
+		data = append(data, &model.RelationshipSchemaNode{
+			ID:                   utils.PopString(neo4jRelationshipSchemaNode.Props, "_id"),
+			Domain:               utils.PopString(neo4jRelationshipSchemaNode.Props, "_domain"),
+			Name:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_name"),
+			OriginalName:         utils.PopString(neo4jRelationshipSchemaNode.Props, "_originalName"),
+			Type:                 utils.PopString(neo4jRelationshipSchemaNode.Props, "_type"),
+			FromTypeSchemaNodeID: utils.PopString(neo4jRelationshipSchemaNode.Props, "_fromTypeSchemaNodeId"),
+			ToTypeSchemaNodeID:   utils.PopString(neo4jRelationshipSchemaNode.Props, "_toTypeSchemaNodeId"),
+			Properties:           utils.ExtractPropertiesFromNeo4jNode(neo4jRelationshipSchemaNode.Props),
+			Labels:               neo4jRelationshipSchemaNode.Labels,
+		})
+	}
+
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
+
+	if len(data) == 0 {
+		message := "No relationship schema nodes found"
+		return &model.RelationshipSchemaNodesResponse{Success: true, Message: &message, RelationshipSchemaNodes: nil}, nil
+	}
+
+	message := fmt.Sprintf("Relationship schema nodes retrieved successfully. %v relationships found", len(data))
+	return &model.RelationshipSchemaNodesResponse{Success: true, Message: &message, RelationshipSchemaNodes: data}, nil
 }
