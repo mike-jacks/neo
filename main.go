@@ -32,7 +32,7 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	}
 
 	// Add WebSocket transport without InitFunc
-	server.AddTransport(transport.Websocket{
+	server.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		PingPongInterval:      10 * time.Second,
 		Upgrader:              upgrader,
