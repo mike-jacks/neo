@@ -122,6 +122,9 @@ func (r *mutationResolver) CreateDomainSchemaNode(ctx context.Context, domain st
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.DomainSchemaNodeCreated, result)
+	}
 	return result, nil
 }
 
@@ -409,7 +412,16 @@ func (r *subscriptionResolver) ObjectRelationshipDeleted(ctx context.Context) (<
 
 // DomainSchemaNodeCreated is the resolver for the domainSchemaNodeCreated field.
 func (r *subscriptionResolver) DomainSchemaNodeCreated(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: DomainSchemaNodeCreated - domainSchemaNodeCreated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.DomainSchemaNodeCreated)
+	ch := make(chan *model.DomainSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.DomainSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // DomainSchemaNodeUpdated is the resolver for the domainSchemaNodeUpdated field.
