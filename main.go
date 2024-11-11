@@ -5,8 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
 	"github.com/mike-jacks/neo/db"
@@ -19,6 +21,12 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	resolver := resolver.NewResolver(db)
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	server := handler.NewDefaultServer(schema)
+
+	// Add WebSocket transport without InitFunc
+	server.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+	})
+
 	return server
 }
 

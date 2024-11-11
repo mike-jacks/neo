@@ -6,9 +6,11 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mike-jacks/neo/generated"
 	"github.com/mike-jacks/neo/model"
+	"github.com/mike-jacks/neo/subscriptions"
 )
 
 // CreateObjectNode is the resolver for the createObjectNode field.
@@ -16,6 +18,9 @@ func (r *mutationResolver) CreateObjectNode(ctx context.Context, domain string, 
 	result, err := r.Database.CreateObjectNode(ctx, domain, name, typeArg, labels, properties)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectNodeCreated, result)
 	}
 	return result, nil
 }
@@ -363,11 +368,99 @@ func (r *queryResolver) GetRelationshipSchemaNodes(ctx context.Context, domain *
 	return result, nil
 }
 
+// ObjectNodeCreated is the resolver for the objectNodeCreated field.
+func (r *subscriptionResolver) ObjectNodeCreated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error) {
+	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectNodeCreated)
+	ch := make(chan *model.ObjectNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.ObjectNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
+}
+
+// ObjectNodeUpdated is the resolver for the objectNodeUpdated field.
+func (r *subscriptionResolver) ObjectNodeUpdated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: ObjectNodeUpdated - objectNodeUpdated"))
+}
+
+// ObjectNodeDeleted is the resolver for the objectNodeDeleted field.
+func (r *subscriptionResolver) ObjectNodeDeleted(ctx context.Context) (<-chan *model.ObjectNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: ObjectNodeDeleted - objectNodeDeleted"))
+}
+
+// ObjectRelationshipCreated is the resolver for the objectRelationshipCreated field.
+func (r *subscriptionResolver) ObjectRelationshipCreated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
+	panic(fmt.Errorf("not implemented: ObjectRelationshipCreated - objectRelationshipCreated"))
+}
+
+// ObjectRelationshipUpdated is the resolver for the objectRelationshipUpdated field.
+func (r *subscriptionResolver) ObjectRelationshipUpdated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
+	panic(fmt.Errorf("not implemented: ObjectRelationshipUpdated - objectRelationshipUpdated"))
+}
+
+// ObjectRelationshipDeleted is the resolver for the objectRelationshipDeleted field.
+func (r *subscriptionResolver) ObjectRelationshipDeleted(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
+	panic(fmt.Errorf("not implemented: ObjectRelationshipDeleted - objectRelationshipDeleted"))
+}
+
+// DomainSchemaNodeCreated is the resolver for the domainSchemaNodeCreated field.
+func (r *subscriptionResolver) DomainSchemaNodeCreated(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: DomainSchemaNodeCreated - domainSchemaNodeCreated"))
+}
+
+// DomainSchemaNodeUpdated is the resolver for the domainSchemaNodeUpdated field.
+func (r *subscriptionResolver) DomainSchemaNodeUpdated(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: DomainSchemaNodeUpdated - domainSchemaNodeUpdated"))
+}
+
+// DomainSchemaNodeDeleted is the resolver for the domainSchemaNodeDeleted field.
+func (r *subscriptionResolver) DomainSchemaNodeDeleted(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: DomainSchemaNodeDeleted - domainSchemaNodeDeleted"))
+}
+
+// TypeSchemaNodeCreated is the resolver for the typeSchemaNodeCreated field.
+func (r *subscriptionResolver) TypeSchemaNodeCreated(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: TypeSchemaNodeCreated - typeSchemaNodeCreated"))
+}
+
+// TypeSchemaNodeUpdated is the resolver for the typeSchemaNodeUpdated field.
+func (r *subscriptionResolver) TypeSchemaNodeUpdated(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: TypeSchemaNodeUpdated - typeSchemaNodeUpdated"))
+}
+
+// TypeSchemaNodeDeleted is the resolver for the typeSchemaNodeDeleted field.
+func (r *subscriptionResolver) TypeSchemaNodeDeleted(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: TypeSchemaNodeDeleted - typeSchemaNodeDeleted"))
+}
+
+// RelationshipSchemaNodeCreated is the resolver for the relationshipSchemaNodeCreated field.
+func (r *subscriptionResolver) RelationshipSchemaNodeCreated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: RelationshipSchemaNodeCreated - relationshipSchemaNodeCreated"))
+}
+
+// RelationshipSchemaNodeUpdated is the resolver for the relationshipSchemaNodeUpdated field.
+func (r *subscriptionResolver) RelationshipSchemaNodeUpdated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: RelationshipSchemaNodeUpdated - relationshipSchemaNodeUpdated"))
+}
+
+// RelationshipSchemaNodeDeleted is the resolver for the relationshipSchemaNodeDeleted field.
+func (r *subscriptionResolver) RelationshipSchemaNodeDeleted(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
+	panic(fmt.Errorf("not implemented: RelationshipSchemaNodeDeleted - relationshipSchemaNodeDeleted"))
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
