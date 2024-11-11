@@ -11,7 +11,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/mike-jacks/neo/db"
 	"github.com/mike-jacks/neo/generated"
@@ -24,23 +23,10 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	server := handler.NewDefaultServer(schema)
 
-	// Create a custom upgrader with very permissive settings
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			// Log the origin for debugging
-			origin := r.Header.Get("Origin")
-			log.Printf("Websocket connection attempt from origin: %s", origin)
-			return true
-		},
-		EnableCompression: true,
-		HandshakeTimeout:  10 * time.Second,
-	}
-
 	// Add WebSocket transport without InitFunc
 	server.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		PingPongInterval:      10 * time.Second,
-		Upgrader:              upgrader,
 	},
 	// For production, you might want to check specific origins:
 	// origin := r.Header.Get("Origin")
