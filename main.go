@@ -35,6 +35,8 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
+				log.Printf("These are the same: %v", origin == "http://localhost:5173")
+				log.Printf("WebSocket connection attempt from origin: %s", origin)
 				if !allowedOrigins[origin] {
 					log.Printf("WebSocket connection attempt from disallowed origin: %s", origin)
 					return false
