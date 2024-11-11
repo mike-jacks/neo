@@ -65,10 +65,10 @@ func main() {
 	// Create a wrapper handler that logs headers
 	loggingHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Log all headers for debugging
-		log.Printf("Incoming request headers:")
-		for name, values := range r.Header {
-			log.Printf("%s: %v", name, values)
-		}
+		// log.Printf("Incoming request headers:")
+		// for name, values := range r.Header {
+		// 	log.Printf("%s: %v", name, values)
+		// }
 
 		corsHandler.Handler(srv).ServeHTTP(w, r)
 	})
