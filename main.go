@@ -10,6 +10,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/mike-jacks/neo/db"
 	"github.com/mike-jacks/neo/generated"
@@ -22,8 +23,21 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	server := handler.NewDefaultServer(schema)
 
+	allowedOrigins := map[string]bool{
+		"https://neo-frontend-v2.vercel.app": true,
+		"http://localhost:5173":              true,
+	}
+
 	// Add WebSocket transport without InitFunc
-	server.AddTransport(&transport.Websocket{})
+	server.AddTransport(&transport.Websocket{
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				log.Printf("WebSocket connection attempt from origin: %s", origin)
+				return allowedOrigins[origin]
+			},
+		},
+	})
 	return server
 }
 
