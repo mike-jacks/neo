@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/mike-jacks/neo/db"
 	"github.com/mike-jacks/neo/generated"
@@ -27,6 +28,15 @@ func setupGraphQLServer(db db.Database) *handler.Server {
 	server.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		PingPongInterval:      10 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+			// For production, you might want to check specific origins:
+			// origin := r.Header.Get("Origin")
+			// return origin == "http://localhost:3000" ||
+			//        origin == "https://your-production-domain.com"
+		},
 	})
 
 	return server
@@ -67,14 +77,13 @@ func main() {
 	var websocketUrl string
 	if url == "" {
 		url = "http://localhost" + ":" + port
-		websocketUrl = "ws://localhost" + ":" + port + "/query"
+		websocketUrl = "ws://localhost" + ":" + port
 	} else {
-		url = "https://" + url
 		websocketUrl = strings.Replace(url, "https://", "ws://", 1)
 	}
 
 	log.Printf("Connect to %s/graphql for GraphQL Playground", url)
-	log.Printf("GraphQL WebSocket endpoint: %s", websocketUrl)
+	log.Printf("GraphQL WebSocket endpoint: %s/query", websocketUrl)
 	log.Printf("Connect to %s/query for GraphQL API", url)
 	log.Printf("Connect to https://console.neo4j.io for Neo4j Browser Console")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
