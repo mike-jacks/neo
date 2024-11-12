@@ -6,7 +6,6 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mike-jacks/neo/generated"
 	"github.com/mike-jacks/neo/model"
@@ -32,6 +31,9 @@ func (r *mutationResolver) RenameObjectNode(ctx context.Context, id string, newN
 		return nil, err
 
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectNodeUpdated, result)
+	}
 	return result, nil
 }
 
@@ -40,6 +42,9 @@ func (r *mutationResolver) DeleteObjectNode(ctx context.Context, id string) (*mo
 	result, err := r.Database.DeleteObjectNode(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectNodeDeleted, result)
 	}
 	return result, nil
 }
@@ -50,6 +55,9 @@ func (r *mutationResolver) AddLabelsOnObjectNode(ctx context.Context, id string,
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectNodeUpdated, result)
+	}
 	return result, nil
 }
 
@@ -58,6 +66,9 @@ func (r *mutationResolver) RemoveLabelsFromObjectNode(ctx context.Context, id st
 	result, err := r.Database.RemoveLabelsFromObjectNode(ctx, id, labels)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectNodeUpdated, result)
 	}
 	return result, nil
 }
@@ -68,6 +79,9 @@ func (r *mutationResolver) UpdatePropertiesOnObjectNode(ctx context.Context, id 
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectNodeUpdated, result)
+	}
 	return result, nil
 }
 
@@ -76,6 +90,9 @@ func (r *mutationResolver) RemovePropertiesFromObjectNode(ctx context.Context, i
 	result, err := r.Database.RemovePropertiesFromObjectNode(ctx, id, properties)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectNodeUpdated, result)
 	}
 	return result, nil
 }
@@ -86,6 +103,9 @@ func (r *mutationResolver) CreateObjectRelationship(ctx context.Context, name st
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectRelationshipCreated, result)
+	}
 	return result, nil
 }
 
@@ -94,6 +114,9 @@ func (r *mutationResolver) UpdatePropertiesOnObjectRelationship(ctx context.Cont
 	result, err := r.Database.UpdatePropertiesOnObjectRelationship(ctx, id, properties)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectRelationshipUpdated, result)
 	}
 	return result, nil
 }
@@ -104,6 +127,9 @@ func (r *mutationResolver) RemovePropertiesFromObjectRelationship(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectRelationshipUpdated, result)
+	}
 	return result, nil
 }
 
@@ -112,6 +138,9 @@ func (r *mutationResolver) DeleteObjectRelationship(ctx context.Context, id stri
 	result, err := r.Database.DeleteObjectRelationship(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.ObjectRelationshipDeleted, result)
 	}
 	return result, nil
 }
@@ -134,6 +163,9 @@ func (r *mutationResolver) RenameDomainSchemaNode(ctx context.Context, id string
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.DomainSchemaNodeUpdated, result)
+	}
 	return result, nil
 }
 
@@ -142,6 +174,9 @@ func (r *mutationResolver) DeleteDomainSchemaNode(ctx context.Context, id string
 	result, err := r.Database.DeleteDomainSchemaNode(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.DomainSchemaNodeDeleted, result)
 	}
 	return result, nil
 }
@@ -152,6 +187,9 @@ func (r *mutationResolver) CreateTypeSchemaNode(ctx context.Context, domain stri
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.TypeSchemaNodeCreated, result)
+	}
 	return result, nil
 }
 
@@ -160,6 +198,9 @@ func (r *mutationResolver) RenameTypeSchemaNode(ctx context.Context, id string, 
 	result, err := r.Database.RenameTypeSchemaNode(ctx, id, newName)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.TypeSchemaNodeUpdated, result)
 	}
 	return result, nil
 }
@@ -170,6 +211,9 @@ func (r *mutationResolver) UpdatePropertiesOnTypeSchemaNode(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.TypeSchemaNodeUpdated, result)
+	}
 	return result, nil
 }
 
@@ -178,6 +222,9 @@ func (r *mutationResolver) RenamePropertyOnTypeSchemaNode(ctx context.Context, i
 	result, err := r.Database.RenamePropertyOnTypeSchemaNode(ctx, id, oldPropertyName, newPropertyName)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.TypeSchemaNodeUpdated, result)
 	}
 	return result, nil
 }
@@ -188,6 +235,9 @@ func (r *mutationResolver) RemovePropertiesFromTypeSchemaNode(ctx context.Contex
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.TypeSchemaNodeUpdated, result)
+	}
 	return result, nil
 }
 
@@ -196,6 +246,9 @@ func (r *mutationResolver) DeleteTypeSchemaNode(ctx context.Context, id string) 
 	result, err := r.Database.DeleteTypeSchemaNode(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.TypeSchemaNodeDeleted, result)
 	}
 	return result, nil
 }
@@ -206,6 +259,9 @@ func (r *mutationResolver) CreateRelationshipSchemaNode(ctx context.Context, nam
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.RelationshipSchemaNodeCreated, result)
+	}
 	return result, nil
 }
 
@@ -214,6 +270,9 @@ func (r *mutationResolver) RenameRelationshipSchemaNode(ctx context.Context, id 
 	result, err := r.Database.RenameRelationshipSchemaNode(ctx, id, newName)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.RelationshipSchemaNodeUpdated, result)
 	}
 	return result, nil
 }
@@ -224,6 +283,9 @@ func (r *mutationResolver) UpdatePropertiesOnRelationshipSchemaNode(ctx context.
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.RelationshipSchemaNodeUpdated, result)
+	}
 	return result, nil
 }
 
@@ -232,6 +294,9 @@ func (r *mutationResolver) RenamePropertyOnRelationshipSchemaNode(ctx context.Co
 	result, err := r.Database.RenamePropertyOnRelationshipSchemaNode(ctx, id, oldPropertyName, newPropertyName)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.RelationshipSchemaNodeUpdated, result)
 	}
 	return result, nil
 }
@@ -242,6 +307,9 @@ func (r *mutationResolver) RemovePropertiesFromRelationshipSchemaNode(ctx contex
 	if err != nil {
 		return nil, err
 	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.RelationshipSchemaNodeUpdated, result)
+	}
 	return result, nil
 }
 
@@ -250,6 +318,9 @@ func (r *mutationResolver) DeleteRelationshipSchemaNode(ctx context.Context, id 
 	result, err := r.Database.DeleteRelationshipSchemaNode(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if result.Success {
+		r.Subscriptions.Publish(subscriptions.RelationshipSchemaNodeDeleted, result)
 	}
 	return result, nil
 }
@@ -387,27 +458,72 @@ func (r *subscriptionResolver) ObjectNodeCreated(ctx context.Context) (<-chan *m
 
 // ObjectNodeUpdated is the resolver for the objectNodeUpdated field.
 func (r *subscriptionResolver) ObjectNodeUpdated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: ObjectNodeUpdated - objectNodeUpdated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectNodeUpdated)
+	ch := make(chan *model.ObjectNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.ObjectNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // ObjectNodeDeleted is the resolver for the objectNodeDeleted field.
 func (r *subscriptionResolver) ObjectNodeDeleted(ctx context.Context) (<-chan *model.ObjectNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: ObjectNodeDeleted - objectNodeDeleted"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectNodeDeleted)
+	ch := make(chan *model.ObjectNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.ObjectNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // ObjectRelationshipCreated is the resolver for the objectRelationshipCreated field.
 func (r *subscriptionResolver) ObjectRelationshipCreated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
-	panic(fmt.Errorf("not implemented: ObjectRelationshipCreated - objectRelationshipCreated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectRelationshipCreated)
+	ch := make(chan *model.ObjectRelationshipResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.ObjectRelationshipResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // ObjectRelationshipUpdated is the resolver for the objectRelationshipUpdated field.
 func (r *subscriptionResolver) ObjectRelationshipUpdated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
-	panic(fmt.Errorf("not implemented: ObjectRelationshipUpdated - objectRelationshipUpdated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectRelationshipUpdated)
+	ch := make(chan *model.ObjectRelationshipResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.ObjectRelationshipResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // ObjectRelationshipDeleted is the resolver for the objectRelationshipDeleted field.
 func (r *subscriptionResolver) ObjectRelationshipDeleted(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
-	panic(fmt.Errorf("not implemented: ObjectRelationshipDeleted - objectRelationshipDeleted"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectRelationshipDeleted)
+	ch := make(chan *model.ObjectRelationshipResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.ObjectRelationshipResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // DomainSchemaNodeCreated is the resolver for the domainSchemaNodeCreated field.
@@ -426,42 +542,114 @@ func (r *subscriptionResolver) DomainSchemaNodeCreated(ctx context.Context) (<-c
 
 // DomainSchemaNodeUpdated is the resolver for the domainSchemaNodeUpdated field.
 func (r *subscriptionResolver) DomainSchemaNodeUpdated(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: DomainSchemaNodeUpdated - domainSchemaNodeUpdated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.DomainSchemaNodeUpdated)
+	ch := make(chan *model.DomainSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.DomainSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // DomainSchemaNodeDeleted is the resolver for the domainSchemaNodeDeleted field.
 func (r *subscriptionResolver) DomainSchemaNodeDeleted(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: DomainSchemaNodeDeleted - domainSchemaNodeDeleted"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.DomainSchemaNodeDeleted)
+	ch := make(chan *model.DomainSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.DomainSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // TypeSchemaNodeCreated is the resolver for the typeSchemaNodeCreated field.
 func (r *subscriptionResolver) TypeSchemaNodeCreated(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: TypeSchemaNodeCreated - typeSchemaNodeCreated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.TypeSchemaNodeCreated)
+	ch := make(chan *model.TypeSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.TypeSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // TypeSchemaNodeUpdated is the resolver for the typeSchemaNodeUpdated field.
 func (r *subscriptionResolver) TypeSchemaNodeUpdated(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: TypeSchemaNodeUpdated - typeSchemaNodeUpdated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.TypeSchemaNodeUpdated)
+	ch := make(chan *model.TypeSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.TypeSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // TypeSchemaNodeDeleted is the resolver for the typeSchemaNodeDeleted field.
 func (r *subscriptionResolver) TypeSchemaNodeDeleted(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: TypeSchemaNodeDeleted - typeSchemaNodeDeleted"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.TypeSchemaNodeDeleted)
+	ch := make(chan *model.TypeSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.TypeSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // RelationshipSchemaNodeCreated is the resolver for the relationshipSchemaNodeCreated field.
 func (r *subscriptionResolver) RelationshipSchemaNodeCreated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: RelationshipSchemaNodeCreated - relationshipSchemaNodeCreated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.RelationshipSchemaNodeCreated)
+	ch := make(chan *model.RelationshipSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.RelationshipSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // RelationshipSchemaNodeUpdated is the resolver for the relationshipSchemaNodeUpdated field.
 func (r *subscriptionResolver) RelationshipSchemaNodeUpdated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: RelationshipSchemaNodeUpdated - relationshipSchemaNodeUpdated"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.RelationshipSchemaNodeUpdated)
+	ch := make(chan *model.RelationshipSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.RelationshipSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // RelationshipSchemaNodeDeleted is the resolver for the relationshipSchemaNodeDeleted field.
 func (r *subscriptionResolver) RelationshipSchemaNodeDeleted(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
-	panic(fmt.Errorf("not implemented: RelationshipSchemaNodeDeleted - relationshipSchemaNodeDeleted"))
+	subscriber := r.Subscriptions.Subscribe(subscriptions.RelationshipSchemaNodeDeleted)
+	ch := make(chan *model.RelationshipSchemaNodeResponse)
+	go func() {
+		for event := range subscriber.Events {
+			if response, ok := event.(*model.RelationshipSchemaNodeResponse); ok {
+				ch <- response
+			}
+		}
+	}()
+	return ch, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
