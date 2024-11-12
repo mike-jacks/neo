@@ -8,51 +8,105 @@ import (
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/websocket"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/joho/godotenv"
 	"github.com/mike-jacks/neo/db"
 	"github.com/mike-jacks/neo/generated"
 	"github.com/mike-jacks/neo/resolver"
 	"github.com/rs/cors"
+	"github.com/vektah/gqlparser/v2/ast"
 )
+
+// LRUQueryCache is a custom cache that implements graphql.Cache[*ast.QueryDocument]
+type LRUQueryCache struct {
+	cache *lru.Cache[string, *ast.QueryDocument]
+}
+
+// NewLRUQueryCache creates a new LRUQueryCache with the given size
+func NewLRUQueryCache(size int) (*LRUQueryCache, error) {
+	cache, err := lru.New[string, *ast.QueryDocument](size)
+	if err != nil {
+		return nil, err
+	}
+	return &LRUQueryCache{cache: cache}, nil
+}
+
+// Add adds a query document to the cache
+func (c *LRUQueryCache) Add(ctx context.Context, key string, value *ast.QueryDocument) {
+	c.cache.Add(key, value)
+}
+
+// Get retrieves a query document from the cache
+func (c *LRUQueryCache) Get(ctx context.Context, key string) (*ast.QueryDocument, bool) {
+	return c.cache.Get(key)
+}
+
+// LRUStringCache is a custom cache that implements graphql.Cache[string]
+type LRUStringCache struct {
+	cache *lru.Cache[string, string]
+}
+
+// NewLRUStringCache creates a new LRUStringCache with the given size
+func NewLRUStringCache(size int) (*LRUStringCache, error) {
+	cache, err := lru.New[string, string](size)
+	if err != nil {
+		return nil, err
+	}
+	return &LRUStringCache{cache: cache}, nil
+}
+
+// Add adds a string to the cache
+func (c *LRUStringCache) Add(ctx context.Context, key string, value string) {
+	c.cache.Add(key, value)
+}
+
+// Get retrieves a string from the cache
+func (c *LRUStringCache) Get(ctx context.Context, key string) (string, bool) {
+	return c.cache.Get(key)
+}
 
 func setupGraphQLServer(db db.Database) *handler.Server {
 	resolver := resolver.NewResolver(db)
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: resolver})
 	server := handler.New(schema)
 
-	allowedOrigins := map[string]bool{
-		"https://neo-frontend-v2.vercel.app": true,
-		"http://localhost:5173":              true,
-		"http://localhost":                   true,
-		"http://172.0.0.1":                   true,
-	}
-
-	// Add WebSocket transport without InitFunc
-	server.AddTransport(transport.Websocket{
+	server.AddTransport(&transport.Websocket{
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				origin := strings.TrimRight(r.Header.Get("Origin"), "/")
-				log.Printf("WebSocket Origin: '%s'", origin)
-
-				// Debug allowed origins
-				for allowed := range allowedOrigins {
-					log.Printf("Comparing with allowed origin: '%s'", allowed)
-				}
-
-				// Compare directly with map
-				if !allowedOrigins[origin] {
-					log.Printf("WebSocket connection rejected from origin: '%s'", origin)
-					return false
-				}
-
-				log.Printf("WebSocket connection accepted from origin: '%s'", origin)
 				return true
 			},
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
 		},
 	})
+
+	server.AddTransport(transport.Options{})
+	server.AddTransport(transport.GET{})
+	server.AddTransport(transport.POST{})
+	server.AddTransport(transport.MultipartForm{})
+
+	// Create a custom LRU cache for query documents
+	queryCache, err := NewLRUQueryCache(1000)
+	if err != nil {
+		log.Fatal("Error creating query cache:", err)
+	}
+	server.SetQueryCache(queryCache)
+
+	// Create a custom LRU cache for persisted queries
+	persistedQueryCache, err := NewLRUStringCache(100)
+	if err != nil {
+		log.Fatal("Error creating persisted query cache:", err)
+	}
+
+	server.Use(extension.Introspection{})
+	server.Use(extension.AutomaticPersistedQuery{
+		Cache: persistedQueryCache, // Use the custom LRUStringCache
+	})
+
 	return server
 }
 
@@ -78,7 +132,12 @@ func main() {
 	})
 
 	loggingHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Request received: Method: %s, Path: %s", r.Method, r.URL.Path)
+		proto := r.Header.Get("X-Forwarded-Proto")
+		if proto == "" {
+			proto = "http"
+		}
+		log.Printf("Request received: Method: %s, Path: %s, Protocol: %s", r.Method, r.URL.Path, proto)
+
 		if websocket.IsWebSocketUpgrade(r) {
 			log.Printf("WebSocket Upgrade Detected. Origin: %s", r.Header.Get("Origin"))
 			srv.ServeHTTP(w, r)
