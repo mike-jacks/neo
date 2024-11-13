@@ -169,7 +169,7 @@ func main() {
 	log.Printf("GraphQL WebSocket endpoint: %s/query", websocketUrl)
 	log.Printf("Connect to %s/query for GraphQL API", url)
 	log.Printf("Connect to https://console.neo4j.io for Neo4j Browser Console")
-	
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+
+	log.Fatal(http.ListenAndServe("[::]:"+port, nil))
 
 }
