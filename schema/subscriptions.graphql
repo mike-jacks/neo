@@ -1,0 +1,21 @@
+type Subscription {
+  objectNodeCreated: ObjectNodeResponse!
+  objectNodeUpdated: ObjectNodeResponse!
+  objectNodeDeleted: ObjectNodeResponse!
+
+  objectRelationshipCreated: ObjectRelationshipResponse!
+  objectRelationshipUpdated: ObjectRelationshipResponse!
+  objectRelationshipDeleted: ObjectRelationshipResponse!
+
+  domainSchemaNodeCreated: DomainSchemaNodeResponse!
+  domainSchemaNodeUpdated: DomainSchemaNodeResponse!
+  domainSchemaNodeDeleted: DomainSchemaNodeResponse!
+
+  typeSchemaNodeCreated: TypeSchemaNodeResponse!
+  typeSchemaNodeUpdated: TypeSchemaNodeResponse!
+  typeSchemaNodeDeleted: TypeSchemaNodeResponse!
+
+  relationshipSchemaNodeCreated: RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeUpdated: RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeDeleted: RelationshipSchemaNodeResponse!
+}

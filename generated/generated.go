@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -40,6 +41,7 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -74,7 +76,6 @@ type ComplexityRoot struct {
 		CreateObjectRelationship                   func(childComplexity int, name string, properties []*model.PropertyInput, fromObjectNodeID string, toObjectNodeID string) int
 		CreateRelationshipSchemaNode               func(childComplexity int, name string, domain string, fromTypeSchemaNodeID string, toTypeSchemaNodeID string) int
 		CreateTypeSchemaNode                       func(childComplexity int, domain string, name string) int
-		CypherMutation                             func(childComplexity int, cypherStatement string) int
 		DeleteDomainSchemaNode                     func(childComplexity int, id string) int
 		DeleteObjectNode                           func(childComplexity int, id string) int
 		DeleteObjectRelationship                   func(childComplexity int, id string) int
@@ -172,7 +173,6 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CypherQuery                            func(childComplexity int, cypherStatement string) int
 		GetDomainSchemaNode                    func(childComplexity int, id string) int
 		GetDomainSchemaNodes                   func(childComplexity int) int
 		GetObjectNode                          func(childComplexity int, id string) int
@@ -216,6 +216,24 @@ type ComplexityRoot struct {
 		Data    func(childComplexity int) int
 		Message func(childComplexity int) int
 		Success func(childComplexity int) int
+	}
+
+	Subscription struct {
+		DomainSchemaNodeCreated       func(childComplexity int) int
+		DomainSchemaNodeDeleted       func(childComplexity int) int
+		DomainSchemaNodeUpdated       func(childComplexity int) int
+		ObjectNodeCreated             func(childComplexity int) int
+		ObjectNodeDeleted             func(childComplexity int) int
+		ObjectNodeUpdated             func(childComplexity int) int
+		ObjectRelationshipCreated     func(childComplexity int) int
+		ObjectRelationshipDeleted     func(childComplexity int) int
+		ObjectRelationshipUpdated     func(childComplexity int) int
+		RelationshipSchemaNodeCreated func(childComplexity int) int
+		RelationshipSchemaNodeDeleted func(childComplexity int) int
+		RelationshipSchemaNodeUpdated func(childComplexity int) int
+		TypeSchemaNodeCreated         func(childComplexity int) int
+		TypeSchemaNodeDeleted         func(childComplexity int) int
+		TypeSchemaNodeUpdated         func(childComplexity int) int
 	}
 
 	TypeSchemaNode struct {
@@ -268,7 +286,6 @@ type MutationResolver interface {
 	RenamePropertyOnRelationshipSchemaNode(ctx context.Context, id string, oldPropertyName string, newPropertyName string) (*model.RelationshipSchemaNodeResponse, error)
 	RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, id string, properties []string) (*model.RelationshipSchemaNodeResponse, error)
 	DeleteRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error)
-	CypherMutation(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
 }
 type QueryResolver interface {
 	GetObjectNode(ctx context.Context, id string) (*model.ObjectNodeResponse, error)
@@ -284,7 +301,23 @@ type QueryResolver interface {
 	GetTypeSchemaNodeIncomingRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error)
 	GetRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error)
 	GetRelationshipSchemaNodes(ctx context.Context, domain *string) (*model.RelationshipSchemaNodesResponse, error)
-	CypherQuery(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
+}
+type SubscriptionResolver interface {
+	ObjectNodeCreated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error)
+	ObjectNodeUpdated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error)
+	ObjectNodeDeleted(ctx context.Context) (<-chan *model.ObjectNodeResponse, error)
+	ObjectRelationshipCreated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error)
+	ObjectRelationshipUpdated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error)
+	ObjectRelationshipDeleted(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error)
+	DomainSchemaNodeCreated(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error)
+	DomainSchemaNodeUpdated(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error)
+	DomainSchemaNodeDeleted(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error)
+	TypeSchemaNodeCreated(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error)
+	TypeSchemaNodeUpdated(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error)
+	TypeSchemaNodeDeleted(ctx context.Context) (<-chan *model.TypeSchemaNodeResponse, error)
+	RelationshipSchemaNodeCreated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error)
+	RelationshipSchemaNodeUpdated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error)
+	RelationshipSchemaNodeDeleted(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error)
 }
 
 type executableSchema struct {
@@ -461,18 +494,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateTypeSchemaNode(childComplexity, args["domain"].(string), args["name"].(string)), true
-
-	case "Mutation.cypherMutation":
-		if e.complexity.Mutation.CypherMutation == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_cypherMutation_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CypherMutation(childComplexity, args["cypher_statement"].(string)), true
 
 	case "Mutation.deleteDomainSchemaNode":
 		if e.complexity.Mutation.DeleteDomainSchemaNode == nil {
@@ -1001,18 +1022,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Property.Value(childComplexity), true
 
-	case "Query.cypherQuery":
-		if e.complexity.Query.CypherQuery == nil {
-			break
-		}
-
-		args, err := ec.field_Query_cypherQuery_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.CypherQuery(childComplexity, args["cypher_statement"].(string)), true
-
 	case "Query.getDomainSchemaNode":
 		if e.complexity.Query.GetDomainSchemaNode == nil {
 			break
@@ -1290,6 +1299,111 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Response.Success(childComplexity), true
 
+	case "Subscription.domainSchemaNodeCreated":
+		if e.complexity.Subscription.DomainSchemaNodeCreated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.DomainSchemaNodeCreated(childComplexity), true
+
+	case "Subscription.domainSchemaNodeDeleted":
+		if e.complexity.Subscription.DomainSchemaNodeDeleted == nil {
+			break
+		}
+
+		return e.complexity.Subscription.DomainSchemaNodeDeleted(childComplexity), true
+
+	case "Subscription.domainSchemaNodeUpdated":
+		if e.complexity.Subscription.DomainSchemaNodeUpdated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.DomainSchemaNodeUpdated(childComplexity), true
+
+	case "Subscription.objectNodeCreated":
+		if e.complexity.Subscription.ObjectNodeCreated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.ObjectNodeCreated(childComplexity), true
+
+	case "Subscription.objectNodeDeleted":
+		if e.complexity.Subscription.ObjectNodeDeleted == nil {
+			break
+		}
+
+		return e.complexity.Subscription.ObjectNodeDeleted(childComplexity), true
+
+	case "Subscription.objectNodeUpdated":
+		if e.complexity.Subscription.ObjectNodeUpdated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.ObjectNodeUpdated(childComplexity), true
+
+	case "Subscription.objectRelationshipCreated":
+		if e.complexity.Subscription.ObjectRelationshipCreated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.ObjectRelationshipCreated(childComplexity), true
+
+	case "Subscription.objectRelationshipDeleted":
+		if e.complexity.Subscription.ObjectRelationshipDeleted == nil {
+			break
+		}
+
+		return e.complexity.Subscription.ObjectRelationshipDeleted(childComplexity), true
+
+	case "Subscription.objectRelationshipUpdated":
+		if e.complexity.Subscription.ObjectRelationshipUpdated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.ObjectRelationshipUpdated(childComplexity), true
+
+	case "Subscription.relationshipSchemaNodeCreated":
+		if e.complexity.Subscription.RelationshipSchemaNodeCreated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.RelationshipSchemaNodeCreated(childComplexity), true
+
+	case "Subscription.relationshipSchemaNodeDeleted":
+		if e.complexity.Subscription.RelationshipSchemaNodeDeleted == nil {
+			break
+		}
+
+		return e.complexity.Subscription.RelationshipSchemaNodeDeleted(childComplexity), true
+
+	case "Subscription.relationshipSchemaNodeUpdated":
+		if e.complexity.Subscription.RelationshipSchemaNodeUpdated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.RelationshipSchemaNodeUpdated(childComplexity), true
+
+	case "Subscription.typeSchemaNodeCreated":
+		if e.complexity.Subscription.TypeSchemaNodeCreated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.TypeSchemaNodeCreated(childComplexity), true
+
+	case "Subscription.typeSchemaNodeDeleted":
+		if e.complexity.Subscription.TypeSchemaNodeDeleted == nil {
+			break
+		}
+
+		return e.complexity.Subscription.TypeSchemaNodeDeleted(childComplexity), true
+
+	case "Subscription.typeSchemaNodeUpdated":
+		if e.complexity.Subscription.TypeSchemaNodeUpdated == nil {
+			break
+		}
+
+		return e.complexity.Subscription.TypeSchemaNodeUpdated(childComplexity), true
+
 	case "TypeSchemaNode.domain":
 		if e.complexity.TypeSchemaNode.Domain == nil {
 			break
@@ -1442,6 +1556,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -1546,7 +1677,6 @@ var sources = []*ast.Source{
   removePropertiesFromRelationshipSchemaNode(id: String!, properties: [String!]!): RelationshipSchemaNodeResponse!
   deleteRelationshipSchemaNode(id: String!): RelationshipSchemaNodeResponse!
 
-  cypherMutation(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }
 `, BuiltIn: false},
 	{Name: "../schema/objectNode.graphql", Input: `type ObjectNode {
@@ -1639,7 +1769,6 @@ input PropertyInput {
   getRelationshipSchemaNode(id: String!): RelationshipSchemaNodeResponse!
   getRelationshipSchemaNodes(domain: String): RelationshipSchemaNodesResponse!
 
-  cypherQuery(cypher_statement: String!): ObjectNodesOrRelationshipNodesResponse!
 }
 
 union ObjectNodeOrRelationshipNode = ObjectNode | ObjectRelationship
@@ -1745,6 +1874,29 @@ type ObjectRelationshipObjectNodesResponse {
 	{Name: "../schema/schema.graphql", Input: `schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
+}
+`, BuiltIn: false},
+	{Name: "../schema/subscriptions.graphql", Input: `type Subscription {
+  objectNodeCreated: ObjectNodeResponse!
+  objectNodeUpdated: ObjectNodeResponse!
+  objectNodeDeleted: ObjectNodeResponse!
+
+  objectRelationshipCreated: ObjectRelationshipResponse!
+  objectRelationshipUpdated: ObjectRelationshipResponse!
+  objectRelationshipDeleted: ObjectRelationshipResponse!
+
+  domainSchemaNodeCreated: DomainSchemaNodeResponse!
+  domainSchemaNodeUpdated: DomainSchemaNodeResponse!
+  domainSchemaNodeDeleted: DomainSchemaNodeResponse!
+
+  typeSchemaNodeCreated: TypeSchemaNodeResponse!
+  typeSchemaNodeUpdated: TypeSchemaNodeResponse!
+  typeSchemaNodeDeleted: TypeSchemaNodeResponse!
+
+  relationshipSchemaNodeCreated: RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeUpdated: RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeDeleted: RelationshipSchemaNodeResponse!
 }
 `, BuiltIn: false},
 	{Name: "../schema/typeSchemaNode.graphql", Input: `type TypeSchemaNode {
@@ -2111,29 +2263,6 @@ func (ec *executionContext) field_Mutation_createTypeSchemaNode_argsName(
 ) (string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cypherMutation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_cypherMutation_argsCypherStatement(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["cypher_statement"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_cypherMutation_argsCypherStatement(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cypher_statement"))
-	if tmp, ok := rawArgs["cypher_statement"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -2923,29 +3052,6 @@ func (ec *executionContext) field_Query___type_argsName(
 ) (string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_cypherQuery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_cypherQuery_argsCypherStatement(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["cypher_statement"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_cypherQuery_argsCypherStatement(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cypher_statement"))
-	if tmp, ok := rawArgs["cypher_statement"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -5479,69 +5585,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteRelationshipSchemaNode(c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteRelationshipSchemaNode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_cypherMutation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_cypherMutation(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CypherMutation(rctx, fc.Args["cypher_statement"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ObjectNodesOrRelationshipNodesResponse)
-	fc.Result = res
-	return ec.marshalNObjectNodesOrRelationshipNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesOrRelationshipNodesResponse(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_cypherMutation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "success":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_success(ctx, field)
-			case "message":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_message(ctx, field)
-			case "objectNodesOrRelationshipNodes":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_objectNodesOrRelationshipNodes(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ObjectNodesOrRelationshipNodesResponse", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_cypherMutation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -8257,69 +8300,6 @@ func (ec *executionContext) fieldContext_Query_getRelationshipSchemaNodes(ctx co
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_cypherQuery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_cypherQuery(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().CypherQuery(rctx, fc.Args["cypher_statement"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ObjectNodesOrRelationshipNodesResponse)
-	fc.Result = res
-	return ec.marshalNObjectNodesOrRelationshipNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesOrRelationshipNodesResponse(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_cypherQuery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "success":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_success(ctx, field)
-			case "message":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_message(ctx, field)
-			case "objectNodesOrRelationshipNodes":
-				return ec.fieldContext_ObjectNodesOrRelationshipNodesResponse_objectNodesOrRelationshipNodes(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ObjectNodesOrRelationshipNodesResponse", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_cypherQuery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query___type(ctx, field)
 	if err != nil {
@@ -9260,6 +9240,996 @@ func (ec *executionContext) fieldContext_Response_data(_ context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_objectNodeCreated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_objectNodeCreated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().ObjectNodeCreated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.ObjectNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNObjectNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_objectNodeCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ObjectNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_ObjectNodeResponse_message(ctx, field)
+			case "objectNode":
+				return ec.fieldContext_ObjectNodeResponse_objectNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ObjectNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_objectNodeUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_objectNodeUpdated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().ObjectNodeUpdated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.ObjectNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNObjectNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_objectNodeUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ObjectNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_ObjectNodeResponse_message(ctx, field)
+			case "objectNode":
+				return ec.fieldContext_ObjectNodeResponse_objectNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ObjectNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_objectNodeDeleted(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_objectNodeDeleted(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().ObjectNodeDeleted(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.ObjectNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNObjectNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_objectNodeDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ObjectNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_ObjectNodeResponse_message(ctx, field)
+			case "objectNode":
+				return ec.fieldContext_ObjectNodeResponse_objectNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ObjectNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_objectRelationshipCreated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_objectRelationshipCreated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().ObjectRelationshipCreated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.ObjectRelationshipResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNObjectRelationshipResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationshipResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_objectRelationshipCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ObjectRelationshipResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_ObjectRelationshipResponse_message(ctx, field)
+			case "objectRelationship":
+				return ec.fieldContext_ObjectRelationshipResponse_objectRelationship(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationshipResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_objectRelationshipUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_objectRelationshipUpdated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().ObjectRelationshipUpdated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.ObjectRelationshipResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNObjectRelationshipResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationshipResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_objectRelationshipUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ObjectRelationshipResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_ObjectRelationshipResponse_message(ctx, field)
+			case "objectRelationship":
+				return ec.fieldContext_ObjectRelationshipResponse_objectRelationship(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationshipResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_objectRelationshipDeleted(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_objectRelationshipDeleted(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().ObjectRelationshipDeleted(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.ObjectRelationshipResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNObjectRelationshipResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectRelationshipResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_objectRelationshipDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ObjectRelationshipResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_ObjectRelationshipResponse_message(ctx, field)
+			case "objectRelationship":
+				return ec.fieldContext_ObjectRelationshipResponse_objectRelationship(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationshipResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_domainSchemaNodeCreated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_domainSchemaNodeCreated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().DomainSchemaNodeCreated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.DomainSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNDomainSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐDomainSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_domainSchemaNodeCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_DomainSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_DomainSchemaNodeResponse_message(ctx, field)
+			case "domainSchemaNode":
+				return ec.fieldContext_DomainSchemaNodeResponse_domainSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DomainSchemaNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_domainSchemaNodeUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_domainSchemaNodeUpdated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().DomainSchemaNodeUpdated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.DomainSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNDomainSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐDomainSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_domainSchemaNodeUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_DomainSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_DomainSchemaNodeResponse_message(ctx, field)
+			case "domainSchemaNode":
+				return ec.fieldContext_DomainSchemaNodeResponse_domainSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DomainSchemaNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_domainSchemaNodeDeleted(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_domainSchemaNodeDeleted(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().DomainSchemaNodeDeleted(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.DomainSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNDomainSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐDomainSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_domainSchemaNodeDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_DomainSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_DomainSchemaNodeResponse_message(ctx, field)
+			case "domainSchemaNode":
+				return ec.fieldContext_DomainSchemaNodeResponse_domainSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DomainSchemaNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_typeSchemaNodeCreated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_typeSchemaNodeCreated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().TypeSchemaNodeCreated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.TypeSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNTypeSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_typeSchemaNodeCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_TypeSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_TypeSchemaNodeResponse_message(ctx, field)
+			case "typeSchemaNode":
+				return ec.fieldContext_TypeSchemaNodeResponse_typeSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TypeSchemaNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_typeSchemaNodeUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_typeSchemaNodeUpdated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().TypeSchemaNodeUpdated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.TypeSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNTypeSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_typeSchemaNodeUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_TypeSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_TypeSchemaNodeResponse_message(ctx, field)
+			case "typeSchemaNode":
+				return ec.fieldContext_TypeSchemaNodeResponse_typeSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TypeSchemaNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_typeSchemaNodeDeleted(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_typeSchemaNodeDeleted(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().TypeSchemaNodeDeleted(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.TypeSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNTypeSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐTypeSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_typeSchemaNodeDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_TypeSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_TypeSchemaNodeResponse_message(ctx, field)
+			case "typeSchemaNode":
+				return ec.fieldContext_TypeSchemaNodeResponse_typeSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TypeSchemaNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_relationshipSchemaNodeCreated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_relationshipSchemaNodeCreated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().RelationshipSchemaNodeCreated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.RelationshipSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNRelationshipSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐRelationshipSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_message(ctx, field)
+			case "relationshipSchemaNode":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_relationshipSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RelationshipSchemaNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_relationshipSchemaNodeUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_relationshipSchemaNodeUpdated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().RelationshipSchemaNodeUpdated(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.RelationshipSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNRelationshipSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐRelationshipSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_message(ctx, field)
+			case "relationshipSchemaNode":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_relationshipSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RelationshipSchemaNodeResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_relationshipSchemaNodeDeleted(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_relationshipSchemaNodeDeleted(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().RelationshipSchemaNodeDeleted(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.RelationshipSchemaNodeResponse):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNRelationshipSchemaNodeResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐRelationshipSchemaNodeResponse(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_message(ctx, field)
+			case "relationshipSchemaNode":
+				return ec.fieldContext_RelationshipSchemaNodeResponse_relationshipSchemaNode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RelationshipSchemaNodeResponse", field.Name)
 		},
 	}
 	return fc, nil
@@ -12186,13 +13156,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "cypherMutation":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_cypherMutation(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13049,28 +14012,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "cypherQuery":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_cypherQuery(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -13302,6 +14243,54 @@ func (ec *executionContext) _Response(ctx context.Context, sel ast.SelectionSet,
 	}
 
 	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "objectNodeCreated":
+		return ec._Subscription_objectNodeCreated(ctx, fields[0])
+	case "objectNodeUpdated":
+		return ec._Subscription_objectNodeUpdated(ctx, fields[0])
+	case "objectNodeDeleted":
+		return ec._Subscription_objectNodeDeleted(ctx, fields[0])
+	case "objectRelationshipCreated":
+		return ec._Subscription_objectRelationshipCreated(ctx, fields[0])
+	case "objectRelationshipUpdated":
+		return ec._Subscription_objectRelationshipUpdated(ctx, fields[0])
+	case "objectRelationshipDeleted":
+		return ec._Subscription_objectRelationshipDeleted(ctx, fields[0])
+	case "domainSchemaNodeCreated":
+		return ec._Subscription_domainSchemaNodeCreated(ctx, fields[0])
+	case "domainSchemaNodeUpdated":
+		return ec._Subscription_domainSchemaNodeUpdated(ctx, fields[0])
+	case "domainSchemaNodeDeleted":
+		return ec._Subscription_domainSchemaNodeDeleted(ctx, fields[0])
+	case "typeSchemaNodeCreated":
+		return ec._Subscription_typeSchemaNodeCreated(ctx, fields[0])
+	case "typeSchemaNodeUpdated":
+		return ec._Subscription_typeSchemaNodeUpdated(ctx, fields[0])
+	case "typeSchemaNodeDeleted":
+		return ec._Subscription_typeSchemaNodeDeleted(ctx, fields[0])
+	case "relationshipSchemaNodeCreated":
+		return ec._Subscription_relationshipSchemaNodeCreated(ctx, fields[0])
+	case "relationshipSchemaNodeUpdated":
+		return ec._Subscription_relationshipSchemaNodeUpdated(ctx, fields[0])
+	case "relationshipSchemaNodeDeleted":
+		return ec._Subscription_relationshipSchemaNodeDeleted(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var typeSchemaNodeImplementors = []string{"TypeSchemaNode"}
@@ -13906,20 +14895,6 @@ func (ec *executionContext) marshalNObjectNodeResponse2ᚖgithubᚗcomᚋmikeᚑ
 		return graphql.Null
 	}
 	return ec._ObjectNodeResponse(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNObjectNodesOrRelationshipNodesResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesOrRelationshipNodesResponse(ctx context.Context, sel ast.SelectionSet, v model.ObjectNodesOrRelationshipNodesResponse) graphql.Marshaler {
-	return ec._ObjectNodesOrRelationshipNodesResponse(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNObjectNodesOrRelationshipNodesResponse2ᚖgithubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesOrRelationshipNodesResponse(ctx context.Context, sel ast.SelectionSet, v *model.ObjectNodesOrRelationshipNodesResponse) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ObjectNodesOrRelationshipNodesResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNObjectNodesResponse2githubᚗcomᚋmikeᚑjacksᚋneoᚋmodelᚐObjectNodesResponse(ctx context.Context, sel ast.SelectionSet, v model.ObjectNodesResponse) graphql.Marshaler {

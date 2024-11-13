@@ -167,6 +167,9 @@ type Response struct {
 	Data    []map[string]interface{} `json:"data,omitempty"`
 }
 
+type Subscription struct {
+}
+
 type TypeSchemaNode struct {
 	ID           string      `json:"id"`
 	Domain       string      `json:"domain"`

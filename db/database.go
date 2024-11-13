@@ -49,7 +49,11 @@ type Database interface {
 
 	GetTypeSchemaNodes(ctx context.Context, domain *string) (*model.TypeSchemaNodesResponse, error)
 	GetTypeSchemaNode(ctx context.Context, id string) (*model.TypeSchemaNodeResponse, error)
-	GetTypeSchemaNodeRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error)
+	GetTypeSchemaNodeOutgoingRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error)
+	GetTypeSchemaNodeIncomingRelationships(ctx context.Context, id string) (*model.RelationshipSchemaNodesResponse, error)
+
+	GetRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error)
+	GetRelationshipSchemaNodes(ctx context.Context, domain *string) (*model.RelationshipSchemaNodesResponse, error)
 
 	CreateRelationshipSchemaNode(ctx context.Context, name string, domain string, fromTypeSchemaNodeId string, toTypeSchemaNodeId string) (*model.RelationshipSchemaNodeResponse, error)
 	RenameRelationshipSchemaNode(ctx context.Context, id string, newName string) (*model.RelationshipSchemaNodeResponse, error)
@@ -58,6 +62,4 @@ type Database interface {
 	RemovePropertiesFromRelationshipSchemaNode(ctx context.Context, id string, properties []string) (*model.RelationshipSchemaNodeResponse, error)
 	DeleteRelationshipSchemaNode(ctx context.Context, id string) (*model.RelationshipSchemaNodeResponse, error)
 
-	CypherQuery(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
-	CypherMutation(ctx context.Context, cypherStatement string) (*model.ObjectNodesOrRelationshipNodesResponse, error)
 }
