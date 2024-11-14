@@ -11,9 +11,9 @@ type Subscription {
   domainSchemaNodeUpdated: DomainSchemaNodeResponse!
   domainSchemaNodeDeleted: DomainSchemaNodeResponse!
 
-  typeSchemaNodeCreated: TypeSchemaNodeResponse!
-  typeSchemaNodeUpdated: TypeSchemaNodeResponse!
-  typeSchemaNodeDeleted: TypeSchemaNodeResponse!
+  typeSchemaNodeCreated(domain: String!): TypeSchemaNodeResponse!
+  typeSchemaNodeUpdated(domain: String!): TypeSchemaNodeResponse!
+  typeSchemaNodeDeleted(domain: String!): TypeSchemaNodeResponse!
 
   relationshipSchemaNodeCreated: RelationshipSchemaNodeResponse!
   relationshipSchemaNodeUpdated: RelationshipSchemaNodeResponse!
