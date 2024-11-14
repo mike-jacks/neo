@@ -3,9 +3,9 @@ type Subscription {
   objectNodeUpdated(type: String!): ObjectNodeResponse!
   objectNodeDeleted(type: String!): ObjectNodeResponse!
 
-  objectRelationshipCreated(name: String!): ObjectRelationshipResponse!
-  objectRelationshipUpdated(name: String!): ObjectRelationshipResponse!
-  objectRelationshipDeleted(name: String!): ObjectRelationshipResponse!
+  objectRelationshipCreated(fromObjectNodeId: String!): ObjectRelationshipResponse!
+  objectRelationshipUpdated(fromObjectNodeId: String!): ObjectRelationshipResponse!
+  objectRelationshipDeleted(fromObjectNodeId: String!): ObjectRelationshipResponse!
 
   domainSchemaNodeCreated: DomainSchemaNodeResponse!
   domainSchemaNodeUpdated: DomainSchemaNodeResponse!
@@ -15,7 +15,7 @@ type Subscription {
   typeSchemaNodeUpdated(domain: String!): TypeSchemaNodeResponse!
   typeSchemaNodeDeleted(domain: String!): TypeSchemaNodeResponse!
 
-  relationshipSchemaNodeCreated(domain: String!): RelationshipSchemaNodeResponse!
-  relationshipSchemaNodeUpdated(domain: String!): RelationshipSchemaNodeResponse!
-  relationshipSchemaNodeDeleted(domain: String!): RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeCreated(fromTypeSchemaNodeId: String!): RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeUpdated(fromTypeSchemaNodeId: String!): RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeDeleted(fromTypeSchemaNodeId: String!): RelationshipSchemaNodeResponse!
 }
