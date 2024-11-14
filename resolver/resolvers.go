@@ -6,10 +6,12 @@ package resolver
 
 import (
 	"context"
+	"strings"
 
 	"github.com/mike-jacks/neo/generated"
 	"github.com/mike-jacks/neo/model"
 	"github.com/mike-jacks/neo/subscriptions"
+	"github.com/mike-jacks/neo/utils"
 )
 
 // CreateObjectNode is the resolver for the createObjectNode field.
@@ -443,13 +445,16 @@ func (r *queryResolver) GetRelationshipSchemaNodes(ctx context.Context, domain *
 }
 
 // ObjectNodeCreated is the resolver for the objectNodeCreated field.
-func (r *subscriptionResolver) ObjectNodeCreated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error) {
+func (r *subscriptionResolver) ObjectNodeCreated(ctx context.Context, typeArg string) (<-chan *model.ObjectNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectNodeCreated)
 	ch := make(chan *model.ObjectNodeResponse)
+	typeArg = strings.TrimSpace(strings.ToUpper(typeArg))
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.ObjectNodeResponse); ok {
-				ch <- response
+				if response.ObjectNode.Type == typeArg {
+					ch <- response
+				}
 			}
 		}
 	}()
@@ -457,13 +462,16 @@ func (r *subscriptionResolver) ObjectNodeCreated(ctx context.Context) (<-chan *m
 }
 
 // ObjectNodeUpdated is the resolver for the objectNodeUpdated field.
-func (r *subscriptionResolver) ObjectNodeUpdated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error) {
+func (r *subscriptionResolver) ObjectNodeUpdated(ctx context.Context, typeArg string) (<-chan *model.ObjectNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectNodeUpdated)
 	ch := make(chan *model.ObjectNodeResponse)
+	typeArg = strings.TrimSpace(strings.ToUpper(typeArg))
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.ObjectNodeResponse); ok {
-				ch <- response
+				if response.ObjectNode.Type == typeArg {
+					ch <- response
+				}
 			}
 		}
 	}()
@@ -471,13 +479,16 @@ func (r *subscriptionResolver) ObjectNodeUpdated(ctx context.Context) (<-chan *m
 }
 
 // ObjectNodeDeleted is the resolver for the objectNodeDeleted field.
-func (r *subscriptionResolver) ObjectNodeDeleted(ctx context.Context) (<-chan *model.ObjectNodeResponse, error) {
+func (r *subscriptionResolver) ObjectNodeDeleted(ctx context.Context, typeArg string) (<-chan *model.ObjectNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectNodeDeleted)
 	ch := make(chan *model.ObjectNodeResponse)
+	typeArg = strings.TrimSpace(strings.ToUpper(typeArg))
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.ObjectNodeResponse); ok {
-				ch <- response
+				if response.ObjectNode.Type == typeArg {
+					ch <- response
+				}
 			}
 		}
 	}()
@@ -485,13 +496,16 @@ func (r *subscriptionResolver) ObjectNodeDeleted(ctx context.Context) (<-chan *m
 }
 
 // ObjectRelationshipCreated is the resolver for the objectRelationshipCreated field.
-func (r *subscriptionResolver) ObjectRelationshipCreated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
+func (r *subscriptionResolver) ObjectRelationshipCreated(ctx context.Context, name string) (<-chan *model.ObjectRelationshipResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectRelationshipCreated)
 	ch := make(chan *model.ObjectRelationshipResponse)
+	name = utils.CleanUpRelationshipName(name)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.ObjectRelationshipResponse); ok {
-				ch <- response
+				if response.ObjectRelationship.Name == name {
+					ch <- response
+				}
 			}
 		}
 	}()
@@ -499,13 +513,16 @@ func (r *subscriptionResolver) ObjectRelationshipCreated(ctx context.Context) (<
 }
 
 // ObjectRelationshipUpdated is the resolver for the objectRelationshipUpdated field.
-func (r *subscriptionResolver) ObjectRelationshipUpdated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
+func (r *subscriptionResolver) ObjectRelationshipUpdated(ctx context.Context, name string) (<-chan *model.ObjectRelationshipResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectRelationshipUpdated)
 	ch := make(chan *model.ObjectRelationshipResponse)
+	name = utils.CleanUpRelationshipName(name)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.ObjectRelationshipResponse); ok {
-				ch <- response
+				if response.ObjectRelationship.Name == name {
+					ch <- response
+				}
 			}
 		}
 	}()
@@ -513,13 +530,16 @@ func (r *subscriptionResolver) ObjectRelationshipUpdated(ctx context.Context) (<
 }
 
 // ObjectRelationshipDeleted is the resolver for the objectRelationshipDeleted field.
-func (r *subscriptionResolver) ObjectRelationshipDeleted(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error) {
+func (r *subscriptionResolver) ObjectRelationshipDeleted(ctx context.Context, name string) (<-chan *model.ObjectRelationshipResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.ObjectRelationshipDeleted)
 	ch := make(chan *model.ObjectRelationshipResponse)
+	name = utils.CleanUpRelationshipName(name)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.ObjectRelationshipResponse); ok {
-				ch <- response
+				if response.ObjectRelationship.Name == name {
+					ch <- response
+				}
 			}
 		}
 	}()
@@ -572,6 +592,7 @@ func (r *subscriptionResolver) DomainSchemaNodeDeleted(ctx context.Context) (<-c
 func (r *subscriptionResolver) TypeSchemaNodeCreated(ctx context.Context, domain string) (<-chan *model.TypeSchemaNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.TypeSchemaNodeCreated)
 	ch := make(chan *model.TypeSchemaNodeResponse)
+	domain = strings.TrimSpace(domain)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.TypeSchemaNodeResponse); ok {
@@ -588,6 +609,7 @@ func (r *subscriptionResolver) TypeSchemaNodeCreated(ctx context.Context, domain
 func (r *subscriptionResolver) TypeSchemaNodeUpdated(ctx context.Context, domain string) (<-chan *model.TypeSchemaNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.TypeSchemaNodeUpdated)
 	ch := make(chan *model.TypeSchemaNodeResponse)
+	domain = strings.TrimSpace(domain)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.TypeSchemaNodeResponse); ok {
@@ -604,6 +626,7 @@ func (r *subscriptionResolver) TypeSchemaNodeUpdated(ctx context.Context, domain
 func (r *subscriptionResolver) TypeSchemaNodeDeleted(ctx context.Context, domain string) (<-chan *model.TypeSchemaNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.TypeSchemaNodeDeleted)
 	ch := make(chan *model.TypeSchemaNodeResponse)
+	domain = strings.TrimSpace(domain)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.TypeSchemaNodeResponse); ok {
@@ -617,13 +640,16 @@ func (r *subscriptionResolver) TypeSchemaNodeDeleted(ctx context.Context, domain
 }
 
 // RelationshipSchemaNodeCreated is the resolver for the relationshipSchemaNodeCreated field.
-func (r *subscriptionResolver) RelationshipSchemaNodeCreated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
+func (r *subscriptionResolver) RelationshipSchemaNodeCreated(ctx context.Context, domain string) (<-chan *model.RelationshipSchemaNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.RelationshipSchemaNodeCreated)
 	ch := make(chan *model.RelationshipSchemaNodeResponse)
+	domain = strings.TrimSpace(domain)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.RelationshipSchemaNodeResponse); ok {
-				ch <- response
+				if response.RelationshipSchemaNode.Domain == domain {
+					ch <- response
+				}
 			}
 		}
 	}()
@@ -631,13 +657,16 @@ func (r *subscriptionResolver) RelationshipSchemaNodeCreated(ctx context.Context
 }
 
 // RelationshipSchemaNodeUpdated is the resolver for the relationshipSchemaNodeUpdated field.
-func (r *subscriptionResolver) RelationshipSchemaNodeUpdated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
+func (r *subscriptionResolver) RelationshipSchemaNodeUpdated(ctx context.Context, domain string) (<-chan *model.RelationshipSchemaNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.RelationshipSchemaNodeUpdated)
 	ch := make(chan *model.RelationshipSchemaNodeResponse)
+	domain = strings.TrimSpace(domain)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.RelationshipSchemaNodeResponse); ok {
-				ch <- response
+				if response.RelationshipSchemaNode.Domain == domain {
+					ch <- response
+				}
 			}
 		}
 	}()
@@ -645,13 +674,16 @@ func (r *subscriptionResolver) RelationshipSchemaNodeUpdated(ctx context.Context
 }
 
 // RelationshipSchemaNodeDeleted is the resolver for the relationshipSchemaNodeDeleted field.
-func (r *subscriptionResolver) RelationshipSchemaNodeDeleted(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error) {
+func (r *subscriptionResolver) RelationshipSchemaNodeDeleted(ctx context.Context, domain string) (<-chan *model.RelationshipSchemaNodeResponse, error) {
 	subscriber := r.Subscriptions.Subscribe(subscriptions.RelationshipSchemaNodeDeleted)
 	ch := make(chan *model.RelationshipSchemaNodeResponse)
+	domain = strings.TrimSpace(domain)
 	go func() {
 		for event := range subscriber.Events {
 			if response, ok := event.(*model.RelationshipSchemaNodeResponse); ok {
-				ch <- response
+				if response.RelationshipSchemaNode.Domain == domain {
+					ch <- response
+				}
 			}
 		}
 	}()

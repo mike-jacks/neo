@@ -222,15 +222,15 @@ type ComplexityRoot struct {
 		DomainSchemaNodeCreated       func(childComplexity int) int
 		DomainSchemaNodeDeleted       func(childComplexity int) int
 		DomainSchemaNodeUpdated       func(childComplexity int) int
-		ObjectNodeCreated             func(childComplexity int) int
-		ObjectNodeDeleted             func(childComplexity int) int
-		ObjectNodeUpdated             func(childComplexity int) int
-		ObjectRelationshipCreated     func(childComplexity int) int
-		ObjectRelationshipDeleted     func(childComplexity int) int
-		ObjectRelationshipUpdated     func(childComplexity int) int
-		RelationshipSchemaNodeCreated func(childComplexity int) int
-		RelationshipSchemaNodeDeleted func(childComplexity int) int
-		RelationshipSchemaNodeUpdated func(childComplexity int) int
+		ObjectNodeCreated             func(childComplexity int, typeArg string) int
+		ObjectNodeDeleted             func(childComplexity int, typeArg string) int
+		ObjectNodeUpdated             func(childComplexity int, typeArg string) int
+		ObjectRelationshipCreated     func(childComplexity int, name string) int
+		ObjectRelationshipDeleted     func(childComplexity int, name string) int
+		ObjectRelationshipUpdated     func(childComplexity int, name string) int
+		RelationshipSchemaNodeCreated func(childComplexity int, domain string) int
+		RelationshipSchemaNodeDeleted func(childComplexity int, domain string) int
+		RelationshipSchemaNodeUpdated func(childComplexity int, domain string) int
 		TypeSchemaNodeCreated         func(childComplexity int, domain string) int
 		TypeSchemaNodeDeleted         func(childComplexity int, domain string) int
 		TypeSchemaNodeUpdated         func(childComplexity int, domain string) int
@@ -303,21 +303,21 @@ type QueryResolver interface {
 	GetRelationshipSchemaNodes(ctx context.Context, domain *string) (*model.RelationshipSchemaNodesResponse, error)
 }
 type SubscriptionResolver interface {
-	ObjectNodeCreated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error)
-	ObjectNodeUpdated(ctx context.Context) (<-chan *model.ObjectNodeResponse, error)
-	ObjectNodeDeleted(ctx context.Context) (<-chan *model.ObjectNodeResponse, error)
-	ObjectRelationshipCreated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error)
-	ObjectRelationshipUpdated(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error)
-	ObjectRelationshipDeleted(ctx context.Context) (<-chan *model.ObjectRelationshipResponse, error)
+	ObjectNodeCreated(ctx context.Context, typeArg string) (<-chan *model.ObjectNodeResponse, error)
+	ObjectNodeUpdated(ctx context.Context, typeArg string) (<-chan *model.ObjectNodeResponse, error)
+	ObjectNodeDeleted(ctx context.Context, typeArg string) (<-chan *model.ObjectNodeResponse, error)
+	ObjectRelationshipCreated(ctx context.Context, name string) (<-chan *model.ObjectRelationshipResponse, error)
+	ObjectRelationshipUpdated(ctx context.Context, name string) (<-chan *model.ObjectRelationshipResponse, error)
+	ObjectRelationshipDeleted(ctx context.Context, name string) (<-chan *model.ObjectRelationshipResponse, error)
 	DomainSchemaNodeCreated(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error)
 	DomainSchemaNodeUpdated(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error)
 	DomainSchemaNodeDeleted(ctx context.Context) (<-chan *model.DomainSchemaNodeResponse, error)
 	TypeSchemaNodeCreated(ctx context.Context, domain string) (<-chan *model.TypeSchemaNodeResponse, error)
 	TypeSchemaNodeUpdated(ctx context.Context, domain string) (<-chan *model.TypeSchemaNodeResponse, error)
 	TypeSchemaNodeDeleted(ctx context.Context, domain string) (<-chan *model.TypeSchemaNodeResponse, error)
-	RelationshipSchemaNodeCreated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error)
-	RelationshipSchemaNodeUpdated(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error)
-	RelationshipSchemaNodeDeleted(ctx context.Context) (<-chan *model.RelationshipSchemaNodeResponse, error)
+	RelationshipSchemaNodeCreated(ctx context.Context, domain string) (<-chan *model.RelationshipSchemaNodeResponse, error)
+	RelationshipSchemaNodeUpdated(ctx context.Context, domain string) (<-chan *model.RelationshipSchemaNodeResponse, error)
+	RelationshipSchemaNodeDeleted(ctx context.Context, domain string) (<-chan *model.RelationshipSchemaNodeResponse, error)
 }
 
 type executableSchema struct {
@@ -1325,63 +1325,108 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Subscription.ObjectNodeCreated(childComplexity), true
+		args, err := ec.field_Subscription_objectNodeCreated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.ObjectNodeCreated(childComplexity, args["type"].(string)), true
 
 	case "Subscription.objectNodeDeleted":
 		if e.complexity.Subscription.ObjectNodeDeleted == nil {
 			break
 		}
 
-		return e.complexity.Subscription.ObjectNodeDeleted(childComplexity), true
+		args, err := ec.field_Subscription_objectNodeDeleted_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.ObjectNodeDeleted(childComplexity, args["type"].(string)), true
 
 	case "Subscription.objectNodeUpdated":
 		if e.complexity.Subscription.ObjectNodeUpdated == nil {
 			break
 		}
 
-		return e.complexity.Subscription.ObjectNodeUpdated(childComplexity), true
+		args, err := ec.field_Subscription_objectNodeUpdated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.ObjectNodeUpdated(childComplexity, args["type"].(string)), true
 
 	case "Subscription.objectRelationshipCreated":
 		if e.complexity.Subscription.ObjectRelationshipCreated == nil {
 			break
 		}
 
-		return e.complexity.Subscription.ObjectRelationshipCreated(childComplexity), true
+		args, err := ec.field_Subscription_objectRelationshipCreated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.ObjectRelationshipCreated(childComplexity, args["name"].(string)), true
 
 	case "Subscription.objectRelationshipDeleted":
 		if e.complexity.Subscription.ObjectRelationshipDeleted == nil {
 			break
 		}
 
-		return e.complexity.Subscription.ObjectRelationshipDeleted(childComplexity), true
+		args, err := ec.field_Subscription_objectRelationshipDeleted_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.ObjectRelationshipDeleted(childComplexity, args["name"].(string)), true
 
 	case "Subscription.objectRelationshipUpdated":
 		if e.complexity.Subscription.ObjectRelationshipUpdated == nil {
 			break
 		}
 
-		return e.complexity.Subscription.ObjectRelationshipUpdated(childComplexity), true
+		args, err := ec.field_Subscription_objectRelationshipUpdated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.ObjectRelationshipUpdated(childComplexity, args["name"].(string)), true
 
 	case "Subscription.relationshipSchemaNodeCreated":
 		if e.complexity.Subscription.RelationshipSchemaNodeCreated == nil {
 			break
 		}
 
-		return e.complexity.Subscription.RelationshipSchemaNodeCreated(childComplexity), true
+		args, err := ec.field_Subscription_relationshipSchemaNodeCreated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.RelationshipSchemaNodeCreated(childComplexity, args["domain"].(string)), true
 
 	case "Subscription.relationshipSchemaNodeDeleted":
 		if e.complexity.Subscription.RelationshipSchemaNodeDeleted == nil {
 			break
 		}
 
-		return e.complexity.Subscription.RelationshipSchemaNodeDeleted(childComplexity), true
+		args, err := ec.field_Subscription_relationshipSchemaNodeDeleted_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.RelationshipSchemaNodeDeleted(childComplexity, args["domain"].(string)), true
 
 	case "Subscription.relationshipSchemaNodeUpdated":
 		if e.complexity.Subscription.RelationshipSchemaNodeUpdated == nil {
 			break
 		}
 
-		return e.complexity.Subscription.RelationshipSchemaNodeUpdated(childComplexity), true
+		args, err := ec.field_Subscription_relationshipSchemaNodeUpdated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.RelationshipSchemaNodeUpdated(childComplexity, args["domain"].(string)), true
 
 	case "Subscription.typeSchemaNodeCreated":
 		if e.complexity.Subscription.TypeSchemaNodeCreated == nil {
@@ -1893,13 +1938,13 @@ type ObjectRelationshipObjectNodesResponse {
 }
 `, BuiltIn: false},
 	{Name: "../schema/subscriptions.graphql", Input: `type Subscription {
-  objectNodeCreated: ObjectNodeResponse!
-  objectNodeUpdated: ObjectNodeResponse!
-  objectNodeDeleted: ObjectNodeResponse!
+  objectNodeCreated(type: String!): ObjectNodeResponse!
+  objectNodeUpdated(type: String!): ObjectNodeResponse!
+  objectNodeDeleted(type: String!): ObjectNodeResponse!
 
-  objectRelationshipCreated: ObjectRelationshipResponse!
-  objectRelationshipUpdated: ObjectRelationshipResponse!
-  objectRelationshipDeleted: ObjectRelationshipResponse!
+  objectRelationshipCreated(name: String!): ObjectRelationshipResponse!
+  objectRelationshipUpdated(name: String!): ObjectRelationshipResponse!
+  objectRelationshipDeleted(name: String!): ObjectRelationshipResponse!
 
   domainSchemaNodeCreated: DomainSchemaNodeResponse!
   domainSchemaNodeUpdated: DomainSchemaNodeResponse!
@@ -1909,9 +1954,9 @@ type ObjectRelationshipObjectNodesResponse {
   typeSchemaNodeUpdated(domain: String!): TypeSchemaNodeResponse!
   typeSchemaNodeDeleted(domain: String!): TypeSchemaNodeResponse!
 
-  relationshipSchemaNodeCreated: RelationshipSchemaNodeResponse!
-  relationshipSchemaNodeUpdated: RelationshipSchemaNodeResponse!
-  relationshipSchemaNodeDeleted: RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeCreated(domain: String!): RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeUpdated(domain: String!): RelationshipSchemaNodeResponse!
+  relationshipSchemaNodeDeleted(domain: String!): RelationshipSchemaNodeResponse!
 }
 `, BuiltIn: false},
 	{Name: "../schema/typeSchemaNode.graphql", Input: `type TypeSchemaNode {
@@ -3365,6 +3410,213 @@ func (ec *executionContext) field_Query_getTypeSchemaNodes_argsDomain(
 	}
 
 	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_objectNodeCreated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_objectNodeCreated_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_objectNodeCreated_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_objectNodeDeleted_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_objectNodeDeleted_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_objectNodeDeleted_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_objectNodeUpdated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_objectNodeUpdated_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_objectNodeUpdated_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_objectRelationshipCreated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_objectRelationshipCreated_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_objectRelationshipCreated_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_objectRelationshipDeleted_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_objectRelationshipDeleted_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_objectRelationshipDeleted_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_objectRelationshipUpdated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_objectRelationshipUpdated_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_objectRelationshipUpdated_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_relationshipSchemaNodeCreated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_relationshipSchemaNodeCreated_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_relationshipSchemaNodeCreated_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_relationshipSchemaNodeDeleted_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_relationshipSchemaNodeDeleted_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_relationshipSchemaNodeDeleted_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_relationshipSchemaNodeUpdated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Subscription_relationshipSchemaNodeUpdated_argsDomain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["domain"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Subscription_relationshipSchemaNodeUpdated_argsDomain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+	if tmp, ok := rawArgs["domain"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -9343,7 +9595,7 @@ func (ec *executionContext) _Subscription_objectNodeCreated(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().ObjectNodeCreated(rctx)
+		return ec.resolvers.Subscription().ObjectNodeCreated(rctx, fc.Args["type"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9374,7 +9626,7 @@ func (ec *executionContext) _Subscription_objectNodeCreated(ctx context.Context,
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_objectNodeCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_objectNodeCreated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -9391,6 +9643,17 @@ func (ec *executionContext) fieldContext_Subscription_objectNodeCreated(_ contex
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ObjectNodeResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_objectNodeCreated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -9409,7 +9672,7 @@ func (ec *executionContext) _Subscription_objectNodeUpdated(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().ObjectNodeUpdated(rctx)
+		return ec.resolvers.Subscription().ObjectNodeUpdated(rctx, fc.Args["type"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9440,7 +9703,7 @@ func (ec *executionContext) _Subscription_objectNodeUpdated(ctx context.Context,
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_objectNodeUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_objectNodeUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -9457,6 +9720,17 @@ func (ec *executionContext) fieldContext_Subscription_objectNodeUpdated(_ contex
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ObjectNodeResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_objectNodeUpdated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -9475,7 +9749,7 @@ func (ec *executionContext) _Subscription_objectNodeDeleted(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().ObjectNodeDeleted(rctx)
+		return ec.resolvers.Subscription().ObjectNodeDeleted(rctx, fc.Args["type"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9506,7 +9780,7 @@ func (ec *executionContext) _Subscription_objectNodeDeleted(ctx context.Context,
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_objectNodeDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_objectNodeDeleted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -9523,6 +9797,17 @@ func (ec *executionContext) fieldContext_Subscription_objectNodeDeleted(_ contex
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ObjectNodeResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_objectNodeDeleted_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -9541,7 +9826,7 @@ func (ec *executionContext) _Subscription_objectRelationshipCreated(ctx context.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().ObjectRelationshipCreated(rctx)
+		return ec.resolvers.Subscription().ObjectRelationshipCreated(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9572,7 +9857,7 @@ func (ec *executionContext) _Subscription_objectRelationshipCreated(ctx context.
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_objectRelationshipCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_objectRelationshipCreated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -9589,6 +9874,17 @@ func (ec *executionContext) fieldContext_Subscription_objectRelationshipCreated(
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationshipResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_objectRelationshipCreated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -9607,7 +9903,7 @@ func (ec *executionContext) _Subscription_objectRelationshipUpdated(ctx context.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().ObjectRelationshipUpdated(rctx)
+		return ec.resolvers.Subscription().ObjectRelationshipUpdated(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9638,7 +9934,7 @@ func (ec *executionContext) _Subscription_objectRelationshipUpdated(ctx context.
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_objectRelationshipUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_objectRelationshipUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -9655,6 +9951,17 @@ func (ec *executionContext) fieldContext_Subscription_objectRelationshipUpdated(
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationshipResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_objectRelationshipUpdated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -9673,7 +9980,7 @@ func (ec *executionContext) _Subscription_objectRelationshipDeleted(ctx context.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().ObjectRelationshipDeleted(rctx)
+		return ec.resolvers.Subscription().ObjectRelationshipDeleted(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9704,7 +10011,7 @@ func (ec *executionContext) _Subscription_objectRelationshipDeleted(ctx context.
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_objectRelationshipDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_objectRelationshipDeleted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -9721,6 +10028,17 @@ func (ec *executionContext) fieldContext_Subscription_objectRelationshipDeleted(
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ObjectRelationshipResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_objectRelationshipDeleted_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10168,7 +10486,7 @@ func (ec *executionContext) _Subscription_relationshipSchemaNodeCreated(ctx cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().RelationshipSchemaNodeCreated(rctx)
+		return ec.resolvers.Subscription().RelationshipSchemaNodeCreated(rctx, fc.Args["domain"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10199,7 +10517,7 @@ func (ec *executionContext) _Subscription_relationshipSchemaNodeCreated(ctx cont
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeCreated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -10216,6 +10534,17 @@ func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeCrea
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RelationshipSchemaNodeResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_relationshipSchemaNodeCreated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10234,7 +10563,7 @@ func (ec *executionContext) _Subscription_relationshipSchemaNodeUpdated(ctx cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().RelationshipSchemaNodeUpdated(rctx)
+		return ec.resolvers.Subscription().RelationshipSchemaNodeUpdated(rctx, fc.Args["domain"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10265,7 +10594,7 @@ func (ec *executionContext) _Subscription_relationshipSchemaNodeUpdated(ctx cont
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -10282,6 +10611,17 @@ func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeUpda
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RelationshipSchemaNodeResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_relationshipSchemaNodeUpdated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10300,7 +10640,7 @@ func (ec *executionContext) _Subscription_relationshipSchemaNodeDeleted(ctx cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().RelationshipSchemaNodeDeleted(rctx)
+		return ec.resolvers.Subscription().RelationshipSchemaNodeDeleted(rctx, fc.Args["domain"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10331,7 +10671,7 @@ func (ec *executionContext) _Subscription_relationshipSchemaNodeDeleted(ctx cont
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeDeleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeDeleted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -10348,6 +10688,17 @@ func (ec *executionContext) fieldContext_Subscription_relationshipSchemaNodeDele
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RelationshipSchemaNodeResponse", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_relationshipSchemaNodeDeleted_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
